@@ -94,7 +94,12 @@ jobs:
         run: test "$(chelis --version)" = "chelis ${CHELIS_VERSION}"
 
       - name: Format check
-        run: chelis fmt --check src/ properties/ demos/ tests/
+        run: |
+          set -euo pipefail
+          for f in src/*.ch properties/*.ch demos/*.ch tests/*.ch; do
+            [ -e "$f" ] || continue
+            chelis fmt --check "$f"
+          done
 
       - name: Lint check
         run: chelis lint --check src/ properties/ demos/ tests/
