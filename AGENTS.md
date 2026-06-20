@@ -133,3 +133,9 @@ Install the local git hooks with:
 ```sh
 git config core.hooksPath ./hooks
 ```
+
+**Recorded divergence.** The `smt-prove-gate` job caches the from-source
+`chelis-smt` binary keyed on the chelis tag (and pins `ubuntu-24.04`), so cvc5
+compiles once per pin rather than every push. This is an Economoist-first
+improvement that is not yet mirrored to the sibling shells; propagate it to them
+(c-note, shoals) in a follow-up change set per this rule.

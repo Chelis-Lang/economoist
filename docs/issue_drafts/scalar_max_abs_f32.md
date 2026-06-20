@@ -1,5 +1,7 @@
 # Draft: scalar max/min/abs over f32 in chelis-std
 
+Filed upstream as chelis#424 on 2026-06-20.
+
 **Summary.** At chelis 0.8.0 there is no bound scalar `max`/`min`/`abs` for `f32`;
 a bare `max(a, b)` over `f32` is an unbound variable. chelis-std exposes tensor
 reductions and ad hoc per-file helpers, but no scalar elementwise reductions.

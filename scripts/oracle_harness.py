@@ -143,6 +143,28 @@ def main() -> int:
         else:
             print(f"  OK  {label}: eval={got:.7g} golden={golden:.7g} tol={tol:.1e}")
 
+    # E4 comparative statics: gate that the AD grad demo reproduces the signs the
+    # SMT properties (gordon_dP_dr_negative, gordon_dP_dg_positive) prove, so a
+    # transcription error in the documented demo cannot pass silently. grad
+    # differentiates the same displayed gordon_pv body, at D=2, r=0.1, g=0.05;
+    # the analytic derivative is -/+ D/(r-g)^2 = -/+ 800.
+    for wrt, want_negative, approx in (("r", True, -800.0), ("g", False, 800.0)):
+        expr = (f"grad(fn (d: f32, r: f32, g: f32) -> (d / (r - g)), wrt={wrt})"
+                f"({f32(2.0)}, {f32(0.1)}, {f32(0.05)})")
+        proc = subprocess.run([binary, "eval", "--json", expr], capture_output=True, text=True)
+        try:
+            value = json.loads(proc.stdout)["roots"][0]["value"]["value"]
+            data = value["data"][0] if isinstance(value, dict) else float(value)
+        except Exception as exc:  # noqa: BLE001
+            failures.append(f"grad dP/d{wrt}: could not parse eval output ({exc}): {proc.stderr.strip()}")
+            continue
+        sign_ok = (data < 0.0) if want_negative else (data > 0.0)
+        if sign_ok and abs(data - approx) <= 1.0:
+            sign = "negative" if want_negative else "positive"
+            print(f"  OK  grad dP/d{wrt} = {data:.6g} ({sign}, matches gordon_dP_d{wrt}_{sign})")
+        else:
+            failures.append(f"grad dP/d{wrt} = {data} does not match the proven sign and magnitude (~{approx})")
+
     passed, failed = run_tests(binary)
     print(f"  test suite: {passed} passed, {failed} failed")
     if failed:

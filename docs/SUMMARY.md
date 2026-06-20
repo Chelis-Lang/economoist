@@ -9,11 +9,14 @@ the strongest proven story in the stack, and the academic-launch surface for
 ## Models
 
 - [Markov chains](models/markov.md): a finite-state transition operator;
-  simplex preservation under one step.
+  simplex preservation under one step. The structural greens ship at both fixed
+  dimensions n=2 and n=3.
 - [Bellman operator](models/bellman.md): monotonicity, boundedness, and the
-  single-application contraction of the dynamic-programming operator.
+  single-application contraction of the dynamic-programming operator. The
+  structural greens ship at both fixed dimensions n=2 and n=3.
 - [Growth and present value](models/growth.md): the Gordon model's positivity
-  and monotonicity, and the AD comparative statics whose signs are proven.
+  and monotonicity, and the AD comparative statics whose signs are proven. Growth
+  is dimension-free (scalar present value), so there is no n to fix.
 
 ## Business-wrong demos
 

@@ -46,6 +46,10 @@ FORBIDDEN_NAME = re.compile(r"(converge|stationary|fixed_point|ergodic|limit|ite
 DECL_NAME = re.compile(r"^\s*(?:@property|def|type)\s+([A-Za-z_][A-Za-z0-9_]*)")
 UNIVERSAL_CLAIM = re.compile(r"(for all n|general[- ]n|any dimension|all dimensions|universal theorem)", re.I)
 HELD_OUT = re.compile(r"held[- ]out", re.I)
+# chelis#426: comparing/subtracting two calls of an ITE-bodied operator def at a
+# goal site false-proves. The sound form inlines the operator arithmetic, so a
+# property/demo goal must never CALL one of these operators.
+ITE_OPERATOR_CALL = re.compile(r"\bbellman_state\d\w*\s*\(")
 
 
 def resolve_bin() -> str:
@@ -178,6 +182,19 @@ def name_lint(failures: list[str]) -> None:
                     failures.append(f"{ch.relative_to(REPO_ROOT)}:{i}: identifier '{m.group(1)}' names a held-out limit theorem; rename to its single-step content")
 
 
+def unsound_pattern_lint(failures: list[str]) -> None:
+    """Guard against the chelis#426 vacuous-green pattern: a property or demo goal
+    must inline the operator arithmetic, never CALL an ITE-bodied operator def
+    (comparing/subtracting two such calls reports a false `proven`). Comments are
+    ignored so the explanatory notes about the bug do not trip the lint."""
+    for d in ("properties", "demos"):
+        for ch in sorted((REPO_ROOT / d).glob("*.ch")):
+            for i, line in enumerate(ch.read_text().splitlines(), 1):
+                code = line.split("--", 1)[0]
+                if ITE_OPERATOR_CALL.search(code):
+                    failures.append(f"{ch.relative_to(REPO_ROOT)}:{i}: goal calls an ITE-bodied operator ({code.strip()[:48]}); inline the arithmetic instead (chelis#426 two-call false-proven)")
+
+
 def doc_lint(failures: list[str]) -> None:
     models = REPO_ROOT / "docs" / "models"
     for md in sorted(models.glob("*.md")) if models.exists() else []:
@@ -196,6 +213,7 @@ def main() -> int:
             gate_file(binary, ch, tier, failures)
 
     name_lint(failures)
+    unsound_pattern_lint(failures)
     doc_lint(failures)
 
     if failures:

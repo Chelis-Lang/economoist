@@ -4,9 +4,11 @@
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
+from shutil import which
 
 
 def find_repo_root() -> Path:
@@ -18,12 +20,31 @@ def find_repo_root() -> Path:
     sys.exit("error: cannot find repo root (no reef.toml)")
 
 
+def resolve_bin(root: Path) -> str:
+    """Resolve a chelis binary that matches the reef pin, so a stale `chelis`
+    on PATH (a different version) cannot produce a false diagnostic mismatch."""
+    for env in ("CHELIS_BIN", "CHELIS_SMT_BIN"):
+        v = os.environ.get(env)
+        if v and (Path(v).expanduser().is_file() or which(v)):
+            return str(Path(v).expanduser())
+    m = re.search(r'compiler\s*=\s*"=([^"]+)"', (root / "reef.toml").read_text())
+    if m:
+        for name in ("chelis-smt", "chelis"):
+            cand = Path.home() / ".local/share/chelis" / m.group(1) / name
+            if cand.is_file():
+                return str(cand)
+    for name in ("chelis-smt", "chelis"):
+        if which(name):
+            return name
+    sys.exit("error: no chelis binary found; set CHELIS_BIN")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run negative tests under tests_neg/.")
     parser.parse_args()
 
     root = find_repo_root()
-    chelis = os.environ.get("CHELIS_BIN", "chelis")
+    chelis = resolve_bin(root)
     tests_dir = root / "tests_neg"
 
     ch_files = sorted(tests_dir.rglob("*.ch")) if tests_dir.exists() else []

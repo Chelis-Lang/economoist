@@ -3,12 +3,18 @@
 A finite-state Markov transition operator over a fixed small state space. A
 distribution on the simplex is a vector of nonnegative masses summing to one. A
 row-stochastic transition has nonnegative rows that each sum to one. The next
-distribution is the transition applied to the current one.
+distribution is the transition applied to the current one. The structural greens
+ship at two fixed dimensions, n equals two and n equals three, each carrying its
+own opaque distribution type (`Dist2`, `Dist3`), guarded constructor, transition
+step, and scalar mass operator.
 
 ## Proven (single application, SMT tier, cvc5, over the reals)
 
 Each result below is discharged at `proof_tier:"smt"` with `arith_model:"real"`,
-zero fuzz samples, and no contract assumption.
+zero fuzz samples, and no contract assumption. The same four structural facts are
+proven at both shipped dimensions.
+
+n equals two:
 
 - `invariant:Dist2:advance` (the producer obligation for `advance`): applying a
   row-stochastic transition to a distribution on the simplex yields a
@@ -19,6 +25,18 @@ zero fuzz samples, and no contract assumption.
 - `markov_mass_preserved`: the output masses sum to one, as an exact
   real-arithmetic identity.
 - `markov_nonneg_preserved`: the output masses are nonnegative.
+
+n equals three:
+
+- `invariant:Dist3:advance3` (the producer obligation for `advance3`): applying a
+  row-stochastic 3x3 transition to a distribution on the 3-simplex yields a
+  distribution on the 3-simplex. Nonnegativity preserved and total mass preserved
+  are proven together inside the simplex invariant.
+- `invariant:Dist3:make_dist3`: the guarded constructor produces a valid
+  3-simplex distribution.
+- `markov3_mass_preserved`: the three output masses sum to one, as an exact
+  real-arithmetic identity (over the exported `mass3_next` operator).
+- `markov3_nonneg_preserved`: the three output masses are nonnegative.
 
 Each proven property carries a `*_guards_satisfiable` non-vacuity witness that is
 refuted at the SMT tier, so cvc5 exhibits a guard-satisfying model and the green
@@ -34,14 +52,19 @@ any of them.
    iterated transition. They need an inductive or fixed-point argument and are
    out of scope for direct SMT. The single-step preservation green does not imply
    them.
-2. General state dimension is held out alongside the limit results. The proofs
-   here are the n equals two instance (the n equals three form is identical entry
-   by entry). They are not the all-n theorem. "Simplex preservation proven" means
-   proven at the small fixed dimension, not for every state space size; the
-   general-n result, like convergence, is not reachable by SMT at fixed size.
+2. The general-n (all-n) theorem is held out alongside the limit results. What
+   ships is two fixed dimensions: the structural greens are discharged separately
+   and concretely at n equals two and at n equals three, each with its own
+   obligations and properties (listed above). They are not the all-n theorem.
+   "Simplex preservation proven" means proven at each shipped fixed dimension, not
+   for every state space size; the general-n result, like convergence, is not
+   reachable by SMT at a fixed size. Adding a fourth or larger state would require
+   its own type, operator, and proofs, mirroring the n equals two and n equals
+   three pattern entry by entry.
 3. Reals, not floats. What is proven is the real-arithmetic fact
-   (`arith_model:"real"`). The exact mass identity `markov_mass_preserved` holds
-   over the reals. The `Dist2` invariant carries an f32 epsilon band on the sum
-   because the runtime is f32; that band is the runtime invariant, distinct from
-   the exact real-arithmetic identity the prover discharges. The proof is about
-   the real-arithmetic model, not f32 float behavior.
+   (`arith_model:"real"`). The exact mass identities `markov_mass_preserved` and
+   `markov3_mass_preserved` hold over the reals. The `Dist2` and `Dist3`
+   invariants each carry an f32 epsilon band on the sum because the runtime is
+   f32; that band is the runtime invariant, distinct from the exact
+   real-arithmetic identity the prover discharges. The proof is about the
+   real-arithmetic model, not f32 float behavior.

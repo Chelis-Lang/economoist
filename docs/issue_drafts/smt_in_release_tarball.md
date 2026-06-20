@@ -1,5 +1,7 @@
 # Draft: ship the SMT feature in the released chelis tarball
 
+Filed upstream as chelis#422 on 2026-06-20.
+
 **Summary.** `chelis prove` reaches the SMT tier only when the binary is built
 with `--features smt` (linked against cvc5). The released `chelis-vX.Y.Z` tarball
 is built without the feature, so `prove` silently degrades an SMT-amenable goal to

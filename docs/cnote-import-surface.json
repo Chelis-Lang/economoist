@@ -3,27 +3,37 @@
   "purpose": "Frozen import surface that C Note vendors and resolves in its no-network sandbox. Pinned so the academic Economics gallery builds against a stable contract while Economoist internals evolve.",
   "pins": {
     "chelis": "0.8.0",
-    "economoist": "0.1.0"
+    "economoist": "0.1.1"
   },
-  "scope_note": "Every economic property here is a genuine unqualified SMT green: proven at the SMT tier by cvc5 over the reals, with zero fuzz samples and no contract assumption in its discharge. This is the differentiator from Shoals, whose composite finance greens are proven_modulo_fuzz_validated_contract. The verdicts below are all composite_verdict proven. Three boundaries are held out and must be stated with equal weight wherever a green is shown: limit and fixed-point results (convergence to stationarity, the unique Bellman fixed point) need induction and are out; the general state dimension is held out alongside them (the structural greens are the n equals two instance, mirrored to three, not the all-n theorem); and the proofs are over the reals (arith_model real), not f32 float behavior.",
-  "eval_import_boundary": "prove resolves these module imports, so the proven properties are reachable and the proof surface is guaranteed. eval does not yet resolve imports for standalone files, so a C Note template that needs to eval a model inlines its single-expression body until eval-side import resolution lands. The proof surface this manifest freezes is not blocked by the eval boundary.",
+  "scope_note": "Every economic property here is a genuine unqualified SMT green: proven at the SMT tier by cvc5 over the reals, with zero fuzz samples and no contract assumption in its discharge. This is the differentiator from Shoals, whose composite finance greens are proven_modulo_fuzz_validated_contract. The verdicts below are all composite_verdict proven. Boundaries held out and stated with equal weight: limit and fixed-point results (convergence to stationarity, the unique Bellman fixed point) need induction; the general state dimension is held out alongside them (structural greens are proven at the fixed dimensions n equals two AND n equals three, not the all-n theorem); and the proofs are over the reals (arith_model real), not f32 float behavior.",
+  "eval_import_boundary": "prove resolves these module imports, so the proven properties are reachable and the proof surface is guaranteed. eval does not yet resolve imports for standalone files (chelis#423), so a C Note template that needs to eval a model inlines its single-expression body until eval-side import resolution lands. The proof surface this manifest freezes is not blocked by the eval boundary.",
   "markov": {
     "module": "Economoist.Markov",
     "exports": [
-      {"id": "next_mass", "sig": "(p,q,ta,tb: f32) -> f32", "role": "operator-scalar", "note": "one output mass entry of the transition step"},
-      {"id": "advance", "sig": "(d: Dist2, t00,t01,t10,t11: f32) -> Option[Dist2]", "role": "operator-producer", "note": "one Markov step; producer obligation proves simplex preservation"},
+      {"id": "next_mass", "sig": "(p,q,ta,tb: f32) -> f32", "role": "operator-scalar", "note": "one output mass entry of a 2-state transition step"},
+      {"id": "mass3_next", "sig": "(p0,p1,p2,ta,tb,tc: f32) -> f32", "role": "operator-scalar", "note": "one output mass entry of a 3-state transition step"},
+      {"id": "advance", "sig": "(d: Dist2, t00,t01,t10,t11: f32) -> Option[Dist2]", "role": "operator-producer", "note": "one Markov step (n=2); producer obligation proves simplex preservation"},
+      {"id": "advance3", "sig": "(d: Dist3, t00,t01,t02,t10,t11,t12,t20,t21,t22: f32) -> Option[Dist3]", "role": "operator-producer", "note": "one Markov step (n=3)"},
       {"id": "make_dist", "sig": "(p0,p1: f32) -> Option[Dist2]", "role": "constructor-producer"},
+      {"id": "make_dist3", "sig": "(p0,p1,p2: f32) -> Option[Dist3]", "role": "constructor-producer"},
       {"id": "eps", "sig": "() -> f32", "role": "constant"}
     ],
     "internal_types": [
-      {"id": "Dist2", "note": "@opaque type with @invariant (nonnegative, sum in [1-eps, 1+eps]); not exported, held only via make_dist/advance returning Option[Dist2]"}
+      {"id": "Dist2", "note": "@opaque 2-simplex type; not exported, held only via make_dist/advance returning Option[Dist2]"},
+      {"id": "Dist3", "note": "@opaque 3-simplex type; not exported, held only via make_dist3/advance3 returning Option[Dist3]"}
     ]
   },
   "bellman": {
     "module": "Economoist.Bellman",
+    "operator_note": "The bellman_state* exports are the displayed operators for eval and the numeric tests (called once, which is sound). The contraction/monotonicity properties INLINE the operator arithmetic at the goal site rather than calling these defs, because comparing or subtracting two calls of an ITE-bodied operator false-proves at this tier (chelis#426); scripts/prove_gate.py enforces the inlined form.",
     "exports": [
-      {"id": "bellman_state0", "sig": "(v0,v1,r0,p00,p01,r1,p10,p11,g: f32) -> f32", "role": "operator-scalar", "note": "Bellman operator at state 0, 2 states by 2 actions"},
-      {"id": "fmax", "sig": "(a,b: f32) -> f32", "role": "helper"},
+      {"id": "bellman_state0", "sig": "(v0,v1,r0,p00,p01,r1,p10,p11,g: f32) -> f32", "role": "operator-scalar", "note": "Bellman operator output at state 0, 2 states by 2 actions"},
+      {"id": "bellman_state1", "sig": "(v0,v1,r0,p00,p01,r1,p10,p11,g: f32) -> f32", "role": "operator-scalar", "note": "Bellman operator output at state 1, 2 states by 2 actions"},
+      {"id": "bellman_state0_n3", "sig": "(v0,v1,v2,r0,p00,p01,p02,r1,p10,p11,p12,g: f32) -> f32", "role": "operator-scalar", "note": "state 0 output, 3 states by 2 actions"},
+      {"id": "bellman_state1_n3", "sig": "(...,g: f32) -> f32", "role": "operator-scalar", "note": "state 1 output, 3 states by 2 actions"},
+      {"id": "bellman_state2_n3", "sig": "(...,g: f32) -> f32", "role": "operator-scalar", "note": "state 2 output, 3 states by 2 actions"},
+      {"id": "fmax", "sig": "(a,b: f32) -> f32", "role": "helper", "note": "scalar max via if/then/else (chelis#424)"},
+      {"id": "fmax3", "sig": "(a,b,c: f32) -> f32", "role": "helper", "note": "ternary max; avoids nested fmax at a goal site (chelis#425)"},
       {"id": "fabs", "sig": "(x: f32) -> f32", "role": "helper"}
     ]
   },
@@ -34,37 +44,41 @@
     ]
   },
   "obligations": [
-    {"id": "invariant:Dist2:advance", "module": "Economoist.Markov", "verdict": "proven", "tier": "smt", "arith_model": "real", "claim": "applying a row-stochastic transition to a simplex distribution yields a simplex distribution (nonnegativity and total mass preserved)"},
-    {"id": "invariant:Dist2:make_dist", "module": "Economoist.Markov", "verdict": "proven", "tier": "smt", "arith_model": "real", "claim": "the guarded constructor yields a valid simplex distribution"}
+    {"id": "invariant:Dist2:advance", "module": "Economoist.Markov", "verdict": "proven", "tier": "smt", "arith_model": "real", "claim": "applying a row-stochastic 2x2 transition to a simplex distribution yields a simplex distribution (nonnegativity and total mass preserved)"},
+    {"id": "invariant:Dist2:make_dist", "module": "Economoist.Markov", "verdict": "proven", "tier": "smt", "arith_model": "real", "claim": "the guarded constructor yields a valid 2-simplex distribution"},
+    {"id": "invariant:Dist3:advance3", "module": "Economoist.Markov", "verdict": "proven", "tier": "smt", "arith_model": "real", "claim": "applying a row-stochastic 3x3 transition to a 3-simplex distribution yields a 3-simplex distribution"},
+    {"id": "invariant:Dist3:make_dist3", "module": "Economoist.Markov", "verdict": "proven", "tier": "smt", "arith_model": "real", "claim": "the guarded constructor yields a valid 3-simplex distribution"}
   ],
   "properties": [
-    {"module": "Economoist.Properties.Markov", "tier": "smt", "verdict": "proven", "ids": ["markov_mass_preserved", "markov_nonneg_preserved"]},
-    {"module": "Economoist.Properties.Bellman", "tier": "smt", "verdict": "proven", "ids": ["bellman_monotone", "bellman_bounded", "bellman_contraction", "bellman_contraction_lower"]},
+    {"module": "Economoist.Properties.Markov", "tier": "smt", "verdict": "proven", "ids": ["markov_mass_preserved", "markov_nonneg_preserved", "markov3_mass_preserved", "markov3_nonneg_preserved"]},
+    {"module": "Economoist.Properties.Bellman", "tier": "smt", "verdict": "proven", "ids": ["bellman_monotone", "bellman_bounded", "bellman_contraction_state0", "bellman_contraction_state0_lower", "bellman_contraction_state1", "bellman_contraction_state1_lower", "bellman3_monotone", "bellman3_bounded"], "sup_norm_note": "The full n=2 sup-norm contraction over the output value vector is the max of the four proven per-output-state components (state 0 and state 1, upper and lower); it is a one-line arithmetic corollary, not a single SMT green, because the combined fmax goal is unsupported (chelis#425)."},
     {"module": "Economoist.Properties.Growth", "tier": "smt", "verdict": "proven", "ids": ["gordon_positive", "gordon_increasing_in_d", "gordon_decreasing_in_r"]}
   ],
   "comparative_statics": {
     "module": "Economoist.Properties.Growth",
-    "note": "E4. The Gordon derivatives are AD-computed in eval on the displayed gordon_pv expression (single-expression discipline); the sign of each comparative static is itself SMT-proven in multiplied-through polynomial form.",
+    "note": "E4. The Gordon derivatives are AD-computed in eval on the displayed gordon_pv expression (single-expression discipline); the sign of each comparative static is itself SMT-proven in multiplied-through polynomial form. The grad demo signs are gated by scripts/oracle_harness.py.",
     "ids": ["gordon_dP_dr_negative", "gordon_dP_dg_positive"]
   },
   "demos": {
     "module": "Economoist.Demos.Businesswrong",
-    "note": "Each wrong model is refuted at the SMT tier with a decoded reproducible counterexample; each control passes. These are also the soundness-dependence twins.",
+    "note": "Each wrong model is refuted at the SMT tier with a decoded reproducible counterexample; each control passes.",
     "run": "chelis prove demos/businesswrong.ch --json --tier auto",
     "pairs": [
       {"wrong": "markov_mass_wrong", "control": "markov_mass_control", "error": "a transition row that does not sum to one fails mass preservation"},
       {"wrong": "gordon_positive_wrong", "control": "gordon_positive_control", "error": "growth at or above the discount gives a non-positive or undefined present value"},
-      {"wrong": "bellman_contraction_modulus_wrong", "control": "bellman_contraction_modulus_control", "error": "a discount at or above one breaks the contraction modulus"}
+      {"wrong": "bellman_contraction_rowsum_wrong", "control": "bellman_contraction_rowsum_control", "error": "dropping row-stochasticity (the load-bearing guard) lets the expected continuation amplify and breaks the contraction bound"},
+      {"wrong": "bellman_contraction_modulus_wrong", "control": "bellman_contraction_modulus_control", "error": "a discount at or above one breaks the contraction modulus (the modulus-condition demo, distinct from the bound's soundness probe)"}
     ]
   },
   "non_vacuity": "Every guarded property carries a preconditions assumption whose non-vacuity is established by cvc5 (a guard-satisfying model), and an explicit *_guards_satisfiable witness that is refuted at the SMT tier. Neither is a contract.",
   "held_out": {
     "convergence": ["stationary distribution existence and uniqueness", "convergence to stationarity", "ergodicity", "value-iteration convergence", "the unique Bellman fixed point"],
-    "general_dimension": "structural greens are proven at the small fixed state dimension (n equals two, mirrored to three), not for all n",
+    "general_dimension": "structural greens are proven at the fixed dimensions n equals two AND n equals three (both shipped), not for all n",
+    "n3_bellman_contraction": "the n=3 single-application Bellman contraction is held out: its sound encoding needs an fmax3 sup on the right combined with the n=3 operator arithmetic, which is unsupported at this tier (chelis#425, chelis#426). The n=3 monotonicity and boundedness ship green.",
     "reason": "limit and general-n results need induction or a fixed-point argument and are not reachable by SMT at fixed size"
   },
   "dependency_tree": {
-    "economoist": "0.1.0",
+    "economoist": "0.1.1",
     "dependencies": [
       {"name": "chelis-std", "version": "0.4.0", "source": "bundled", "compiler_version": "0.8.0", "archive_sha256": "651d210ce8852de3092714c5807a4f991735b2ac0c58e4ed45f44046b889f2e5", "shell_sha256": "4c625bbf9b30941cecaeb78e2886866dde5bcf481d506c8d9615a8e3596afee1"}
     ]
@@ -73,6 +87,6 @@
     "build": "chelis reef build",
     "prove_gate": "python3 scripts/prove_gate.py",
     "oracle": "python3 scripts/oracle_harness.py",
-    "smoke_import": "chelis check tests/import_surface.ch"
+    "smoke_import": "chelis test tests/import_surface.ch"
   }
 }

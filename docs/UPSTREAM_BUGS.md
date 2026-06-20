@@ -16,9 +16,34 @@ Suspected chelis issues are cited as `chelis#NNN` or as a parked draft under
 ## Actively blocking
 
 None. Every economic property in this shell discharges as an unqualified SMT
-green at the pinned binary; nothing upstream blocks shipping the current surface.
+green at the pinned binary, and the one soundness bug below is contained by an
+enforced workaround; nothing upstream blocks shipping the current surface.
 
 ## Tracking
+
+- **SOUNDNESS: two-call comparison/subtraction of an ITE-bodied def false-proves.**
+  A goal that compares or subtracts two calls of the same `fmax`-bodied operator
+  def (with different args) collapses to the all-arguments-equal corner, so a
+  false goal reports `proven` at the SMT tier with no counterexample. This made the
+  first cut of the Bellman contraction/monotonicity greens vacuous. Affected
+  surface: any max-style operator contraction/monotonicity. Workaround: inline the
+  operator arithmetic at the goal site (never call an ITE-bodied operator twice in
+  a goal); `scripts/prove_gate.py` `unsound_pattern_lint` enforces this
+  structurally. Re-probe trigger: any release note on prove-tier lowering or
+  two-call expression handling. chelis#426 (draft:
+  `issue_drafts/twocall_ite_subtraction_unsound.md`). This is the most serious
+  upstream issue this shell has hit; re-probe the reproducer every release.
+
+- **Nested fmax-style helper calls at a goal site do not lower; the n=3
+  contraction is consequently held out.** A three-way maximum written as nested
+  `fmax` at a goal site does not lower; the `fmax3` ternary helper lowers in
+  isolation but the n=3 single-application contraction goal as a whole (n=3
+  operator arithmetic plus the `fmax3` sup) still reports `unsupported`. Affected
+  surface: the n=3 Bellman sup-norm contraction, which is held out (see
+  `docs/models/bellman.md`). Workaround: ship the n=2 per-output-state
+  contractions; hold out the n=3 contraction. Re-probe trigger: any release note
+  on prove-tier lowering or goal-site inlining. chelis#425 (draft:
+  `issue_drafts/nested_fmax_goal_site.md`).
 
 - **SMT prove is absent from the released chelis tarball.** `chelis prove` only
   reaches the SMT tier when the binary is built `cargo build --release -p
@@ -28,7 +53,8 @@ green at the pinned binary; nothing upstream blocks shipping the current surface
   proof story. Workaround: build the SMT binary from source
   (`scripts/build_chelis_smt.py`) and run the prove gate against it; CI builds it
   in the `smt-prove-gate` job. Re-probe trigger: any release note shipping the
-  `smt` feature in the published tarball. Draft: `issue_drafts/smt_in_release_tarball.md`.
+  `smt` feature in the published tarball. chelis#422 (draft:
+  `issue_drafts/smt_in_release_tarball.md`).
 
 - **eval does not resolve imports for standalone files.** `prove` resolves module
   imports, so the proven properties reach the real exported functions, but `eval`
@@ -38,14 +64,25 @@ green at the pinned binary; nothing upstream blocks shipping the current surface
   proof surface is not blocked by this. Workaround: inline the displayed
   single-expression body (the oracle harness evals inline lambdas identical to the
   shipped bodies). Re-probe trigger: any release note naming eval-side import
-  resolution. Draft: `issue_drafts/eval_side_import_resolution.md`.
+  resolution. chelis#423 (draft: `issue_drafts/eval_side_import_resolution.md`).
 
 - **No bound scalar `max`/`min`/`abs` for `f32`.** At 0.8.0 a bare `max(...)` over
   `f32` is an unbound variable. Affected surface: the Bellman operator and the
   sup-norm contraction. Workaround: define local `fmax`/`fabs` with `if/then/else`
   (they lower as ITE and prove smt-green). Re-probe trigger: any release note
-  adding scalar reductions over `f32` to chelis-std. Draft:
-  `issue_drafts/scalar_max_abs_f32.md`.
+  adding scalar reductions over `f32` to chelis-std. chelis#424 (draft:
+  `issue_drafts/scalar_max_abs_f32.md`).
+
+- **Nested `fmax`-style helper calls at a property goal site do not lower to
+  Tier B.** A goal that nests local `fmax` helper calls (e.g. `fmax(fmax(a, b), c)`
+  for an n=3 maximum) at the property goal site does not lower to the SMT tier and
+  drops to fuzz, even though each helper lowers as ITE in isolation. Affected
+  surface: the n=3 Bellman sup-norm contraction, whose goal takes a three-way
+  maximum over the per-state deviations. Workaround: the flattened `fmax3` ternary
+  helper (one nested `if/then/else` over the three arguments, no helper-of-helper
+  call at the goal site), which lowers to ITE and proves smt-green. Re-probe
+  trigger: any release note on prove-tier lowering or goal-site inlining of
+  helper calls. chelis#425 (draft: `issue_drafts/nested_fmax_goal_site.md`).
 
 ## Parked
 

@@ -41,10 +41,33 @@ import argparse
 import os
 import subprocess
 import sys
+import re
 from pathlib import Path
+from shutil import which
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-CHELIS = os.environ.get("CHELIS_BIN", "chelis")
+
+
+def _resolve_bin() -> str:
+    """Resolve a chelis binary matching the reef pin, so a stale `chelis` on
+    PATH (a different version that cannot parse 0.8.0 syntax) is not used."""
+    for env in ("CHELIS_BIN", "CHELIS_SMT_BIN"):
+        v = os.environ.get(env)
+        if v and (Path(v).expanduser().is_file() or which(v)):
+            return str(Path(v).expanduser())
+    m = re.search(r'compiler\s*=\s*"=([^"]+)"', (REPO_ROOT / "reef.toml").read_text())
+    if m:
+        for name in ("chelis-smt", "chelis"):
+            cand = Path.home() / ".local/share/chelis" / m.group(1) / name
+            if cand.is_file():
+                return str(cand)
+    for name in ("chelis-smt", "chelis"):
+        if which(name):
+            return name
+    sys.exit("error: no chelis binary found; set CHELIS_BIN")
+
+
+CHELIS = _resolve_bin()
 
 # Directories swept by fmt/lint, in stage order.
 SOURCE_DIRS = ["src", "properties", "demos", "tests"]

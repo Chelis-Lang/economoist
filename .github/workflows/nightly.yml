@@ -5,9 +5,10 @@ name: nightly
 # Per-PR CI (ci.yml) downloads the released toolchain and runs prove only
 # on push to main; this job rebuilds chelis with --features smt from the
 # pinned tag so a regression in the upstream proof tier surfaces weekly
-# even with no economoist push. The chelis pin is read from reef.toml, the
-# single source of truth (the hard-rule guard keeps the CI env pins in
-# step with it).
+# even with no economoist push. The chelis pin is carried as a literal
+# CHELIS_TAG/CHELIS_VERSION env pair (read by the offline pin guard) and
+# cross-checked at runtime against reef.toml, the single source of truth
+# (the hard-rule guard keeps every workflow's env pin in step with it).
 
 on:
   schedule:
@@ -18,6 +19,15 @@ concurrency:
   group: nightly-${{ github.ref }}
   cancel-in-progress: true
 
+# Literal chelis pin (contract section 2): this workflow installs a toolchain
+# (it builds chelis from the pinned tag with --features smt), so it carries a
+# matching CHELIS_TAG/CHELIS_VERSION pair that the offline pin guard
+# (scripts/audit_workarounds.py --pins-only) reads without running the workflow.
+# The reef.toml derivation below stays as a runtime cross-check.
+env:
+  CHELIS_TAG: v0.8.0
+  CHELIS_VERSION: 0.8.0
+
 jobs:
   prove:
     name: SMT prove + oracle (from-source build)
@@ -27,18 +37,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extract chelis pin from reef.toml
+      - name: Cross-check the literal chelis pin against reef.toml
         run: |
           set -euo pipefail
-          CHELIS_VERSION=$(grep -oP '^compiler\s*=\s*"=\K[0-9]+\.[0-9]+\.[0-9]+' reef.toml)
-          if [ -z "$CHELIS_VERSION" ]; then
+          REEF_CHELIS_VERSION=$(grep -oP '^compiler\s*=\s*"=\K[0-9]+\.[0-9]+\.[0-9]+' reef.toml)
+          if [ -z "$REEF_CHELIS_VERSION" ]; then
             echo "Failed to parse compiler pin from reef.toml" >&2
             cat reef.toml >&2
             exit 1
           fi
-          echo "CHELIS_VERSION=$CHELIS_VERSION" >> "$GITHUB_ENV"
-          echo "CHELIS_TAG=v$CHELIS_VERSION"     >> "$GITHUB_ENV"
-          echo "Detected: chelis=$CHELIS_VERSION"
+          # The literal env pin must agree with reef.toml; the offline guard
+          # enforces this too, this is the in-workflow belt-and-braces check.
+          if [ "$REEF_CHELIS_VERSION" != "${CHELIS_VERSION}" ]; then
+            echo "Pin drift: reef.toml=$REEF_CHELIS_VERSION but env CHELIS_VERSION=${CHELIS_VERSION}" >&2
+            exit 1
+          fi
+          echo "Detected: chelis=${CHELIS_VERSION} (tag ${CHELIS_TAG})"
 
       - name: Checkout chelis at pinned release
         uses: actions/checkout@v4

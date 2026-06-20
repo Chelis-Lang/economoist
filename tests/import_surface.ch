@@ -1,11 +1,11 @@
 module Economoist.Tests.ImportSurface
 import Std.Test (assert_close)
-import Economoist.Markov (eps, make_dist, advance, next_mass)
-import Economoist.Bellman (bellman_state0, fmax, fabs)
+import Economoist.Markov (eps, make_dist, make_dist3, advance, advance3, next_mass, mass3_next)
+import Economoist.Bellman (bellman_state0, bellman_state1, bellman_state0_n3, bellman_state1_n3, bellman_state2_n3, fmax, fmax3, fabs)
 import Economoist.Growth (gordon_pv)
 -- Smoke test for the frozen C Note import surface (docs/cnote-import-surface.json).
 -- Every published symbol is imported and exercised, so the surface resolves under
--- the pinned binary. The opaque Dist2 is held only through make_dist and advance.
+-- the pinned binary. The opaque Dist2/Dist3 are held only through their producers.
 def test_scalar_surface_resolves() -> unit ! { Test } = {
   e = eps()
   nm = next_mass(cast(0.6, f32), cast(0.4, f32), cast(0.7, f32), cast(0.2, f32))
@@ -16,13 +16,31 @@ def test_scalar_surface_resolves() -> unit ! { Test } = {
   total = add(add(add(e, mx), ab), nm)
   assert_close(total, add(add(add(cast(0.0001, f32), cast(40.0, f32)), cast(2.02, f32)), cast(0.5, f32)), cast(0.01, f32), "scalar surface resolves and composes")
 }
+def test_n3_scalar_surface_resolves() -> unit ! { Test } = {
+  z = cast(0.0, f32)
+  m3 = mass3_next(cast(0.2, f32), cast(0.3, f32), cast(0.5, f32), cast(0.5, f32), cast(0.25, f32), cast(0.25, f32))
+  b1 = bellman_state1(z, z, z, z, z, z, z, z, z)
+  b0n3 = bellman_state0_n3(z, z, z, z, z, z, z, z, z, z, z, z)
+  b1n3 = bellman_state1_n3(z, z, z, z, z, z, z, z, z, z, z, z)
+  b2n3 = bellman_state2_n3(z, z, z, z, z, z, z, z, z, z, z, z)
+  mx3 = fmax3(b0n3, b1n3, b2n3)
+  total = add(add(add(add(m3, b1), mx3), add(b1n3, b2n3)), b0n3)
+  assert_close(total, cast(0.3, f32), cast(0.001, f32), "n=3 surface resolves; mass3_next == 0.3 and zero-state operators == 0")
+}
 def test_producer_surface_resolves() -> unit ! { Test } = {
-  built = match make_dist(cast(0.6, f32), cast(0.4, f32)) with {
+  built2 = match make_dist(cast(0.6, f32), cast(0.4, f32)) with {
     | Some(d) => match advance(d, cast(0.7, f32), cast(0.3, f32), cast(0.2, f32), cast(0.8, f32)) with {
     | Some(_) => cast(1.0, f32)
     | None => cast(0.0, f32)
   }
     | None => cast(0.0, f32)
   }
-  assert_close(built, cast(1.0, f32), cast(0.0001, f32), "make_dist then advance resolve and produce a distribution")
+  built3 = match make_dist3(cast(0.2, f32), cast(0.3, f32), cast(0.5, f32)) with {
+    | Some(d) => match advance3(d, cast(1.0, f32), cast(0.0, f32), cast(0.0, f32), cast(0.0, f32), cast(1.0, f32), cast(0.0, f32), cast(0.0, f32), cast(0.0, f32), cast(1.0, f32)) with {
+    | Some(_) => cast(1.0, f32)
+    | None => cast(0.0, f32)
+  }
+    | None => cast(0.0, f32)
+  }
+  assert_close(add(built2, built3), cast(2.0, f32), cast(0.0001, f32), "make_dist/advance and make_dist3/advance3 resolve and produce distributions")
 }

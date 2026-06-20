@@ -1,5 +1,7 @@
 # Draft: resolve module imports in eval for standalone files
 
+Filed upstream as chelis#423 on 2026-06-20.
+
 **Summary.** `prove` resolves module imports, so a property targets the real
 exported shell function. `eval` on a standalone file does not resolve a package
 import, so a one-line expression that calls an exported shell function cannot be

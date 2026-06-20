@@ -9,8 +9,15 @@ on:
 permissions:
   contents: write
 
+# Literal chelis pin (contract section 2): every toolchain-installing workflow
+# carries a matching CHELIS_TAG/CHELIS_VERSION pair that the offline pin guard
+# (scripts/audit_workarounds.py --pins-only) reads without running the workflow.
+# The reef.toml derivation below stays as a runtime cross-check, but these
+# literals are the source the guard compares against the reef pin.
 env:
   PACKAGE_NAME: economoist
+  CHELIS_TAG: v0.8.0
+  CHELIS_VERSION: 0.8.0
 
 jobs:
   build-reef-assets:
@@ -19,20 +26,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extract versions from reef.toml
+      - name: Extract versions from reef.toml (cross-check the literal pin)
         id: versions
         run: |
-          CHELIS_VERSION=$(grep -oP '^compiler\s*=\s*"=\K[0-9]+\.[0-9]+\.[0-9]+' reef.toml)
+          REEF_CHELIS_VERSION=$(grep -oP '^compiler\s*=\s*"=\K[0-9]+\.[0-9]+\.[0-9]+' reef.toml)
           PACKAGE_VERSION=$(grep -oP '^version\s*=\s*"\K[0-9]+\.[0-9]+\.[0-9]+' reef.toml | head -1)
-          if [ -z "$CHELIS_VERSION" ] || [ -z "$PACKAGE_VERSION" ]; then
+          if [ -z "$REEF_CHELIS_VERSION" ] || [ -z "$PACKAGE_VERSION" ]; then
             echo "Failed to parse one or more versions from reef.toml" >&2
             cat reef.toml >&2
             exit 1
           fi
-          echo "CHELIS_VERSION=$CHELIS_VERSION" >> "$GITHUB_ENV"
-          echo "CHELIS_TAG=v$CHELIS_VERSION" >> "$GITHUB_ENV"
+          # The literal env pin must agree with reef.toml; the offline guard
+          # enforces this too, this is the in-workflow belt-and-braces check.
+          if [ "$REEF_CHELIS_VERSION" != "${CHELIS_VERSION}" ]; then
+            echo "Pin drift: reef.toml=$REEF_CHELIS_VERSION but env CHELIS_VERSION=${CHELIS_VERSION}" >&2
+            exit 1
+          fi
           echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> "$GITHUB_ENV"
-          echo "Detected: chelis=$CHELIS_VERSION economoist=$PACKAGE_VERSION"
+          echo "Detected: chelis=${CHELIS_VERSION} economoist=$PACKAGE_VERSION"
 
       - name: Download chelis toolchain
         env:

@@ -80,9 +80,10 @@ Three boundaries are stated explicitly, per the repo contract.
    expression under `r > g`, nothing about the iterated sum that produced it.
 
 2. **Fixed dimension vs general-n: not applicable here.** The Markov and Bellman
-   instances in this shell carry a fixed-dimension caveat because they are the
-   `n = 2` (mirrored `n = 3`) instance of an all-`n` theorem. The Gordon value
-   has no state dimension: it is a closed form in three scalars `D`, `r`, `g`.
+   results in this shell carry a fixed-dimension caveat because they are proven at
+   the small fixed dimensions `n = 2` and `n = 3`, which is not the all-`n`
+   theorem. The Gordon value has no state dimension: it is a closed form in three
+   scalars `D`, `r`, `g`.
    There is no `n` to generalize over, so the fixed-dimension caveat is
    considered and found not applicable. This is stated explicitly so the reader
    knows it was not omitted by oversight.
