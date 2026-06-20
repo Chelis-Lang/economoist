@@ -1,0 +1,4 @@
+precision mismatch: expected f32, got bool
+Type checker rejects a bool passed where an f32 is required (assert_close
+arguments). The substring above is the stable part of the chelis 0.8.0
+diagnostic "compile: precision mismatch: expected f32, got bool".

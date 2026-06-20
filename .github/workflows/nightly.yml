@@ -1,0 +1,120 @@
+name: nightly
+
+# Weekly from-source rebuild of the smt binary, re-running the SMT proof
+# gate and the numeric oracle harness against the pinned chelis commit.
+# Per-PR CI (ci.yml) downloads the released toolchain and runs prove only
+# on push to main; this job rebuilds chelis with --features smt from the
+# pinned tag so a regression in the upstream proof tier surfaces weekly
+# even with no economoist push. The chelis pin is read from reef.toml, the
+# single source of truth (the hard-rule guard keeps the CI env pins in
+# step with it).
+
+on:
+  schedule:
+    - cron: '0 6 * * 0'   # 06:00 UTC, Sundays (weekly)
+  workflow_dispatch:
+
+concurrency:
+  group: nightly-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prove:
+    name: SMT prove + oracle (from-source build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract chelis pin from reef.toml
+        run: |
+          set -euo pipefail
+          CHELIS_VERSION=$(grep -oP '^compiler\s*=\s*"=\K[0-9]+\.[0-9]+\.[0-9]+' reef.toml)
+          if [ -z "$CHELIS_VERSION" ]; then
+            echo "Failed to parse compiler pin from reef.toml" >&2
+            cat reef.toml >&2
+            exit 1
+          fi
+          echo "CHELIS_VERSION=$CHELIS_VERSION" >> "$GITHUB_ENV"
+          echo "CHELIS_TAG=v$CHELIS_VERSION"     >> "$GITHUB_ENV"
+          echo "Detected: chelis=$CHELIS_VERSION"
+
+      - name: Checkout chelis at pinned release
+        uses: actions/checkout@v4
+        with:
+          repository: Chelis-Lang/chelis
+          ref: ${{ env.CHELIS_TAG }}
+          path: chelis-src
+          token: ${{ secrets.CHELIS_RELEASE_TOKEN }}
+
+      - name: Install C dependencies
+        run: sudo apt-get update && sudo apt-get install -y gcc g++ cmake libclang-dev
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo (smt)
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: chelis-src
+          key: nightly-smt
+
+      - name: Build chelis with --features smt
+        working-directory: chelis-src
+        run: cargo build --release -p chelis-cli --features smt
+
+      - name: Set CHELIS_SMT_BIN
+        run: echo "CHELIS_SMT_BIN=${{ github.workspace }}/chelis-src/target/release/chelis" >> "$GITHUB_ENV"
+
+      - name: Run prove gate
+        run: python3 scripts/prove_gate.py
+
+      - name: Run oracle harness
+        if: hashFiles('scripts/oracle_harness.py') != ''
+        run: python3 scripts/oracle_harness.py
+
+  # Surface a nightly failure as a tracking issue (opens on failure, closes
+  # on green) so a red nightly is impossible to miss -- scheduled-run
+  # failures do not show a red status on main. `needs` the prove job;
+  # `if: always()` so it runs regardless of outcome.
+  report:
+    name: Surface nightly status
+    needs: [prove]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Open/close nightly-failure tracking issue
+        uses: actions/github-script@v7
+        env:
+          PROVE_RESULT: ${{ needs.prove.result }}
+        with:
+          script: |
+            const title = 'Nightly failing: economoist';
+            const { owner, repo } = context.repo;
+            const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+            const failed = process.env.PROVE_RESULT !== 'success';
+            const q = `repo:${owner}/${repo} is:issue is:open in:title "${title}"`;
+            const found = await github.rest.search.issuesAndPullRequests({ q });
+            const existing = found.data.items.find(i => i.title === title);
+            if (failed) {
+              if (existing) {
+                core.info(`Tracking issue #${existing.number} already open.`);
+              } else {
+                const issue = await github.rest.issues.create({
+                  owner, repo, title,
+                  body: `The **nightly** from-source prove gate failed (prove=${process.env.PROVE_RESULT}).\n\nRun: ${runUrl}\nCommit: \`${context.sha}\`\n\nAuto-opened on failure; auto-closes when the nightly next passes.`,
+                  labels: ['nightly-failure'],
+                });
+                core.info(`Opened tracking issue #${issue.data.number}.`);
+              }
+            } else if (existing) {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: existing.number,
+                body: `Nightly green again -- ${runUrl}. Closing.`,
+              });
+              await github.rest.issues.update({ owner, repo, issue_number: existing.number, state: 'closed' });
+              core.info(`Closed tracking issue #${existing.number}.`);
+            }

@@ -1,0 +1,78 @@
+{
+  "schema": "economoist.cnote-import-surface/v1",
+  "purpose": "Frozen import surface that C Note vendors and resolves in its no-network sandbox. Pinned so the academic Economics gallery builds against a stable contract while Economoist internals evolve.",
+  "pins": {
+    "chelis": "0.8.0",
+    "economoist": "0.1.0"
+  },
+  "scope_note": "Every economic property here is a genuine unqualified SMT green: proven at the SMT tier by cvc5 over the reals, with zero fuzz samples and no contract assumption in its discharge. This is the differentiator from Shoals, whose composite finance greens are proven_modulo_fuzz_validated_contract. The verdicts below are all composite_verdict proven. Three boundaries are held out and must be stated with equal weight wherever a green is shown: limit and fixed-point results (convergence to stationarity, the unique Bellman fixed point) need induction and are out; the general state dimension is held out alongside them (the structural greens are the n equals two instance, mirrored to three, not the all-n theorem); and the proofs are over the reals (arith_model real), not f32 float behavior.",
+  "eval_import_boundary": "prove resolves these module imports, so the proven properties are reachable and the proof surface is guaranteed. eval does not yet resolve imports for standalone files, so a C Note template that needs to eval a model inlines its single-expression body until eval-side import resolution lands. The proof surface this manifest freezes is not blocked by the eval boundary.",
+  "markov": {
+    "module": "Economoist.Markov",
+    "exports": [
+      {"id": "next_mass", "sig": "(p,q,ta,tb: f32) -> f32", "role": "operator-scalar", "note": "one output mass entry of the transition step"},
+      {"id": "advance", "sig": "(d: Dist2, t00,t01,t10,t11: f32) -> Option[Dist2]", "role": "operator-producer", "note": "one Markov step; producer obligation proves simplex preservation"},
+      {"id": "make_dist", "sig": "(p0,p1: f32) -> Option[Dist2]", "role": "constructor-producer"},
+      {"id": "eps", "sig": "() -> f32", "role": "constant"}
+    ],
+    "internal_types": [
+      {"id": "Dist2", "note": "@opaque type with @invariant (nonnegative, sum in [1-eps, 1+eps]); not exported, held only via make_dist/advance returning Option[Dist2]"}
+    ]
+  },
+  "bellman": {
+    "module": "Economoist.Bellman",
+    "exports": [
+      {"id": "bellman_state0", "sig": "(v0,v1,r0,p00,p01,r1,p10,p11,g: f32) -> f32", "role": "operator-scalar", "note": "Bellman operator at state 0, 2 states by 2 actions"},
+      {"id": "fmax", "sig": "(a,b: f32) -> f32", "role": "helper"},
+      {"id": "fabs", "sig": "(x: f32) -> f32", "role": "helper"}
+    ]
+  },
+  "growth": {
+    "module": "Economoist.Growth",
+    "exports": [
+      {"id": "gordon_pv", "sig": "(d,r,g: f32) -> f32", "role": "operator-scalar", "note": "Gordon growth present value, displayed single-expression for eval and AD"}
+    ]
+  },
+  "obligations": [
+    {"id": "invariant:Dist2:advance", "module": "Economoist.Markov", "verdict": "proven", "tier": "smt", "arith_model": "real", "claim": "applying a row-stochastic transition to a simplex distribution yields a simplex distribution (nonnegativity and total mass preserved)"},
+    {"id": "invariant:Dist2:make_dist", "module": "Economoist.Markov", "verdict": "proven", "tier": "smt", "arith_model": "real", "claim": "the guarded constructor yields a valid simplex distribution"}
+  ],
+  "properties": [
+    {"module": "Economoist.Properties.Markov", "tier": "smt", "verdict": "proven", "ids": ["markov_mass_preserved", "markov_nonneg_preserved"]},
+    {"module": "Economoist.Properties.Bellman", "tier": "smt", "verdict": "proven", "ids": ["bellman_monotone", "bellman_bounded", "bellman_contraction", "bellman_contraction_lower"]},
+    {"module": "Economoist.Properties.Growth", "tier": "smt", "verdict": "proven", "ids": ["gordon_positive", "gordon_increasing_in_d", "gordon_decreasing_in_r"]}
+  ],
+  "comparative_statics": {
+    "module": "Economoist.Properties.Growth",
+    "note": "E4. The Gordon derivatives are AD-computed in eval on the displayed gordon_pv expression (single-expression discipline); the sign of each comparative static is itself SMT-proven in multiplied-through polynomial form.",
+    "ids": ["gordon_dP_dr_negative", "gordon_dP_dg_positive"]
+  },
+  "demos": {
+    "module": "Economoist.Demos.Businesswrong",
+    "note": "Each wrong model is refuted at the SMT tier with a decoded reproducible counterexample; each control passes. These are also the soundness-dependence twins.",
+    "run": "chelis prove demos/businesswrong.ch --json --tier auto",
+    "pairs": [
+      {"wrong": "markov_mass_wrong", "control": "markov_mass_control", "error": "a transition row that does not sum to one fails mass preservation"},
+      {"wrong": "gordon_positive_wrong", "control": "gordon_positive_control", "error": "growth at or above the discount gives a non-positive or undefined present value"},
+      {"wrong": "bellman_contraction_modulus_wrong", "control": "bellman_contraction_modulus_control", "error": "a discount at or above one breaks the contraction modulus"}
+    ]
+  },
+  "non_vacuity": "Every guarded property carries a preconditions assumption whose non-vacuity is established by cvc5 (a guard-satisfying model), and an explicit *_guards_satisfiable witness that is refuted at the SMT tier. Neither is a contract.",
+  "held_out": {
+    "convergence": ["stationary distribution existence and uniqueness", "convergence to stationarity", "ergodicity", "value-iteration convergence", "the unique Bellman fixed point"],
+    "general_dimension": "structural greens are proven at the small fixed state dimension (n equals two, mirrored to three), not for all n",
+    "reason": "limit and general-n results need induction or a fixed-point argument and are not reachable by SMT at fixed size"
+  },
+  "dependency_tree": {
+    "economoist": "0.1.0",
+    "dependencies": [
+      {"name": "chelis-std", "version": "0.4.0", "source": "bundled", "compiler_version": "0.8.0", "archive_sha256": "651d210ce8852de3092714c5807a4f991735b2ac0c58e4ed45f44046b889f2e5", "shell_sha256": "4c625bbf9b30941cecaeb78e2886866dde5bcf481d506c8d9615a8e3596afee1"}
+    ]
+  },
+  "run": {
+    "build": "chelis reef build",
+    "prove_gate": "python3 scripts/prove_gate.py",
+    "oracle": "python3 scripts/oracle_harness.py",
+    "smoke_import": "chelis check tests/import_surface.ch"
+  }
+}

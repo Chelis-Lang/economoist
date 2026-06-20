@@ -1,0 +1,15 @@
+target/
+dist/
+reef.lock
+*.chb
+*.tar.zst
+.DS_Store
+.env
+*.swp
+*.swo
+__pycache__/
+*.py[cod]
+.gate-tmp/
+
+# Claude Code runtime artifacts
+.claude/scheduled_tasks.lock
