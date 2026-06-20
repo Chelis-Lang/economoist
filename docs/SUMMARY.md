@@ -15,6 +15,15 @@ the strongest proven story in the stack, and the academic-launch surface for
 - [Growth and present value](models/growth.md): the Gordon model's positivity
   and monotonicity, and the AD comparative statics whose signs are proven.
 
+## Business-wrong demos
+
+[`demos/businesswrong.ch`](../demos/businesswrong.ch) ships, for each structural
+property, a corrupted twin that is refuted at the SMT tier with a decoded
+counterexample, beside its passing control: a transition whose rows do not sum to
+one, a Gordon model with growth at or above the discount, and a discount outside
+the open interval from zero to one that breaks the contraction modulus. These are
+the soundness-dependence twins, importable with stable IDs for C Note.
+
 ## Surfaces
 
 - [Capability surface](CHELIS_SURFACE.md): what chelis and chelis-std provide to

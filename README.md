@@ -1,41 +1,33 @@
 # Economoist
 
 Verified economic and dynamic-programming models for the
-[Chelis](https://github.com/Chelis-Lang/chelis) language. Ships as a reef
+[Chelis](https://github.com/Chelis-Lang/chelis) language, shipped as a reef
 package under the `Economoist` module prefix.
 
-Economoist is the academic-launch surface for "C Proof": every economic
-property it states is written to be a genuine, unqualified SMT green (cvc5,
-over the reals, zero fuzz, no contract). A result that only closes under a
-contract qualifier, or that comes back amber, is treated as a bug to fix
-rather than a result to ship.
+Economoist is the academic-launch surface for "C Proof". Its defining principle:
+every economic property it states is a genuine, unqualified SMT green, proven at
+the SMT tier by cvc5 over the reals with no fuzz sampling and no contract. A
+property that comes back sampled or contract-qualified is a bug to fix, not a
+result to ship.
 
 Economic content lives here. Finance and derivatives stay in
-[Shoals](https://github.com/Chelis-Lang/shoals), and Economoist never depends
-on Shoals.
+[Shoals](https://github.com/Chelis-Lang/shoals), and Economoist never depends on
+Shoals.
 
-## Modules
+## Documentation
 
-| Module | Contents |
-|---|---|
-| `Economoist.Markov` | Finite-state Markov chains: stochastic-matrix structure, row-stochasticity invariants, one-step distribution updates. |
-| `Economoist.Bellman` | Bellman operators for dynamic programming: the value-update map, monotonicity and discounting structure of a single application. |
-| `Economoist.Growth` | Discrete-time growth models: capital-accumulation and production-function structure, single-step transition properties. |
+This README stays small on purpose. Anything that moves as models are added or
+proofs change lives in the docs:
 
-## Honesty boundaries
-
-Every proven property says where the green stops. The three boundaries are
-mandatory in each module's docs:
-
-- **Single-step vs limit/convergence.** A green on a one-step contraction or
-  monotonicity is not a green on the fixed point or the convergence of the
-  iteration. The limit claim needs induction and is held out.
-- **Fixed dimension vs general-n.** A green at `n = 2` or `n = 3` is an
-  instance, not the universal theorem over all `n`. The general-n claim is
-  held out alongside convergence.
-- **Reals vs floats.** The proven fact is real arithmetic as discharged by
-  cvc5 over the reals, not a statement about `f32` evaluation. The
-  floating-point behavior of any demo is a separate, unproven concern.
+- [docs/SUMMARY.md](docs/SUMMARY.md) indexes the models, the business-wrong
+  demos, the surfaces, and the gates.
+- [docs/models/](docs/models/) gives each model's proven properties and its
+  held-out boundaries (limit and convergence, fixed dimension, reals versus
+  floats), stated per property.
+- [docs/CHELIS_SURFACE.md](docs/CHELIS_SURFACE.md) records what Chelis and
+  chelis-std provide to this domain.
+- [docs/cnote-import-surface.json](docs/cnote-import-surface.json) is the frozen
+  machine-readable import surface for C Note.
 
 ## Building and proving
 
@@ -45,19 +37,15 @@ Build the package with the released `chelis` tarball:
 chelis reef build
 ```
 
-SMT prove uses a separate from-source binary that links cvc5. Build it with:
+SMT prove uses a separate from-source binary that links cvc5. Build it with
+`python3 scripts/build_chelis_smt.py`, which runs
+`cargo build --release -p chelis-cli --features smt` (the host needs `cmake`,
+`g++`, and `libclang-dev`). `scripts/prove_gate.py` drives that binary over the
+properties in `properties/` and the demos in `demos/`; `scripts/run_local_gate.py`
+runs the full gate.
 
-```sh
-python3 scripts/build_chelis_smt.py
-```
-
-which runs `cargo build --release -p chelis-cli --features smt` (the build
-host needs `cmake`, `g++`, and `libclang-dev`) and installs it side-by-side
-as `~/.local/share/chelis/0.8.0/chelis-smt`. The prove gate drives that
-binary over the property bodies in `properties/`.
-
-`reef.toml` is the single source of truth for the compiler and `chelis-std`
-pins and the package version.
+`reef.toml` is the single source of truth for the compiler and `chelis-std` pins
+and the package version.
 
 ## License
 
