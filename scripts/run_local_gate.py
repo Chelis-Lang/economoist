@@ -23,7 +23,7 @@ no ``.ch`` files yet is skipped with a printed notice rather than failing.
 The ``chelis`` binary is taken from the ``CHELIS_BIN`` environment
 variable, defaulting to ``chelis`` on PATH; this lets the gate run against
 the side-by-side smt binary at
-``~/.local/share/chelis/0.8.0/chelis-smt``.
+``~/.local/share/chelis/0.9.0/chelis-smt``.
 
 Exits 0 only if every stage that ran succeeds.
 
@@ -50,7 +50,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 def _resolve_bin() -> str:
     """Resolve a chelis binary matching the reef pin, so a stale `chelis` on
-    PATH (a different version that cannot parse 0.8.0 syntax) is not used."""
+    PATH (a different version that cannot parse 0.9.0 syntax) is not used."""
     for env in ("CHELIS_BIN", "CHELIS_SMT_BIN"):
         v = os.environ.get(env)
         if v and (Path(v).expanduser().is_file() or which(v)):

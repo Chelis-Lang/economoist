@@ -2,10 +2,10 @@
   "schema": "economoist.cnote-import-surface/v1",
   "purpose": "Frozen import surface that C Note vendors and resolves in its no-network sandbox. Pinned so the academic Economics gallery builds against a stable contract while Economoist internals evolve.",
   "pins": {
-    "chelis": "0.8.0",
-    "economoist": "0.1.1"
+    "chelis": "0.9.0",
+    "economoist": "0.1.2"
   },
-  "scope_note": "Every economic property here is a genuine unqualified SMT green: proven at the SMT tier by cvc5 over the reals, with zero fuzz samples and no contract assumption in its discharge. This is the differentiator from Shoals, whose composite finance greens are proven_modulo_fuzz_validated_contract. The verdicts below are all composite_verdict proven. Boundaries held out and stated with equal weight: limit and fixed-point results (convergence to stationarity, the unique Bellman fixed point) need induction; the general state dimension is held out alongside them (structural greens are proven at the fixed dimensions n equals two AND n equals three, not the all-n theorem); and the proofs are over the reals (arith_model real), not f32 float behavior.",
+  "scope_note": "Every economic property here is a genuine unqualified SMT green: proven at the SMT tier by cvc5 over the reals, with zero fuzz samples and no contract assumption in its discharge. This is the differentiator from Shoals, whose composite finance greens are proven_modulo_fuzz_validated_contract. The verdicts below are all composite_verdict proven_modulo_real_arithmetic (chelis 0.9.0: cvc5 proved each goal over the reals and is honest it did not also discharge f32 rounding, which is exactly the over-the-reals boundary this manifest states; it is the strongest unqualified SMT green, distinct from a fuzz-validated or contract-qualified verdict). Boundaries held out and stated with equal weight: limit and fixed-point results (convergence to stationarity, the unique Bellman fixed point) need induction; the general state dimension is held out alongside them (structural greens are proven at the fixed dimensions n equals two AND n equals three, not the all-n theorem); and the proofs are over the reals (arith_model real), not f32 float behavior.",
   "eval_import_boundary": "prove resolves these module imports, so the proven properties are reachable and the proof surface is guaranteed. eval does not yet resolve imports for standalone files (chelis#423), so a C Note template that needs to eval a model inlines its single-expression body until eval-side import resolution lands. The proof surface this manifest freezes is not blocked by the eval boundary.",
   "markov": {
     "module": "Economoist.Markov",
@@ -44,15 +44,15 @@
     ]
   },
   "obligations": [
-    {"id": "invariant:Dist2:advance", "module": "Economoist.Markov", "verdict": "proven", "tier": "smt", "arith_model": "real", "claim": "applying a row-stochastic 2x2 transition to a simplex distribution yields a simplex distribution (nonnegativity and total mass preserved)"},
-    {"id": "invariant:Dist2:make_dist", "module": "Economoist.Markov", "verdict": "proven", "tier": "smt", "arith_model": "real", "claim": "the guarded constructor yields a valid 2-simplex distribution"},
-    {"id": "invariant:Dist3:advance3", "module": "Economoist.Markov", "verdict": "proven", "tier": "smt", "arith_model": "real", "claim": "applying a row-stochastic 3x3 transition to a 3-simplex distribution yields a 3-simplex distribution"},
-    {"id": "invariant:Dist3:make_dist3", "module": "Economoist.Markov", "verdict": "proven", "tier": "smt", "arith_model": "real", "claim": "the guarded constructor yields a valid 3-simplex distribution"}
+    {"id": "invariant:Dist2:advance", "module": "Economoist.Markov", "verdict": "proven_modulo_real_arithmetic", "tier": "smt", "arith_model": "real", "claim": "applying a row-stochastic 2x2 transition to a simplex distribution yields a simplex distribution (nonnegativity and total mass preserved)"},
+    {"id": "invariant:Dist2:make_dist", "module": "Economoist.Markov", "verdict": "proven_modulo_real_arithmetic", "tier": "smt", "arith_model": "real", "claim": "the guarded constructor yields a valid 2-simplex distribution"},
+    {"id": "invariant:Dist3:advance3", "module": "Economoist.Markov", "verdict": "proven_modulo_real_arithmetic", "tier": "smt", "arith_model": "real", "claim": "applying a row-stochastic 3x3 transition to a 3-simplex distribution yields a 3-simplex distribution"},
+    {"id": "invariant:Dist3:make_dist3", "module": "Economoist.Markov", "verdict": "proven_modulo_real_arithmetic", "tier": "smt", "arith_model": "real", "claim": "the guarded constructor yields a valid 3-simplex distribution"}
   ],
   "properties": [
-    {"module": "Economoist.Properties.Markov", "tier": "smt", "verdict": "proven", "ids": ["markov_mass_preserved", "markov_nonneg_preserved", "markov3_mass_preserved", "markov3_nonneg_preserved"]},
-    {"module": "Economoist.Properties.Bellman", "tier": "smt", "verdict": "proven", "ids": ["bellman_monotone", "bellman_bounded", "bellman_contraction_state0", "bellman_contraction_state0_lower", "bellman_contraction_state1", "bellman_contraction_state1_lower", "bellman3_monotone", "bellman3_bounded"], "sup_norm_note": "The full n=2 sup-norm contraction over the output value vector is the max of the four proven per-output-state components (state 0 and state 1, upper and lower); it is a one-line arithmetic corollary, not a single SMT green, because the combined fmax goal is unsupported (chelis#425)."},
-    {"module": "Economoist.Properties.Growth", "tier": "smt", "verdict": "proven", "ids": ["gordon_positive", "gordon_increasing_in_d", "gordon_decreasing_in_r"]}
+    {"module": "Economoist.Properties.Markov", "tier": "smt", "verdict": "proven_modulo_real_arithmetic", "ids": ["markov_mass_preserved", "markov_nonneg_preserved", "markov3_mass_preserved", "markov3_nonneg_preserved"]},
+    {"module": "Economoist.Properties.Bellman", "tier": "smt", "verdict": "proven_modulo_real_arithmetic", "ids": ["bellman_monotone", "bellman_bounded", "bellman_contraction_state0", "bellman_contraction_state0_lower", "bellman_contraction_state1", "bellman_contraction_state1_lower", "bellman3_monotone", "bellman3_bounded"], "sup_norm_note": "The full n=2 sup-norm contraction over the output value vector is the max of the four proven per-output-state components (state 0 and state 1, upper and lower); it is a one-line arithmetic corollary, not a single SMT green, because the combined fmax goal is unsupported (chelis#425)."},
+    {"module": "Economoist.Properties.Growth", "tier": "smt", "verdict": "proven_modulo_real_arithmetic", "ids": ["gordon_positive", "gordon_increasing_in_d", "gordon_decreasing_in_r"]}
   ],
   "comparative_statics": {
     "module": "Economoist.Properties.Growth",
@@ -78,9 +78,9 @@
     "reason": "limit and general-n results need induction or a fixed-point argument and are not reachable by SMT at fixed size"
   },
   "dependency_tree": {
-    "economoist": "0.1.1",
+    "economoist": "0.1.2",
     "dependencies": [
-      {"name": "chelis-std", "version": "0.4.0", "source": "bundled", "compiler_version": "0.8.0", "archive_sha256": "651d210ce8852de3092714c5807a4f991735b2ac0c58e4ed45f44046b889f2e5", "shell_sha256": "4c625bbf9b30941cecaeb78e2886866dde5bcf481d506c8d9615a8e3596afee1"}
+      {"name": "chelis-std", "version": "0.4.0", "source": "bundled", "compiler_version": "0.9.0", "archive_sha256": "d690c2b8e30b145a69cb4b63925bce6b85ad0245eb940c533dfd7b278af1d2f4", "shell_sha256": "0452fdd31efe15ba4fa51ff53401d77c95c3641b76764e68e656ceb99cd67b84"}
     ]
   },
   "run": {

@@ -50,8 +50,8 @@ def workflow_files(root: Path) -> list[Path]:
 def read_workflow_pins(text: str) -> dict:
     """Collect the literal CHELIS_TAG / CHELIS_VERSION env pins in one workflow.
 
-    Keyed by the env NAME. Both a bare CHELIS_VERSION (e.g. 0.8.0) and a tagged
-    CHELIS_TAG (e.g. v0.8.0) are normalized to the bare version before
+    Keyed by the env NAME. Both a bare CHELIS_VERSION (e.g. 0.9.0) and a tagged
+    CHELIS_TAG (e.g. v0.9.0) are normalized to the bare version before
     comparison with the reef.toml pin. Only literal `NAME: <value>` forms are
     read (the YAML env block); runtime `echo "NAME=..." >> $GITHUB_ENV`
     derivations are deliberately ignored, because the guard runs offline and

@@ -41,3 +41,9 @@ structurally (the `unsound_pattern_lint`).
 
 **Re-probe trigger.** Any release note on prove-tier lowering, goal-site inlining,
 or two-call expression handling. Re-probe the reproducer above per release.
+
+**Re-probe 2026-06-23 (chelis 0.9.0).** Still reproduces. The two FALSE goals
+(`cmp_unguarded`, `sub_unguarded`) are reported `status:passed, proof_tier:smt`
+with no counterexample; only the verdict token changed (`proven` ->
+`proven_modulo_real_arithmetic`, the 0.9.0 unqualified-green token). The fix has
+not landed; the `unsound_pattern_lint` workaround stays in force.
