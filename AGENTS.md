@@ -60,7 +60,7 @@ boundaries are mandatory:
   - SMT prove requires a **from-source** binary built with
     `cargo build --release -p chelis-cli --features smt` (it links cvc5, so
     the build host needs `cmake`, `g++`, and `libclang-dev`). It is installed
-    side-by-side as `~/.local/share/chelis/0.8.0/chelis-smt`. See
+    side-by-side as `~/.local/share/chelis/0.9.0/chelis-smt`. See
     `scripts/build_chelis_smt.py`.
 - Never vendor or build the chelis compiler into this shell beyond that
   from-source SMT binary. Consume the released tarball for everything else.

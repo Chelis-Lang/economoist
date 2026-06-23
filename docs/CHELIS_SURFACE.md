@@ -4,10 +4,10 @@ What the Chelis language and the bundled chelis-std actually provide to the
 economic-models domain this shell touches. Read this before designing around a
 suspected language gap.
 
-> **Pinned:** chelis 0.8.0 (chelis-std 0.4.0, bundled) ·
-> **Latest upstream:** 0.8.0 · **Last refreshed:** 2026-06-20
+> **Pinned:** chelis 0.9.0 (chelis-std 0.4.0, bundled) ·
+> **Latest upstream:** 0.9.0 · **Last refreshed:** 2026-06-23
 
-Rows are marked `@pin` (usable today at 0.8.0) or `@upstream` (expected at the
+Rows are marked `@pin` (usable today at 0.9.0) or `@upstream` (expected at the
 next bump). Refresh this table at every pin bump.
 
 ## Proof surface (the spine of this shell)
@@ -15,11 +15,11 @@ next bump). Refresh this table at every pin bump.
 | Capability | Status | Notes |
 |---|---|---|
 | SMT prove tier (cvc5, QF_NRA over the reals) | `@pin*` | `chelis prove --json --tier smt-only`. *Requires a from-source binary built `cargo build --release -p chelis-cli --features smt` (links cvc5; needs cmake, g++, libclang). The released tarball is fuzz-only and silently degrades; see `UPSTREAM_BUGS.md`. |
-| Green markers | `@pin` | `status:"passed"`, `proof_tier:"smt"`, `samples:0`, `arith_model:"real"`, `composite_verdict:"proven"`. |
+| Green markers | `@pin` | `status:"passed"`, `proof_tier:"smt"`, `samples:0`, `arith_model:"real"`, `composite_verdict:"proven_modulo_real_arithmetic"` (chelis 0.9.0; the prover is honest that it proved the goal over the reals, not the f32 rounding behaviour, which is exactly this shell's boundary). The older plain `"proven"` token is also accepted by the gate. |
 | Reals, not floats | `@pin` | A green is a real-arithmetic fact (`arith_model:"real"`), not a statement about `f32` evaluation. Stated per model. |
 | Per-property non-vacuity | `@pin` | A guarded property carries a `preconditions` assumption whose non-vacuity cvc5 establishes (a guard-satisfying model). The gate also ships explicit `*_guards_satisfiable` witnesses that refute. |
 | Invariant-producer obligations | `@pin` | An `@opaque` type with `@invariant`, plus a `def` returning the type or `Option[T]`, generates an obligation that discharges the invariant at SMT. The carrier for E1 simplex preservation. |
-| `@property forall ... where ...` | `@pin` | Goals must be operator-form (`>=`, `<=`, `&&`, `*`); builtin-call forms (`gte`, `mul`) do not lower and drop to fuzz. Params must be scalar (`f32`); tensor params drop to fuzz. |
+| `@property forall ... where ...` | `@pin` | Operator-form goals (`>=`, `<=`, `&&`, `*`) lower to cvc5. As of chelis 0.9.0 the builtin-call forms (`gte`, `mul`) also lower to SMT (verified `proven_modulo_real_arithmetic`, tier `smt`, samples 0); they were fuzz-only at 0.8.0. The shipped goals stay in operator form for clarity regardless. Params must be scalar (`f32`); tensor params drop to fuzz. |
 | prove-side import resolution | `@pin` | `prove` resolves module imports, so a property targets the real exported function. |
 
 ## Numeric and language primitives the domain uses

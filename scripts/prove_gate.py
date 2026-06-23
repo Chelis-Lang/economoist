@@ -7,14 +7,23 @@ assumption). A property that comes back sampled (fuzz), unsupported, or
 contract-qualified is a bug, not a result. This gate enforces that, plus the
 non-vacuity and soundness-dependence probes and the honesty-boundary name lint.
 
+The unqualified-green verdict token is `proven_modulo_real_arithmetic` (chelis
+0.9.0): cvc5 proved the goal in real arithmetic and is honest that it did not
+also discharge the f32 rounding behaviour, which is exactly this shell's stated
+boundary ("proven over the reals, not f32"). The older plain `proven` token is
+also accepted. A qualified token -- `fuzz_validated`, `sound_approximate`,
+`proven_modulo_fuzz_validated_contract` -- is a weaker result and stays a bug
+here. See UNQUALIFIED_GREEN_VERDICTS below.
+
 It reads the newline-delimited JSON that `chelis prove --json` emits and checks,
 per record:
 
   Economic greens (src/ invariant-producer obligations, and the real properties
   in properties/): status==passed, proof_tier=="smt", samples==0,
-  composite_verdict=="proven"; properties carry no assumptions (no contract);
-  obligations carry only SMT-discharged invariant assumptions with established
-  non-vacuity (the legitimate input invariant, not a fuzz-validated contract).
+  composite_verdict in UNQUALIFIED_GREEN_VERDICTS; properties carry no
+  assumptions (no contract); obligations carry only SMT-discharged invariant
+  assumptions with established non-vacuity (the legitimate input invariant, not
+  a fuzz-validated contract).
 
   Non-vacuity witnesses (properties/ names ending `_guards_satisfiable`): must be
   refuted at the SMT tier, so cvc5 exhibits a guard-satisfying model and the
@@ -42,6 +51,18 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
+# The two unqualified-green verdict tokens this shell accepts. From chelis 0.9.0
+# a genuine SMT discharge over the reals reports `proven_modulo_real_arithmetic`
+# (the prover proved the goal in real arithmetic and is honest that it has not
+# also discharged the f32 rounding behaviour); `proven` is the older unqualified
+# token, kept for forward/backward overlap. Both are unqualified greens for a
+# shell whose stated boundary is "proven over the reals, not f32". Every other
+# token -- `fuzz_validated`, `sound_approximate`,
+# `proven_modulo_fuzz_validated_contract` -- is a weaker, qualified result and
+# stays REJECTED: economoist's honesty boundary is pure SMT over the reals with
+# no fuzz fallback and no contract assumption.
+UNQUALIFIED_GREEN_VERDICTS = frozenset({"proven_modulo_real_arithmetic", "proven"})
+
 FORBIDDEN_NAME = re.compile(r"(converge|stationary|fixed_point|ergodic|limit|iterat)", re.I)
 DECL_NAME = re.compile(r"^\s*(?:@property|def|type)\s+([A-Za-z_][A-Za-z0-9_]*)")
 UNIVERSAL_CLAIM = re.compile(r"(for all n|general[- ]n|any dimension|all dimensions|universal theorem)", re.I)
@@ -57,7 +78,7 @@ def resolve_bin() -> str:
         v = os.environ.get(env)
         if v and (Path(v).expanduser().is_file() or _on_path(v)):
             return str(Path(v).expanduser())
-    default = Path.home() / ".local/share/chelis/0.8.0/chelis-smt"
+    default = Path.home() / ".local/share/chelis/0.9.0/chelis-smt"
     if default.is_file():
         return str(default)
     for cand in ("chelis-smt", "chelis"):
@@ -96,7 +117,8 @@ def _assumptions_clean(r: dict) -> tuple[bool, str]:
     established. The prover attaches a `preconditions:` assumption to every
     guarded property and runs its non-vacuity check with cvc5; a fuzz-validated
     contract (the over-firing abstraction this shell forbids) shows up as
-    discharge.method != "smt" and composite_verdict != "proven"."""
+    discharge.method != "smt" and a composite_verdict outside
+    UNQUALIFIED_GREEN_VERDICTS."""
     for a in r.get("assumptions", []):
         method = a.get("discharge", {}).get("method")
         if method != "smt":
@@ -114,8 +136,8 @@ def green_property(r: dict) -> tuple[bool, str]:
         return False, f"proof_tier={r.get('proof_tier')} (amber/fuzz is a bug here)"
     if r.get("samples", -1) != 0:
         return False, f"samples={r.get('samples')} (nonzero fuzz samples)"
-    if r.get("composite_verdict") != "proven":
-        return False, f"composite_verdict={r.get('composite_verdict')} (must be unqualified proven)"
+    if r.get("composite_verdict") not in UNQUALIFIED_GREEN_VERDICTS:
+        return False, f"composite_verdict={r.get('composite_verdict')} (must be an unqualified green: {sorted(UNQUALIFIED_GREEN_VERDICTS)})"
     if r.get("arith_model") != "real":
         return False, f"arith_model={r.get('arith_model')} (must be real; the proof is over the reals)"
     ok, why = _assumptions_clean(r)
@@ -129,7 +151,7 @@ def green_obligation(r: dict) -> tuple[bool, str]:
         return False, f"status={r.get('status')} reason={r.get('reason')}"
     if r.get("proof_tier") != "smt" or r.get("arith_model") != "real":
         return False, f"proof_tier={r.get('proof_tier')} arith_model={r.get('arith_model')}"
-    if r.get("samples", -1) != 0 or r.get("composite_verdict") != "proven":
+    if r.get("samples", -1) != 0 or r.get("composite_verdict") not in UNQUALIFIED_GREEN_VERDICTS:
         return False, f"samples={r.get('samples')} verdict={r.get('composite_verdict')}"
     ok, why = _assumptions_clean(r)
     if not ok:
@@ -203,10 +225,50 @@ def doc_lint(failures: list[str]) -> None:
             failures.append(f"{md.relative_to(REPO_ROOT)}: makes a universal-dimension claim without a held-out caveat in the same file")
 
 
+def honesty_boundary_self_test() -> None:
+    """The honesty boundary, checked before any prove runs: green_property and
+    green_obligation accept ONLY the two unqualified-green tokens and reject
+    every qualified verdict, even one that wears a clean smt/real/zero-sample
+    mask. This is the negative probe for the 0.9.0 verdict-taxonomy widening:
+    membership in UNQUALIFIED_GREEN_VERDICTS must not have leaked into a fuzz or
+    contract verdict. Raises AssertionError (caught and reported by main) on any
+    drift, so a future widening of the accept set cannot pass silently."""
+
+    def rec(verdict: str) -> dict:
+        # An otherwise-perfect smt/real/zero-sample record; only the verdict varies.
+        return {"status": "passed", "proof_tier": "smt", "samples": 0,
+                "arith_model": "real", "composite_verdict": verdict, "assumptions": []}
+
+    accept = ("proven_modulo_real_arithmetic", "proven")
+    reject = ("fuzz_validated", "sound_approximate",
+              "proven_modulo_fuzz_validated_contract", "failed", "unsupported")
+
+    for v in accept:
+        for name, fn in (("green_property", green_property), ("green_obligation", green_obligation)):
+            ok, why = fn(rec(v))
+            assert ok, f"honesty self-test: {name} rejected unqualified-green verdict {v!r}: {why}"
+    for v in reject:
+        for name, fn in (("green_property", green_property), ("green_obligation", green_obligation)):
+            ok, _ = fn(rec(v))
+            assert not ok, f"honesty self-test: {name} ACCEPTED qualified verdict {v!r} (honesty boundary breached)"
+    # A genuinely fuzz-tier record (the released non-SMT binary's output for these
+    # goals) must be rejected by the tier check too, independent of its verdict.
+    ok, _ = green_property({"status": "passed", "proof_tier": "fuzz", "samples": 100,
+                            "arith_model": "real", "composite_verdict": "fuzz_validated",
+                            "assumptions": []})
+    assert not ok, "honesty self-test: green_property accepted a fuzz-tier record"
+
+
 def main() -> int:
+    failures: list[str] = []
+    try:
+        honesty_boundary_self_test()
+    except AssertionError as e:
+        print(f"prove_gate FAILED: {e}")
+        return 1
+
     binary = resolve_bin()
     print(f"prove_gate using {binary}")
-    failures: list[str] = []
 
     for d, tier in (("src", "smt-only"), ("properties", "smt-only"), ("demos", "auto")):
         for ch in sorted((REPO_ROOT / d).glob("*.ch")):

@@ -38,7 +38,7 @@ def resolve_bin() -> str:
         v = os.environ.get(env)
         if v and (Path(v).expanduser().is_file() or which(v)):
             return str(Path(v).expanduser())
-    default = Path.home() / ".local/share/chelis/0.8.0/chelis-smt"
+    default = Path.home() / ".local/share/chelis/0.9.0/chelis-smt"
     if default.is_file():
         return str(default)
     for cand in ("chelis-smt", "chelis"):
