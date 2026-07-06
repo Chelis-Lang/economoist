@@ -4,10 +4,10 @@ What the Chelis language and the bundled chelis-std actually provide to the
 economic-models domain this shell touches. Read this before designing around a
 suspected language gap.
 
-> **Pinned:** chelis 0.9.0 (chelis-std 0.4.0, bundled) ·
-> **Latest upstream:** 0.9.0 · **Last refreshed:** 2026-06-23
+> **Pinned:** chelis 0.14.0 (chelis-std 0.4.0, bundled) ·
+> **Latest upstream:** 0.14.0 · **Last refreshed:** 2026-07-06
 
-Rows are marked `@pin` (usable today at 0.9.0) or `@upstream` (expected at the
+Rows are marked `@pin` (usable today at 0.14.0) or `@upstream` (expected at the
 next bump). Refresh this table at every pin bump.
 
 ## Proof surface (the spine of this shell)
