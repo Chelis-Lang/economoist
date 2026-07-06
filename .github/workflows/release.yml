@@ -16,8 +16,8 @@ permissions:
 # literals are the source the guard compares against the reef pin.
 env:
   PACKAGE_NAME: economoist
-  CHELIS_TAG: v0.11.1
-  CHELIS_VERSION: 0.11.1
+  CHELIS_TAG: v0.14.0
+  CHELIS_VERSION: 0.14.0
 
 jobs:
   build-reef-assets:
