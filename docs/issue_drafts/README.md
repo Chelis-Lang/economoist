@@ -16,3 +16,4 @@ at narrowing sites and in `UPSTREAM_BUGS.md`.
 | `grad_smt_lowering.md` | grad goals do not lower to SMT (AD sensitivity is fuzz-only); tier-upgrade trigger for the sampled invariant. | Open draft (not yet filed; cite the path). |
 | `grad_through_import.md` | grad hangs differentiating through a cross-module import call at 0.14.0. | Open draft (not yet filed; cite the path). |
 | `dependency_edges_imports.md` | prove --json `dependency_edges` omits cross-module import references. | Open draft (not yet filed; cite the path). |
+| `grad_inpackage_hang.md` | grad prove hangs in package context (inline body, no imports); standalone returns. Distinct from `grad_through_import.md`. | Open draft (not yet filed; cite the path). |

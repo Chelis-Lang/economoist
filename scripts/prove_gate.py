@@ -244,11 +244,50 @@ _VAR_EXPR = re.compile(r"^[\w\s+\-*/.()]+$")
 
 
 def _val(s: str) -> Fraction:
+    """Parse a counterexample value. cvc5 emits exact reals as SMT-LIB
+    S-expressions -- `(/ 1 2)`, `(- 1.0)`, `(/ (- 1) 2)` -- as well as plain
+    decimals/integers; both must land as an exact Fraction."""
     s = s.strip()
+    if s.startswith("("):
+        return _parse_sexpr(s)
     try:
         return Fraction(s)
     except (ValueError, ZeroDivisionError):
         return Fraction(float(s))
+
+
+def _parse_sexpr(s: str) -> Fraction:
+    toks = re.findall(r"\(|\)|[^\s()]+", s)
+    pos = [0]
+
+    def parse() -> Fraction:
+        t = toks[pos[0]]
+        pos[0] += 1
+        if t == "(":
+            op = toks[pos[0]]
+            pos[0] += 1
+            args = []
+            while toks[pos[0]] != ")":
+                args.append(parse())
+            pos[0] += 1  # consume ')'
+            if op == "/":
+                return args[0] / args[1]
+            if op == "*":
+                r = Fraction(1)
+                for a in args:
+                    r *= a
+                return r
+            if op == "+":
+                return sum(args, Fraction(0))
+            if op == "-":
+                return -args[0] if len(args) == 1 else args[0] - sum(args[1:], Fraction(0))
+            raise ValueError(f"unknown S-expr op {op!r}")
+        try:
+            return Fraction(t)
+        except (ValueError, ZeroDivisionError):
+            return Fraction(float(t))
+
+    return parse()
 
 
 def eval_arith(expr: str, env: dict[str, Fraction]) -> Fraction:
@@ -393,8 +432,20 @@ def gate_manifest(binary: str, manifest: dict, records: dict[str, dict],
                 ok, why = f32_reexec_positive_break(binary, model["output_fn"], cx)
                 if not ok:
                     failures.append(f"{iid}: {why}")
-        elif preconds and all(_safe_precond(pc, env) for pc in preconds):
-            failures.append(f"{iid}: out-of-region witness {cx} satisfies ALL preconditions (should leave the region)")
+        else:
+            # out-of-region break: the witness must VIOLATE at least one
+            # precondition (leave the validity region). An eval error here is
+            # fail-closed -- we cannot confirm the witness leaves the region -- so
+            # it is reported, not silently skipped (matching the in-region path).
+            evaluated: list[bool | None] = []
+            for pc in preconds:
+                try:
+                    evaluated.append(precond_holds(pc, env))
+                except Exception as exc:  # noqa: BLE001
+                    failures.append(f"{iid}: out-of-region check could not evaluate precondition {precond_string(pc)!r} at witness {cx}: {exc}")
+                    evaluated.append(None)
+            if evaluated and all(v is True for v in evaluated):
+                failures.append(f"{iid}: out-of-region witness {cx} satisfies ALL preconditions (should leave the region)")
     return checked
 
 
@@ -487,9 +538,11 @@ def main() -> int:
         gate_proven_file(recs, ch, failures)
         all_records.update({k: v for k, v in recs.items() if k != "__errors__"})
 
-    # sampled: proven STANDALONE in a scratch dir outside the repo (package
-    # auto-detection changes prove semantics -- an in-package grad goal hangs),
-    # auto tier so the grad goals degrade to fuzz.
+    # sampled: proven STANDALONE in a scratch dir outside the repo. Package
+    # auto-detection changes prove semantics: an in-package grad goal hangs even
+    # with the body inlined (no imports) -- standalone returns in ~5s, in-package
+    # does not return (docs/issue_drafts/grad_inpackage_hang.md; distinct from the
+    # grad-through-import hang). auto tier so the grad goals degrade to fuzz.
     with tempfile.TemporaryDirectory(prefix="econ-sampled-") as tmp:
         for ch in sorted((REPO_ROOT / "sampled").glob("*.ch")):
             dst = Path(tmp) / ch.name

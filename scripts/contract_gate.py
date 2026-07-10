@@ -47,7 +47,6 @@ KIND_TAXONOMY = frozenset({
     "finance.option_pricer.european_put",
     "finance.option_pricer.european_call_forward",
     "finance.lattice_pricer.european_call_fixed_depth",
-    "finance.discount_curve",
     "econ.perpetuity_pv",
     "econ.dp_operator.fixed_dim",
     "econ.markov_step.fixed_dim",
