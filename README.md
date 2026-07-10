@@ -37,12 +37,12 @@ Build the package with the released `chelis` tarball:
 chelis reef build
 ```
 
-SMT prove uses a separate from-source binary that links cvc5. Build it with
-`python3 scripts/build_chelis_smt.py`, which runs
-`cargo build --release -p chelis-cli --features smt` (the host needs `cmake`,
-`g++`, and `libclang-dev`). `scripts/prove_gate.py` drives that binary over the
-properties in `properties/` and the demos in `demos/`; `scripts/run_local_gate.py`
-runs the full gate.
+SMT prove ships in the same released `chelis` binary as of chelis v0.11.0, so no
+separate from-source build is needed. `scripts/prove_gate.py` drives `chelis
+prove` over the properties in `properties/` and the demos in `demos/`;
+`scripts/run_local_gate.py` runs the full gate. All stages resolve one binary:
+`CHELIS_BIN` if set, else the reef.toml-pinned release install
+(`~/.local/share/chelis/<pin>/bin/chelis`), else `chelis` on PATH.
 
 `reef.toml` is the single source of truth for the compiler and `chelis-std` pins
 and the package version.

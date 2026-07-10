@@ -25,12 +25,14 @@ def read_reef_pin(root: Path) -> str:
 
 
 # A workflow "installs a toolchain" if it downloads the released chelis tarball
-# or builds chelis from source. Contract section 2 requires every such workflow
-# to carry a matching literal CHELIS_TAG/CHELIS_VERSION env pair, guarded
-# offline. These markers identify those steps without running the workflow; a
-# workflow with no chelis CI in it (so nothing to pin) is correctly exempt.
+# (directly or via the shared composite action) or builds chelis from source.
+# Contract section 2 requires every such workflow to carry a matching literal
+# CHELIS_TAG/CHELIS_VERSION env pair, guarded offline. These markers identify
+# those steps without running the workflow; a workflow with no chelis CI in it
+# (so nothing to pin) is correctly exempt.
 TOOLCHAIN_INSTALL_MARKERS = (
     "gh release download",          # download the published chelis tarball
+    "actions/install-chelis",       # install the release tarball via the composite action
     "repository: Chelis-Lang/chelis",  # checkout chelis source to build it
     "cargo build --release -p chelis-cli",  # build chelis from source
 )

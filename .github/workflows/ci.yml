@@ -107,71 +107,25 @@ jobs:
       - name: Blocked probes
         run: python3 scripts/run_blocked_probes.py
 
-  smt-prove-gate:
-    name: SMT prove gate (from-source build)
-    # Pinned (not ubuntu-latest) so a cached binary's glibc always matches the
-    # runtime; the cache key carries the same slug.
-    runs-on: ubuntu-24.04
+  prove-gate:
+    name: SMT prove gate (release binary)
+    # SMT ships in the released chelis tarball as of v0.11.0 (chelis#422
+    # resolved), so the prove gate installs the pinned RELEASE toolchain via the
+    # shared composite action and runs per-PR -- no from-source cvc5 build, no
+    # push-to-main narrowing. prove_gate.py resolves `chelis` from PATH (the
+    # composite action puts it there and asserts the pinned version).
+    runs-on: ubuntu-latest
     needs: [hard-rule-guard, no-ai-authorship]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    # Generous so a cold cvc5 compile finishes and SAVES the cache rather than
-    # timing out and leaving every run to rebuild.
-    timeout-minutes: 75
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
-      # The SMT binary depends only on the pinned chelis tag. Cache the built
-      # binary itself keyed on the tag: cvc5 compiles from source once per pin,
-      # and every later run restores the 62 MB binary and skips the build.
-      - name: Restore cached chelis-smt binary
-        id: smt-bin
-        uses: actions/cache@v4
+      - name: Install chelis toolchain (cached)
+        uses: ./.github/actions/install-chelis
         with:
-          path: smt-bin
-          key: chelis-smt-${{ env.CHELIS_TAG }}-ubuntu-24.04
-
-      - name: Checkout chelis at pinned release
-        if: steps.smt-bin.outputs.cache-hit != 'true'
-        uses: actions/checkout@v4
-        with:
-          repository: Chelis-Lang/chelis
-          ref: ${{ env.CHELIS_TAG }}
-          path: chelis-src
-          token: ${{ secrets.CHELIS_RELEASE_TOKEN }}
-
-      - name: Install C dependencies
-        if: steps.smt-bin.outputs.cache-hit != 'true'
-        run: sudo apt-get update && sudo apt-get install -y gcc g++ cmake libclang-dev
-
-      - name: Install Rust toolchain
-        if: steps.smt-bin.outputs.cache-hit != 'true'
-        uses: dtolnay/rust-toolchain@stable
-
-      # Second cache layer: cargo registry and cvc5 build artifacts, so a binary
-      # cache miss (pin bump or eviction) still rebuilds incrementally.
-      - name: Cache cargo (smt)
-        if: steps.smt-bin.outputs.cache-hit != 'true'
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: chelis-src
-          key: smt
-
-      - name: Build chelis with --features smt
-        if: steps.smt-bin.outputs.cache-hit != 'true'
-        working-directory: chelis-src
-        run: cargo build --release -p chelis-cli --features smt
-
-      - name: Stage built binary for the cache
-        if: steps.smt-bin.outputs.cache-hit != 'true'
-        run: |
-          mkdir -p smt-bin
-          cp chelis-src/target/release/chelis smt-bin/chelis-smt
-
-      - name: Set CHELIS_SMT_BIN
-        run: echo "CHELIS_SMT_BIN=${{ github.workspace }}/smt-bin/chelis-smt" >> "$GITHUB_ENV"
-
-      - name: Verify smt binary
-        run: "$CHELIS_SMT_BIN --version"
+          chelis-tag: ${{ env.CHELIS_TAG }}
+          chelis-version: ${{ env.CHELIS_VERSION }}
+          gh-token: ${{ secrets.CHELIS_RELEASE_TOKEN }}
 
       - name: Run prove gate
         run: python3 scripts/prove_gate.py
