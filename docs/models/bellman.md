@@ -27,16 +27,21 @@ forms add one extra state. All five operators ship and are pinned numerically in
 `tests/bellman.ch`.
 
 `properties/bellman.ch` proves the structural facts of this one step at the SMT
-tier (cvc5, over the reals, zero fuzz, no contract). Each property goal INLINES
-the operator arithmetic (it writes the `max(...)` of the two actions directly)
-rather than calling the `bellman_state*` defs: in chelis 0.8.0 a goal that
-subtracts or compares two calls of the same `if/then/else`-bodied def, such as
-`bellman_state0(v...) - bellman_state0(w...)`, collapses the pair to a constant
-and would mask a false bound, false-proving it at the SMT tier (chelis#426), so
-the contraction and monotonicity goals are stated inline against the same
-arithmetic the operators compute (the inlined goal is textually the operator
-body). Each real property is paired with a `*_guards_satisfiable` witness that
-cvc5 refutes, so the green is not vacuous.
+tier (cvc5, over the reals, zero fuzz, no contract). Each property goal now CALLS
+the exported `bellman_state0`/`bellman_state1` (and the `_n3` variants) DIRECTLY
+at the goal site -- for example `bellman_state0(v...) - bellman_state0(w...)` for
+a contraction -- so the green is a fact about the shipped operator, not a
+separate restatement. An earlier cut had to INLINE the operator arithmetic
+instead: in chelis 0.8.0 a goal that subtracted or compared two calls of the same
+`if/then/else`-bodied def collapsed the pair to the all-arguments-equal corner
+and false-proved a false bound at the SMT tier (chelis#426). That soundness bug
+was fixed upstream at chelis 0.10.0 and re-verified at the 0.14.0 pin via probe
+p04 (the satisfying two-call goal proves; the corrupted twin refutes with a
+counterexample), so the goals call the operators directly and the former
+`unsound_pattern_lint` was removed. A regression control pair
+`bellman_call_collapse_wrong` / `bellman_call_collapse_control` in `demos/` keeps
+the fixed behavior under watch. Each real property is paired with a
+`*_guards_satisfiable` witness that cvc5 refutes, so the green is not vacuous.
 
 Every green below is one application of T. Read each against the three
 boundaries, which carry equal weight. A green here is a "C Proof" of the single
@@ -81,12 +86,15 @@ separate SMT green. A single per-output-state component (for example output stat
 the full contraction is the max over.
 
 The full sup-norm written as one goal,
-`max(|(Tv)_0 - (Tw)_0|, |(Tv)_1 - (Tw)_1|) <= g * sup`, does NOT lower to the
-SMT tier (the outer max wraps arguments that each already contain a max over the
-two actions, a nested-max site that does not lower, chelis#425), so it is not
-itself shipped as a green. The honest headline is therefore the per-output-state
-contraction at both output states, two-sided, with the full sup-norm stated as
-their max.
+`max(|(Tv)_0 - (Tw)_0|, |(Tv)_1 - (Tw)_1|) <= g * sup`, is not itself shipped as
+a separate green: the full sup-norm is the max of the per-output-state
+components, a one-line arithmetic corollary of the two per-state greens rather
+than an independent SMT goal. The honest headline is therefore the
+per-output-state contraction at both output states, two-sided, with the full
+sup-norm stated as their max. (The nested-`fmax` lowering gap that once forced
+this framing, chelis#425, is candidate-fixed at 0.14.0; the n=3 per-output-state
+contraction with the `fmax3` three-coordinate sup now lowers and ships as a green
+-- see the n=3 section below.)
 
 ## The two contraction guards: which is load-bearing for which claim
 
@@ -174,12 +182,40 @@ and proven as a single conjunction.
 - Does not say: a bound on the fixed point `v*` or on the iterate after many
   steps, nor a bound at general dimension; and it makes no f32 claim.
 
-### Held out at n=3: the per-output-state contraction
+### bellman_contraction_state{0,1,2}_n3 / _lower
 
-The n=3 per-output-state contraction (the per-state difference bounded by `g`
-times `fmax3` over the three coordinate distances) is HELD OUT: at this dimension
-its goal does not lower to the SMT tier (the three-state sup norm `fmax3` over
-nonlinear arguments exceeds the lowering limit; cvc5 reports it unsupported, not
-proven), so no green is claimed for it. The n=3 monotonicity and bound above are
-the n=3 greens; the n=3 contraction joins convergence, the fixed point, and the
-general-`n` theorem on the held-out list.
+For each output state `s` in `{0, 1, 2}`, the difference between one Bellman step
+on v and one Bellman step on w at that output state is bounded in absolute value
+by `g` times the sup-norm distance between v and w over the three coordinates.
+The upper side (`bellman_contraction_state0_n3`, `_state1_n3`, `_state2_n3`) and
+the lower side (`..._lower`) are proven as separate greens -- six unqualified SMT
+greens in all, each paired with a `*_guards_satisfiable` witness that refutes.
+The goal calls `bellman_state0_n3(v...) - bellman_state0_n3(w...)` (two-call
+subtraction, sound since chelis#426) on the left and the `fmax3` three-coordinate
+sup `g * fmax3(|v0-w0|, |v1-w1|, |v2-w2|)` on the right.
+
+- Says: each output value-vector component `(Tv)_s` is a g contraction in the sup
+  norm, at 3 states x 2 actions, over the reals; the full n=3 sup-norm
+  contraction is the max of these three per-state components, as at n=2.
+- Does not say: that the iteration converges, that a fixed point exists or is
+  unique, or that T contracts at general dimension. The convergence, fixed point,
+  and general-`n` results are held out and need induction. It makes no f32 claim.
+
+### De-narrowed at n=3: the per-output-state contraction now ships
+
+The n=3 per-output-state contraction (each per-state difference bounded by `g`
+times `fmax3` over the three coordinate distances) was PREVIOUSLY HELD OUT
+because its goal did not lower to the SMT tier (the three-state sup norm `fmax3`
+over nonlinear arguments exceeded the lowering limit; cvc5 reported it
+unsupported, not proven). At 0.14.0 chelis#425 is candidate-fixed: the goal now
+lowers and all six greens ship (`bellman_contraction_state{0,1,2}_n3` and their
+`_lower` twins), verified via probe p15 and per-surface (all three output states,
+upper and lower, prove; the six witnesses refute). It is therefore no longer on
+the held-out list.
+
+Still HELD OUT at every dimension, including n=3: value-iteration convergence
+`v_{k+1} = T v_k -> v*`, the existence and uniqueness of the fixed point (the
+Banach conclusion), and the general-`n`, general-`m` theorem. These need
+induction or a fixed-point argument and are not reachable by SMT at a fixed size;
+the single-application contraction proven here is a premise of the Banach
+theorem, not its conclusion.

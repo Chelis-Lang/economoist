@@ -1,5 +1,5 @@
 module Economoist.Growth
-export (gordon_pv)
+export (gordon_pv, gordon_pv_negated)
 -- Economoist.Growth: the Gordon growth model present value of a perpetuity whose
 -- cash flow grows at a constant rate. With next-period dividend D, required
 -- return r, and growth rate g (all under the convergence condition r > g), the
@@ -14,15 +14,31 @@ export (gordon_pv)
 -- reals-vs-floats boundary (the proven facts are real arithmetic, not f32).
 --
 -- PROVEN here (SMT, transcendental-free, over the reals; see
--- docs/models/growth.md), stated in multiplied-through polynomial form so the
--- solver sees polynomials rather than a division:
---   gordon_positive          : under D > 0 and r > g the value P = D/(r-g) > 0.
---   gordon_increasing_in_d    : P is increasing in the dividend D.
---   gordon_decreasing_in_r    : P is decreasing in the required return r.
---   gordon_dP_dr_negative     : the comparative static dP/dr = -D/(r-g)^2 < 0.
---   gordon_dP_dg_positive     : the comparative static dP/dg = +D/(r-g)^2 > 0.
+-- docs/models/growth.md), stated by CALLING gordon_pv in division form so each
+-- green is a fact about the shipped operator, not a restatement of its guards
+-- (verified at chelis 0.14.0; cnote.dischargeability p01/p02/p03):
+--   gordon_positive        : under D > 0 and r > g the value gordon_pv > 0.
+--   gordon_increasing_in_d : two-call, gordon_pv is increasing in the dividend D.
+--   gordon_decreasing_in_r : two-call, gordon_pv is decreasing in the return r.
+-- The derivative-SIGN comparative statics dP/dr and dP/dg are NOT shipped as
+-- polynomial greens any more: written on the guards they only restated them
+-- (vacuous). The decreasing/increasing two-call greens above carry the same
+-- economic content over the reals, and the AD sensitivity dP/dr < 0 ships as an
+-- honest fuzz-validated amber in sampled/growth_sensitivity.ch.
 -- HELD OUT: these are facts about the closed-form expression itself, not about
 --   the convergence of the underlying discounted sum to that closed form (a
 --   limit result, which needs the geometric-series argument and is held out).
 --   No f32 float claim is made: the green is real arithmetic.
+-- gordon_pv_negated below is a DEFECTIVE reference model, not a proven fact.
 def gordon_pv(d: f32, r: f32, g: f32) -> f32 = (d / (r - g))
+-- A DEFECTIVE reference model: a mispriced perpetuity that returns the negative
+-- of the correct Gordon present value. It is a first-class model in the manifest
+-- (defective: true) whose canon positivity invariant breaks IN its stated
+-- validity region (under D > 0 and r > g the correct value is positive, so this
+-- negated value is negative). It exists to exercise the in-region-defect break
+-- class of the characterization surface: the break has an f32-confirmed in-domain
+-- witness (demos/businesswrong.ch gordon_pv_corrupted_wrong), distinct from the
+-- out-of-region break gordon_positive_wrong (which flips the r > g guard instead
+-- of corrupting the model). It is NOT a claim about economics; it is a deliberate
+-- defect the gallery must characterize as broken.
+def gordon_pv_negated(d: f32, r: f32, g: f32) -> f32 = (0.0 - (d / (r - g)))

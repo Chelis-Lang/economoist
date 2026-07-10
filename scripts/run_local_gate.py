@@ -68,10 +68,21 @@ def _resolve_bin() -> str:
     sys.exit("error: no chelis binary found; set CHELIS_BIN")
 
 
+def _assert_version(binary: str) -> None:
+    """Post-resolution guard: the resolved binary must be the reef-pinned version."""
+    m = re.search(r'compiler\s*=\s*"=([^"]+)"', (REPO_ROOT / "reef.toml").read_text())
+    if not m:
+        return
+    got = subprocess.run([binary, "--version"], capture_output=True, text=True).stdout.strip()
+    if got != f"chelis {m.group(1)}":
+        sys.exit(f"run_local_gate: resolved binary reports {got!r}, expected 'chelis {m.group(1)}' (reef pin); set CHELIS_BIN")
+
+
 CHELIS = _resolve_bin()
+_assert_version(CHELIS)
 
 # Directories swept by fmt/lint, in stage order.
-SOURCE_DIRS = ["src", "properties", "demos", "tests"]
+SOURCE_DIRS = ["src", "properties", "demos", "sampled", "tests"]
 
 
 def run(cmd: list[str], *, quiet: bool) -> int:
@@ -96,7 +107,7 @@ def main() -> int:
     args = parser.parse_args()
     quiet = args.quiet
 
-    print("[1/8] chelis fmt --check")
+    print("[1/9] chelis fmt --check")
     fmt_any = False
     for dirname in SOURCE_DIRS:
         for path in ch_files_in(dirname):
@@ -107,9 +118,9 @@ def main() -> int:
                 print(f"FAIL: chelis fmt --check {rel}")
                 return rc
     if not fmt_any:
-        print("  notice: no .ch files under src/ properties/ demos/ tests/; skipping fmt")
+        print("  notice: no .ch files under src/ properties/ demos/ sampled/ tests/; skipping fmt")
 
-    print("[2/8] chelis lint --check")
+    print("[2/9] chelis lint --check")
     lint_targets = [f"{d}/" for d in SOURCE_DIRS if ch_files_in(d)]
     if lint_targets:
         rc = run([CHELIS, "lint", "--check", *lint_targets], quiet=False)
@@ -117,15 +128,15 @@ def main() -> int:
             print("FAIL: chelis lint --check")
             return rc
     else:
-        print("  notice: no .ch files under src/ properties/ demos/ tests/; skipping lint")
+        print("  notice: no .ch files under src/ properties/ demos/ sampled/ tests/; skipping lint")
 
-    print("[3/8] chelis reef build")
+    print("[3/9] chelis reef build")
     rc = run([CHELIS, "reef", "build"], quiet=False)
     if rc != 0:
         print("FAIL: chelis reef build")
         return rc
 
-    print("[4/8] chelis test tests/")
+    print("[4/9] chelis test tests/")
     if ch_files_in("tests"):
         rc = run([CHELIS, "test", "tests/"], quiet=False)
         if rc != 0:
@@ -134,19 +145,28 @@ def main() -> int:
     else:
         print("  notice: no .ch files under tests/; skipping test stage")
 
-    print("[5/8] negative tests")
+    print("[5/9] negative tests")
     rc = run([sys.executable, "scripts/run_negative_tests.py"], quiet=False)
     if rc != 0:
         print("FAIL: scripts/run_negative_tests.py")
         return rc
 
-    print("[6/8] blocked probes")
+    print("[6/9] blocked probes")
     rc = run([sys.executable, "scripts/run_blocked_probes.py"], quiet=False)
     if rc != 0:
         print("FAIL: scripts/run_blocked_probes.py")
         return rc
 
-    print("[7/8] prove gate")
+    print("[7/9] contract gate (manifest consistency, offline)")
+    if (REPO_ROOT / "scripts" / "contract_gate.py").exists():
+        rc = run([sys.executable, "scripts/contract_gate.py"], quiet=False)
+        if rc != 0:
+            print("FAIL: scripts/contract_gate.py")
+            return rc
+    else:
+        print("  notice: scripts/contract_gate.py not present yet; skipping")
+
+    print("[8/9] prove gate (keystone, release binary)")
     if (REPO_ROOT / "scripts" / "prove_gate.py").exists():
         rc = run([sys.executable, "scripts/prove_gate.py"], quiet=False)
         if rc != 0:
@@ -155,7 +175,7 @@ def main() -> int:
     else:
         print("  notice: scripts/prove_gate.py not present yet; skipping")
 
-    print("[8/8] oracle harness")
+    print("[9/9] oracle harness")
     if (REPO_ROOT / "scripts" / "oracle_harness.py").exists():
         rc = run([sys.executable, "scripts/oracle_harness.py"], quiet=False)
         if rc != 0:

@@ -39,7 +39,7 @@ def resolve_bin() -> str:
     else `chelis` on PATH. SMT ships in the release binary since chelis v0.11.0
     (chelis#422 resolved); there is no separate from-source smt binary."""
     from shutil import which
-    for env in ("CHELIS_SMT_BIN", "CHELIS_BIN"):
+    for env in ("CHELIS_BIN", "CHELIS_SMT_BIN"):
         v = os.environ.get(env)
         if v and (Path(v).expanduser().is_file() or which(v)):
             return str(Path(v).expanduser())
