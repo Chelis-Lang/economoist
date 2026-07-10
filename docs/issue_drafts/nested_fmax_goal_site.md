@@ -2,6 +2,19 @@
 
 Filed upstream as chelis#425 on 2026-06-20.
 
+**Status: CANDIDATE-FIXED (chelis 0.14.0).** The nested-`fmax` lowering gap is
+resolved. The full n=3 per-output-state Bellman sup-norm contraction now lowers
+and proves at SMT. Verified at the 0.14.0 pin via probe p15 and per-surface:
+`bellman_contraction_state0_n3` / `_state1_n3` / `_state2_n3`, each upper and
+lower (6 unqualified SMT greens + 6 refuting `*_guards_satisfiable` witnesses),
+with the `fmax3` three-coordinate sup on the right and the two-call
+`bellman_state0_n3` subtraction on the left. Economoist is de-narrowed: the n=3
+contraction is no longer held out (see `docs/models/bellman.md`); general-`n` and
+value-iteration convergence remain held out (they need induction). Archived in
+`UPSTREAM_BUGS.md`. The historical analysis below -- which recorded that at 0.8.0
+the `fmax3` helper lowered in isolation but did NOT yet make the n=3 contraction
+provable -- is kept as the record.
+
 **Summary.** A `@property` goal that nests local `fmax`-style helper calls at the
 goal site (e.g. `fmax(fmax(a, b), c)` to express a three-way maximum) does not
 lower to the SMT tier and drops to fuzz, even though each `fmax` helper lowers

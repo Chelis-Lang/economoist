@@ -20,28 +20,38 @@ property would be a bug to fix, not a result to ship.
 
 ## What is proven, per property
 
-Every goal is stated in multiplied-through polynomial form. The Gordon value is
-a quotient `D / (r - g)`, and a comparison that contains a division is nonlinear
-and fragile for the solver. Each property is therefore restated so the solver
-sees polynomials only: positivity becomes "numerator positive and denominator
-positive", a monotonicity becomes a cross-multiplied inequality, and a
-derivative sign becomes "polynomial numerator has the claimed sign and the
-denominator square is positive". The displayed `def` keeps the division for
-evaluation and display; no `/` appears in any proof goal.
+Every goal REFERENCES the exported `gordon_pv` directly: it calls the shipped
+`gordon_pv(d, r, g) = (d / (r - g))` at the goal site rather than restating the
+guards in a separate polynomial form. Positivity calls `gordon_pv` once; each
+comparative static compares two `gordon_pv` calls at shifted inputs. The goals
+discharge at SMT under the `r > g` guard (the denominator is guarded nonzero),
+verified via probes p01/p02/p03.
 
-| Property | Guards | Proven (polynomial form) | Economic meaning |
+This is the anti-vacuity discipline. An earlier cut restated each goal in
+multiplied-through polynomial form (for example positivity as
+`(d > 0) && ((r - g) > 0)`); that restatement never mentions `gordon_pv`, so it
+was a VACUOUS restatement of the guards, not a fact about the shipped value. The
+restatements were replaced by calls to the export, so the green is now a fact
+about `gordon_pv` itself.
+
+| Property | Guards | Proven (calls `gordon_pv`) | Economic meaning |
 | --- | --- | --- | --- |
-| `gordon_positive` | `d > 0`, `r > g` | `(d > 0) && ((r - g) > 0)` | `P = D/(r-g) > 0` |
-| `gordon_increasing_in_d` | `r > g`, `d2 > d1` | `((d2 - d1) > 0) && ((r - g) > 0)` | larger dividend gives larger `P` |
-| `gordon_decreasing_in_r` | `d > 0`, `r1 > g`, `r2 > r1` | `((d * (r1 - r2)) < 0) && ((r1 - g) > 0) && ((r2 - g) > 0)` | `D/(r2-g) < D/(r1-g)`: raising `r` lowers `P` |
-| `gordon_dP_dr_negative` | `d > 0`, `r > g` | `((0 - d) < 0) && (((r - g) * (r - g)) > 0)` | `dP/dr = -D/(r-g)^2 < 0` |
-| `gordon_dP_dg_positive` | `d > 0`, `r > g` | `(d > 0) && (((r - g) * (r - g)) > 0)` | `dP/dg = +D/(r-g)^2 > 0` |
+| `gordon_positive` | `d > 0`, `r > g` | `gordon_pv(d, r, g) > 0` | `P = D/(r-g) > 0` |
+| `gordon_increasing_in_d` | `r > g`, `d2 > d1` | `gordon_pv(d2, r, g) > gordon_pv(d1, r, g)` | larger dividend gives larger `P` |
+| `gordon_decreasing_in_r` | `d > 0`, `r1 > g`, `r2 > r1` | `gordon_pv(d, r2, g) < gordon_pv(d, r1, g)` | raising `r` lowers `P` |
 
-`gordon_decreasing_in_r` cross-multiplies the two quotients: `D/(r2-g) <
-D/(r1-g)` with both denominators positive is equivalent to `D*(r1-r2) < 0`. The
-two comparative statics state the sign of the numerator of the derivative
-together with the strict positivity of the denominator square, which together
-pin the sign of `dP/dr` and `dP/dg` without ever forming the quotient.
+`gordon_decreasing_in_r` compares the value at the higher `r2` against the value
+at the lower `r1` at the same `d` and `g`; that the higher discount rate yields
+the smaller present value is exactly the two-point statement of `dP/dr < 0` over
+the reals. `gordon_increasing_in_d` likewise compares two values at shifted `d`.
+
+The two derivative-SIGN properties an earlier cut shipped
+(`gordon_dP_dr_negative`, `gordon_dP_dg_positive`) were REMOVED from
+`properties/`: each stated a polynomial numerator sign plus a positive
+denominator square and never referenced `gordon_pv`, so each was a vacuous
+restatement of the guards. The `dP/dr` sign now lives in the sampled AD lane
+(`fuzz_validated`, amber) and is ALSO available over the reals as the proven
+two-point green `gordon_decreasing_in_r`; see the AD demo below.
 
 ### Non-vacuity
 
@@ -49,9 +59,13 @@ Each real property is paired with a `<name>_guards_satisfiable` witness that
 asserts `false` under the identical `forall` and guards. Under `--tier
 smt-only` cvc5 refutes each witness by exhibiting a guard-satisfying model (for
 example `d = 1, r = 1, g = 0`), which proves the guards are jointly satisfiable
-and the corresponding green is not vacuous. In the prove summary the five
+and the corresponding green is not vacuous. In the prove summary the three
 witnesses report `status: failed, proof_tier: smt`; that refutation is the
-intended outcome, not a failure of the model.
+intended outcome, not a failure of the model. Because every goal now calls
+`gordon_pv`, the prover-emitted goal string carries the mangled export
+reference, which the producer gate cross-checks for anti-vacuity
+(`dependency_edges` does not survive the module-import boundary; see
+`issue_drafts/dependency_edges_imports.md`).
 
 ### Prove summary
 
@@ -60,11 +74,27 @@ chelis prove properties/growth.ch --json --tier smt-only --smt-timeout 15000
 ```
 
 reports, per property, `proof_tier: smt`, `arith_model: real`, and
-`composite_verdict: proven` with `status: passed` for the five real properties,
-and `status: failed` for the five non-vacuity witnesses. Summary:
-`passed: 5, failed: 5, errors: 0, unsupported: 0` (the five failures are the
+`composite_verdict: proven` with `status: passed` for the three real properties,
+and `status: failed` for the three non-vacuity witnesses. Summary:
+`passed: 3, failed: 3, errors: 0, unsupported: 0` (the three failures are the
 refuted `false` witnesses). The command exits nonzero precisely because the
 witnesses are refuted; that is expected.
+
+### Defective controls: in-region vs out-of-region breakage
+
+Two defective exemplars guard the positivity canon from opposite sides, so the
+green is load-bearing rather than merely satisfiable in some corner:
+
+- `gordon_positive_wrong` is the OUT-of-region exemplar: it flips the guard to
+  `g > r` (outside the convergence region `r > g`), where `D/(r - g)` is
+  negative. It shows the guard `r > g` is doing real work -- drop it and
+  positivity fails.
+- `gordon_pv_negated` (manifest model `gordon_mispriced`, `defective: true`) is a
+  mispriced perpetuity whose closed form negates the value. Its positivity canon
+  breaks IN region, at `r > g`, with an `f32`-confirmed counterexample: the demos
+  `gordon_pv_corrupted_wrong` (refutes) and `gordon_pv_corrupted_control` (the
+  correct model, passes) pin that the break is a genuine mispricing inside the
+  valid region, not an out-of-region artifact.
 
 ## Honesty boundaries
 
@@ -95,15 +125,29 @@ Three boundaries are stated explicitly, per the repo contract.
    shipped expression; that floating-point behavior is a separate, unproven
    concern.
 
-## E4 comparative statics: the AD demo
+## E4 comparative statics: the AD demo (sampled lane)
 
-The comparative statics `dP/dr` and `dP/dg` have SMT-proven signs above. The
-same signs can be exhibited numerically through the language's automatic
-differentiation, which differentiates the same `gordon_pv` expression whose
-value is displayed. This is the single-expression discipline: the function body
-that `eval` evaluates for its value is the identical body that `grad`
-differentiates for its derivative, so the AD result is a derivative of the
+The `dP/dr` sign is a proven fact over the reals as the two-point green
+`gordon_decreasing_in_r` above. It is ALSO exhibited numerically through the
+language's automatic differentiation, which differentiates the same `gordon_pv`
+expression whose value is displayed. This is the single-expression discipline:
+the function body that `eval` evaluates for its value is the identical body that
+`grad` differentiates for its derivative, so the AD result is a derivative of the
 shipped expression and not of a separate restatement.
+
+The AD sensitivity ships as an honest amber, NOT a proven green. It lives in the
+sampled lane (`sampled/growth_sensitivity.ch`, module prefix
+`Economoist.Sampled`, property `gordon_dP_dr_negative_grad`) at tier
+`fuzz_validated`, kept out of the pure-SMT-green `properties/` boundary. Two
+upstream gaps force this: a `grad` goal does not lower to the SMT tier -- it only
+fuzz-validates (`issue_drafts/grad_smt_lowering.md`) -- and `grad` does not lower
+through a cross-module import call (it hangs), so the sampled property inlines
+`gordon_pv`'s shipped single-expression body `(d / (r - g))` rather than
+referencing the export directly (`issue_drafts/grad_through_import.md`). The
+oracle harness pins the inline body against `gordon_pv`'s numeric goldens so the
+equivalent form cannot drift from the export. When `grad` goals lower to SMT this
+amber is re-probed and its expected tier bumps to `proven` -- a de-narrowing
+event, not a rewrite.
 
 At the concrete point `D = 2, r = 0.1, g = 0.05` the denominator is `r - g =
 0.05`, so the analytic values are `P = 2 / 0.05 = 40`, `dP/dr = -D/(r-g)^2 =
@@ -131,12 +175,14 @@ chelis eval 'grad(fn (d: f32, r: f32, g: f32) -> (d / (r - g)), wrt=g)(2.0, 0.1,
 ```
 
 The AD-computed derivative with respect to `r` is negative (about `-800`) and the
-derivative with respect to `g` is positive (about `+800`), in `f32`. These match
-the signs of `gordon_dP_dr_negative` and `gordon_dP_dg_positive` proven over the
-reals. The small `f32` shortfall from the exact `800` is the floating-point
-residue, which is precisely the reals-vs-floats boundary above: the proven fact
-is the real-arithmetic sign, and the `f32` AD value confirms that sign at a
-point without being itself a proof.
+derivative with respect to `g` is positive (about `+800`), in `f32`. The `dP/dr`
+sign is the shipped sampled invariant `gordon_dP_dr_negative_grad`
+(`fuzz_validated`, amber) and matches the proven two-point green
+`gordon_decreasing_in_r` over the reals; the `dP/dg` gradient is shown here only
+as an eval illustration and is not itself a shipped invariant. The small `f32`
+shortfall from the exact `800` is the floating-point residue, which is precisely
+the reals-vs-floats boundary above: the proven fact is the real-arithmetic sign,
+and the `f32` AD value confirms that sign at a point without being itself a proof.
 
 The lambda body `(d / (r - g))` written inline is the exact body of
 `def gordon_pv` in `src/growth.ch`. The inline form is used for the demo because

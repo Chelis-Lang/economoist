@@ -104,6 +104,39 @@ forward-only path) cites, **at the narrowing site**, either `chelis#NNN` or a
 parked draft under `docs/issue_drafts/`. Never a prose name: a prose-name
 citation is invisible to every mechanical audit.
 
+## Characterization Contract and Canon Surface
+
+The cross-repo characterization seam is frozen at
+[`c-note/docs/contracts/characterization_contract_v1.md`](../c-note/docs/contracts/characterization_contract_v1.md)
+(schema `chelis-shell.invariant-surface/1.0`). Economoist's producer
+obligations under it:
+
+- `docs/cnote-import-surface.json` -- the invariant-surface manifest (models +
+  invariants + per-pin expected tiers + controls). Published byte-identical as
+  the release asset `economoist-<ver>.invariants.json` by `release.yml`; C Note
+  vendors and freshness-gates that asset.
+- `scripts/contract_gate.py` -- fast offline consistency gate (schema/pin
+  freshness, property + control resolution, precondition/where-clause
+  cross-check, tier citations).
+- `scripts/prove_gate.py` -- the keystone: expected-tier enforcement off the
+  manifest against the pinned RELEASE binary. An achieved tier is classified
+  from `proof_tier` + assumption discharge + `qualifiers`, **never** from the
+  `composite_verdict` string; tier drift in either direction fails.
+
+**Two-lane split (flagged divergence).** Economoist keeps the `properties/`
+tree as its pure unqualified-SMT-green boundary -- that green-only asymmetry vs
+Shoals is the shell's identity and is contractual. Weaker-tier library
+invariants (fuzz-validated AD sensitivities) live in a separate top-level
+`sampled/` dir (module prefix `Economoist.Sampled`, in `reef.toml`
+`additional_sources`), gated separately: `proof_tier == "fuzz"`, expected tier
+`fuzz_validated`, name-linted, and never colliding with a `properties/` green.
+Shoals instead hosts mixed tiers in `properties/` keyed on expected-tier; this
+per-dir split is an Economoist divergence recorded here and in the contract doc
+per the Scaffolding Drift Rule. Anti-vacuity for imported output fns is verified
+from the prover-emitted `goal` string plus the corrupt-flip control, because
+`dependency_edges` does not cross the module import boundary
+(`docs/issue_drafts/dependency_edges_imports.md`).
+
 ## Shared Local Skills
 
 Project-local skills live in `agent-skills/`. `.claude/skills` and

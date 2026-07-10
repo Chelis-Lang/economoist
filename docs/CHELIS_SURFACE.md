@@ -5,7 +5,7 @@ economic-models domain this shell touches. Read this before designing around a
 suspected language gap.
 
 > **Pinned:** chelis 0.14.0 (chelis-std 0.4.0, bundled) ·
-> **Latest upstream:** 0.14.0 · **Last refreshed:** 2026-07-06
+> **Latest upstream:** 0.14.0 · **Last refreshed:** 2026-07-10
 
 Rows are marked `@pin` (usable today at 0.14.0) or `@upstream` (expected at the
 next bump). Refresh this table at every pin bump.
@@ -21,14 +21,17 @@ next bump). Refresh this table at every pin bump.
 | Invariant-producer obligations | `@pin` | An `@opaque` type with `@invariant`, plus a `def` returning the type or `Option[T]`, generates an obligation that discharges the invariant at SMT. The carrier for E1 simplex preservation. |
 | `@property forall ... where ...` | `@pin` | Operator-form goals (`>=`, `<=`, `&&`, `*`) lower to cvc5. As of chelis 0.9.0 the builtin-call forms (`gte`, `mul`) also lower to SMT (verified `proven_modulo_real_arithmetic`, tier `smt`, samples 0); they were fuzz-only at 0.8.0. The shipped goals stay in operator form for clarity regardless. Params must be scalar (`f32`); tensor params drop to fuzz. |
 | prove-side import resolution | `@pin` | `prove` resolves module imports, so a property targets the real exported function. |
+| Two-call comparison/subtraction of an ITE-bodied operator at a goal site | `@pin` | A goal that compares or subtracts two calls of the same `if/then/else`-bodied operator def (e.g. `bellman_state0(v...) - bellman_state0(w...)`) now lowers faithfully: true goals prove, false goals refute with a counterexample. The two-call collapse soundness bug (chelis#426) was fixed at chelis 0.10.0 and re-verified at 0.14.0 (probe p04, archived in `UPSTREAM_BUGS.md`); `properties/bellman.ch` calls the exported operators directly at the goal site, and the former `unsound_pattern_lint` was removed. |
+| Nested `fmax`-style sup at a goal site (n=3 sup-norm contraction) | `@pin` | The n=3 per-output-state Bellman sup-norm contraction now lowers to SMT: the `fmax3` three-coordinate sup on the right combined with the two-call n=3 operator arithmetic on the left proves (6 greens + 6 refuting witnesses). The nested-fmax lowering gap (chelis#425) is candidate-fixed at 0.14.0 (probe p15 + per-surface, archived in `UPSTREAM_BUGS.md`). General-`n` and value-iteration convergence remain held out (need induction). |
 
 ## Numeric and language primitives the domain uses
 
 | Family | Status | Notes |
 |---|---|---|
-| Arithmetic `+ - * /`, comparisons `>= <= > < == !=` | `@pin` | Lower to cvc5. Keep `/` out of proof goals; use multiplied-through polynomial form (Gordon). |
+| Arithmetic `+ - * /`, comparisons `>= <= > < == !=` | `@pin` | Lower to cvc5. A `/` with a guarded-nonzero denominator now lowers: the Gordon greens call the exported `gordon_pv(d, r, g) = d / (r - g)` directly at the goal site under the `r > g` guard and prove at SMT (probes p01/p02/p03), replacing the earlier multiplied-through polynomial restatements (which were vacuous). |
 | `if/then/else` | `@pin` | Lowers as ITE in QF_NRA. |
-| Scalar `max`/`min`/`abs` for `f32` | `@upstream` | No bound scalar builtin exists at 0.8.0; define local `fmax`/`fabs` with `if/then/else` (they lower as ITE and prove smt-green). See `UPSTREAM_BUGS.md`. |
+| Scalar `abs` for `f32` | `@pin` | Re-probed at 0.14.0 (2026-07-10): `abs` over `f32` now binds and proves smt-green. The local `fabs` `if/then/else` helper is kept for symmetry with `fmax` but is no longer strictly required. See `UPSTREAM_BUGS.md` (chelis#424). |
+| Scalar `max`/`min` for `f32` | `@upstream` | Still unbound at 0.14.0 (typecheck error "unbound variable"); re-probed 2026-07-10. Define local `fmax`/`fmax3` with `if/then/else` (they lower as ITE and prove smt-green). Do not assume a bound `max`/`min` builtin. See `UPSTREAM_BUGS.md` (chelis#424, Tracking). |
 | `Option[T]`, `Some`/`None`, `match` | `@pin` | Used by the guarded producers. |
 | `@opaque` types with `@invariant` | `@pin` | Field access stays inside the module; values held by consumers only through producers. |
 | `cast`, `f32` literals | `@pin` | Test and eval bodies use builtin-call forms freely; only prove goals require operator form. |
@@ -44,6 +47,8 @@ next bump). Refresh this table at every pin bump.
 | AD mode (`grad`) | `@pin` | `grad` is **reverse-mode** automatic differentiation, not forward-mode (`spec/06-transformations.md` §2 title and §2.3 "Algorithm: Reverse-Mode AD"). The signature requires a scalar floating result `B` (§2.1: `f : A -> B`, `B` a scalar floating result; `grad(f) : A -> dA`). In `chelis eval` and the Tide host runtime, `grad` is applied by lowering the runtime transform back into the RISC DAG evaluator using the **same reverse-mode rules** as the tensor lane, not a separate host AD engine (§2.10). |
 | grad-lane rule for `f32` scalars | `@pin` | The E4 demo differentiates a scalar `f32` lambda (`grad(fn (d,r,g) -> d/(r-g), wrt=r)`); the result is a rank-0 tensor (`tensor(shape=[], data=[...])`). Integer-typed parameters are a hard error (`non_differentiable`, §2.7); the Gordon params are all `f32`, so this never bites. The proven sign is the real-arithmetic fact; the `f32` AD value confirms the sign at a point and is not itself a proof (`docs/models/growth.md` E4). |
 | Zero-grad / differentiability lanes | `@pin` | `spec/06-transformations.md` §2.7: `CmpLt` routes **zero gradient** to both inputs (with a compiler warning); `Max(a,b)` is differentiable almost everywhere, the gradient routing to the larger input (subgradient convention, **zero at ties**); `Cast` to integer is zero-gradient. The shipped Gordon body `d/(r-g)` is a smooth rational with no comparison, `max`, or integer cast on the differentiated path, so it has a well-defined nonzero gradient at the demo point and hits none of these zero-grad lanes. The `if/then/else` `fmax`/`fabs` helpers (Bellman, `chelis#424`) are **not** in the AD path; AD is only used for the smooth Gordon expression. |
+| grad goal lowering (tier) | `@upstream` | A `@property` goal whose body contains `grad(...)` does not lower to the SMT tier: it degrades to fuzz at `--tier auto` and reports `unsupported` at `--tier smt-only`. The honest tier for an AD-derivative sign fact is `fuzz_validated`, so the Gordon dP/dr sensitivity ships in the `sampled/` lane (amber), not the proven `properties/` boundary; the same sign is available as the proven two-point green `gordon_decreasing_in_r`. Cite `issue_drafts/grad_smt_lowering.md` (tier-upgrade trigger). |
+| grad through cross-module import | `@upstream` | `grad(fn (...) -> imported_fn(...), ...)` at a goal site hangs (no verdict, no error) when the callee is imported from another module; the identical grad with the callee body inlined lowers and fuzz-validates promptly. The sampled AD property therefore inlines gordon_pv's single-expression body rather than referencing the export directly. Cite `issue_drafts/grad_through_import.md`. |
 | Rank polymorphism (`..r`) | n/a | Not relied on. Chelis verbs are **not** implicitly rank-polymorphic and there is **no implicit broadcasting**: all rank/dimension manipulation is explicit via `expand`/`reshape`/`permute` (`spec/04-type-system.md` §4.2). Optional `..r` rank-variable defs exist as an identity-tier feature (`spec/design/rank_polymorphism.md`, "IDENTITY TIER SHIPPED"), but this shell uses **fixed small dimensions** (n=2 and n=3) with **scalar `f32`** params and never writes a `..r` def, so rank polymorphism has no bearing on the proof or AD surface here. |
 
 ## Where to read more

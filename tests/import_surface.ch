@@ -2,7 +2,7 @@ module Economoist.Tests.ImportSurface
 import Std.Test (assert_close)
 import Economoist.Markov (eps, make_dist, make_dist3, advance, advance3, next_mass, mass3_next)
 import Economoist.Bellman (bellman_state0, bellman_state1, bellman_state0_n3, bellman_state1_n3, bellman_state2_n3, fmax, fmax3, fabs)
-import Economoist.Growth (gordon_pv)
+import Economoist.Growth (gordon_pv, gordon_pv_negated)
 -- Smoke test for the frozen C Note import surface (docs/cnote-import-surface.json).
 -- Every published symbol is imported and exercised, so the surface resolves under
 -- the pinned binary. The opaque Dist2/Dist3 are held only through their producers.
@@ -11,10 +11,11 @@ def test_scalar_surface_resolves() -> unit ! { Test } = {
   nm = next_mass(cast(0.6, f32), cast(0.4, f32), cast(0.7, f32), cast(0.2, f32))
   bs = bellman_state0(cast(1.0, f32), cast(2.0, f32), cast(0.5, f32), cast(0.7, f32), cast(0.3, f32), cast(0.4, f32), cast(0.2, f32), cast(0.8, f32), cast(0.9, f32))
   gp = gordon_pv(cast(2.0, f32), cast(0.1, f32), cast(0.05, f32))
+  gpn = gordon_pv_negated(cast(2.0, f32), cast(0.1, f32), cast(0.05, f32))
   mx = fmax(nm, gp)
   ab = fabs(bs)
-  total = add(add(add(e, mx), ab), nm)
-  assert_close(total, add(add(add(cast(0.0001, f32), cast(40.0, f32)), cast(2.02, f32)), cast(0.5, f32)), cast(0.01, f32), "scalar surface resolves and composes")
+  total = add(add(add(add(e, mx), ab), nm), add(gp, gpn))
+  assert_close(total, add(add(add(cast(0.0001, f32), cast(40.0, f32)), cast(2.02, f32)), cast(0.5, f32)), cast(0.01, f32), "scalar surface resolves and composes; gordon_pv + gordon_pv_negated cancel to 0")
 }
 def test_n3_scalar_surface_resolves() -> unit ! { Test } = {
   z = cast(0.0, f32)

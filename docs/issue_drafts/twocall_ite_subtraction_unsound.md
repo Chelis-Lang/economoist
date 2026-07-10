@@ -3,6 +3,16 @@
 Filed upstream as chelis#426 on 2026-06-20. This is the most serious of the
 shell's upstream filings: a false `proven` at the SMT tier.
 
+**Status: RESOLVED (chelis 0.10.0), re-verified at 0.14.0.** The two-call collapse
+is fixed upstream. At the 0.14.0 pin, probe p04 confirms the satisfying two-call
+goal proves and the corrupted twin refutes with a counterexample. Economoist is
+de-narrowed: `properties/bellman.ch` now calls the exported `bellman_state*`
+operators DIRECTLY at the goal site, the `scripts/prove_gate.py`
+`unsound_pattern_lint` was removed, and a regression control pair
+`bellman_call_collapse_wrong` / `bellman_call_collapse_control` guards the fixed
+behavior. Archived in `UPSTREAM_BUGS.md`. The reproducer and historical re-probes
+below are kept as the record.
+
 **Summary.** A `@property` goal that compares or subtracts two calls of the same
 `def` whose body calls an ITE-bodied helper (for example an `fmax`-based
 max-over-actions), with different arguments, does not lower faithfully. The

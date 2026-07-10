@@ -66,12 +66,25 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.CHELIS_RELEASE_TOKEN || github.token }}
         run: chelis reef build
 
+      - name: Stage the invariant-surface manifest as a release asset
+        # The characterization contract (chelis-shell.invariant-surface/1.0)
+        # requires each shell to publish a byte-identical copy of its manifest as
+        # <pkg>-<ver>.invariants.json; C Note vendors THIS asset and freshness-
+        # gates it. Guard the pin/version in the manifest against reef.toml first.
+        run: |
+          set -euo pipefail
+          python3 scripts/contract_gate.py
+          mkdir -p dist
+          cp docs/cnote-import-surface.json "dist/${PACKAGE_NAME}-${PACKAGE_VERSION}.invariants.json"
+
       - name: Verify release assets
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         run: |
           test "${GITHUB_REF_NAME#v}" = "${PACKAGE_VERSION}"
           test -f "dist/${PACKAGE_NAME}-${PACKAGE_VERSION}.tar.zst"
           test -f "dist/${PACKAGE_NAME}-${PACKAGE_VERSION}.chb"
+          test -f "dist/${PACKAGE_NAME}-${PACKAGE_VERSION}.invariants.json"
+          cmp docs/cnote-import-surface.json "dist/${PACKAGE_NAME}-${PACKAGE_VERSION}.invariants.json"
 
       - name: Publish GitHub Release
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
@@ -80,5 +93,6 @@ jobs:
           files: |
             dist/${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}.tar.zst
             dist/${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}.chb
+            dist/${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}.invariants.json
           generate_release_notes: true
           fail_on_unmatched_files: true
