@@ -29,13 +29,12 @@ def resolve_bin(root: Path) -> str:
             return str(Path(v).expanduser())
     m = re.search(r'compiler\s*=\s*"=([^"]+)"', (root / "reef.toml").read_text())
     if m:
-        for name in ("chelis-smt", "chelis"):
-            cand = Path.home() / ".local/share/chelis" / m.group(1) / name
+        base = Path.home() / ".local/share/chelis" / m.group(1)
+        for cand in (base / "bin" / "chelis", base / "chelis"):
             if cand.is_file():
                 return str(cand)
-    for name in ("chelis-smt", "chelis"):
-        if which(name):
-            return name
+    if which("chelis"):
+        return "chelis"
     sys.exit("error: no chelis binary found; set CHELIS_BIN")
 
 

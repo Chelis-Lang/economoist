@@ -25,6 +25,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -33,18 +34,24 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def resolve_bin() -> str:
+    """CHELIS_SMT_BIN/CHELIS_BIN override, else the reef.toml-pinned release
+    install (~/.local/share/chelis/<pin>/bin/chelis, or the top-level layout),
+    else `chelis` on PATH. SMT ships in the release binary since chelis v0.11.0
+    (chelis#422 resolved); there is no separate from-source smt binary."""
     from shutil import which
     for env in ("CHELIS_SMT_BIN", "CHELIS_BIN"):
         v = os.environ.get(env)
         if v and (Path(v).expanduser().is_file() or which(v)):
             return str(Path(v).expanduser())
-    default = Path.home() / ".local/share/chelis/0.9.0/chelis-smt"
-    if default.is_file():
-        return str(default)
-    for cand in ("chelis-smt", "chelis"):
-        if which(cand):
-            return cand
-    sys.exit("error: no chelis smt binary found; set CHELIS_SMT_BIN")
+    m = re.search(r'compiler\s*=\s*"=([^"]+)"', (REPO_ROOT / "reef.toml").read_text())
+    if m:
+        base = Path.home() / ".local/share/chelis" / m.group(1)
+        for cand in (base / "bin" / "chelis", base / "chelis"):
+            if cand.is_file():
+                return str(cand)
+    if which("chelis"):
+        return "chelis"
+    sys.exit("error: no chelis binary found; set CHELIS_SMT_BIN or CHELIS_BIN")
 
 
 def f32(x: float) -> str:

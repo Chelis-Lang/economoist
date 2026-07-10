@@ -7,7 +7,7 @@ path remains as the supporting record.
 
 | Draft | Filing condition | Status |
 |---|---|---|
-| `smt_in_release_tarball.md` | Confirm the released tarball still lacks the `smt` feature at the next release. | Filed as chelis#422 on 2026-06-20. |
+| `smt_in_release_tarball.md` | RESOLVED: SMT ships in the released tarball as of chelis v0.11.0 (verified at 0.14.0, 2026-07-10). | Filed as chelis#422 on 2026-06-20; archived in `UPSTREAM_BUGS.md`. |
 | `eval_side_import_resolution.md` | Confirm eval still does not resolve standalone-file imports when a C Note template needs it. | Filed as chelis#423 on 2026-06-20. |
 | `scalar_max_abs_f32.md` | Confirm no scalar `f32` max/min/abs lands in chelis-std at the next release. | Filed as chelis#424 on 2026-06-20. |
 | `nested_fmax_goal_site.md` | Confirm nested `fmax`-style helper calls at a property goal site still fail to lower to Tier B at the next release. | Filed as chelis#425 on 2026-06-20. |

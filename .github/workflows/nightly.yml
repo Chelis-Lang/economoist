@@ -1,14 +1,14 @@
 name: nightly
 
-# Weekly from-source rebuild of the smt binary, re-running the SMT proof
-# gate and the numeric oracle harness against the pinned chelis commit.
-# Per-PR CI (ci.yml) downloads the released toolchain and runs prove only
-# on push to main; this job rebuilds chelis with --features smt from the
-# pinned tag so a regression in the upstream proof tier surfaces weekly
-# even with no economoist push. The chelis pin is carried as a literal
-# CHELIS_TAG/CHELIS_VERSION env pair (read by the offline pin guard) and
-# cross-checked at runtime against reef.toml, the single source of truth
-# (the hard-rule guard keeps every workflow's env pin in step with it).
+# Weekly re-run of the SMT proof gate and the numeric oracle harness against
+# the pinned RELEASE chelis binary. SMT ships in the released tarball as of
+# chelis v0.11.0 (chelis#422 resolved), so this installs the pinned toolchain
+# via the shared composite action -- no from-source cvc5 build. Per-PR CI
+# (ci.yml) runs the same prove gate on every PR; this weekly job is a drift
+# detector that fires even with no economoist push, surfacing an upstream
+# proof-tier regression at the pinned release. The chelis pin is carried as a
+# literal CHELIS_TAG/CHELIS_VERSION env pair (read by the offline pin guard) and
+# cross-checked at runtime against reef.toml, the single source of truth.
 
 on:
   schedule:
@@ -20,7 +20,7 @@ concurrency:
   cancel-in-progress: true
 
 # Literal chelis pin (contract section 2): this workflow installs a toolchain
-# (it builds chelis from the pinned tag with --features smt), so it carries a
+# (the pinned release tarball, via the shared composite action), so it carries a
 # matching CHELIS_TAG/CHELIS_VERSION pair that the offline pin guard
 # (scripts/audit_workarounds.py --pins-only) reads without running the workflow.
 # The reef.toml derivation below stays as a runtime cross-check.
@@ -30,9 +30,9 @@ env:
 
 jobs:
   prove:
-    name: SMT prove + oracle (from-source build)
+    name: SMT prove + oracle (release binary)
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -54,32 +54,12 @@ jobs:
           fi
           echo "Detected: chelis=${CHELIS_VERSION} (tag ${CHELIS_TAG})"
 
-      - name: Checkout chelis at pinned release
-        uses: actions/checkout@v4
+      - name: Install chelis toolchain (cached)
+        uses: ./.github/actions/install-chelis
         with:
-          repository: Chelis-Lang/chelis
-          ref: ${{ env.CHELIS_TAG }}
-          path: chelis-src
-          token: ${{ secrets.CHELIS_RELEASE_TOKEN }}
-
-      - name: Install C dependencies
-        run: sudo apt-get update && sudo apt-get install -y gcc g++ cmake libclang-dev
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache cargo (smt)
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: chelis-src
-          key: nightly-smt
-
-      - name: Build chelis with --features smt
-        working-directory: chelis-src
-        run: cargo build --release -p chelis-cli --features smt
-
-      - name: Set CHELIS_SMT_BIN
-        run: echo "CHELIS_SMT_BIN=${{ github.workspace }}/chelis-src/target/release/chelis" >> "$GITHUB_ENV"
+          chelis-tag: ${{ env.CHELIS_TAG }}
+          chelis-version: ${{ env.CHELIS_VERSION }}
+          gh-token: ${{ secrets.CHELIS_RELEASE_TOKEN }}
 
       - name: Run prove gate
         run: python3 scripts/prove_gate.py
@@ -119,7 +99,7 @@ jobs:
               } else {
                 const issue = await github.rest.issues.create({
                   owner, repo, title,
-                  body: `The **nightly** from-source prove gate failed (prove=${process.env.PROVE_RESULT}).\n\nRun: ${runUrl}\nCommit: \`${context.sha}\`\n\nAuto-opened on failure; auto-closes when the nightly next passes.`,
+                  body: `The **nightly** release-binary prove gate failed (prove=${process.env.PROVE_RESULT}).\n\nRun: ${runUrl}\nCommit: \`${context.sha}\`\n\nAuto-opened on failure; auto-closes when the nightly next passes.`,
                   labels: ['nightly-failure'],
                 });
                 core.info(`Opened tracking issue #${issue.data.number}.`);

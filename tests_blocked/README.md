@@ -26,10 +26,11 @@ failure pins the intended diagnostic.
 Some blockers cannot be expressed as a `.ch` file that `chelis check` can
 probe. These stay on the manual re-probe list in `docs/UPSTREAM_BUGS.md`:
 
-- **SMT prove is absent from the released chelis tarball.** A binary-level
-  feature gate: whether the `smt` feature is linked is a property of the
-  binary, not of any source file, so no `.ch` file `chelis check` reads can
-  exercise it. Verified instead by the `smt-prove-gate` building from source.
+- **SMT prove was absent from the released chelis tarball. RESOLVED (chelis
+  v0.11.0).** A binary-level feature gate that no `.ch` file `chelis check`
+  reads could exercise. SMT now ships in the released binary; verified at the
+  0.14.0 pin by `scripts/prove_gate.py` running green on the release binary.
+  Archived in `docs/UPSTREAM_BUGS.md`.
 - **eval does not resolve imports for standalone files.** An `eval`-side
   resolution gap that `chelis check` does not exercise; `check` and `prove`
   resolve imports, so no single `check`-rejected file pins it. Re-probed by

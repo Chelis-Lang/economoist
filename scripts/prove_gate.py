@@ -74,17 +74,24 @@ ITE_OPERATOR_CALL = re.compile(r"\bbellman_state\d\w*\s*\(")
 
 
 def resolve_bin() -> str:
+    """Resolve the chelis binary: CHELIS_SMT_BIN/CHELIS_BIN override, else the
+    reef.toml-pinned release install (~/.local/share/chelis/<pin>/bin/chelis, or
+    the top-level layout), else `chelis` on PATH. SMT ships in the release binary
+    as of chelis v0.11.0 (chelis#422 resolved), so there is no separate
+    from-source smt binary to prefer any more."""
     for env in ("CHELIS_SMT_BIN", "CHELIS_BIN"):
         v = os.environ.get(env)
         if v and (Path(v).expanduser().is_file() or _on_path(v)):
             return str(Path(v).expanduser())
-    default = Path.home() / ".local/share/chelis/0.9.0/chelis-smt"
-    if default.is_file():
-        return str(default)
-    for cand in ("chelis-smt", "chelis"):
-        if _on_path(cand):
-            return cand
-    sys.exit("error: no chelis smt binary found; set CHELIS_SMT_BIN")
+    m = re.search(r'compiler\s*=\s*"=([^"]+)"', (REPO_ROOT / "reef.toml").read_text())
+    if m:
+        base = Path.home() / ".local/share/chelis" / m.group(1)
+        for cand in (base / "bin" / "chelis", base / "chelis"):
+            if cand.is_file():
+                return str(cand)
+    if _on_path("chelis"):
+        return "chelis"
+    sys.exit("error: no chelis binary found; set CHELIS_SMT_BIN or CHELIS_BIN")
 
 
 def _on_path(name: str) -> bool:
@@ -251,8 +258,9 @@ def honesty_boundary_self_test() -> None:
         for name, fn in (("green_property", green_property), ("green_obligation", green_obligation)):
             ok, _ = fn(rec(v))
             assert not ok, f"honesty self-test: {name} ACCEPTED qualified verdict {v!r} (honesty boundary breached)"
-    # A genuinely fuzz-tier record (the released non-SMT binary's output for these
-    # goals) must be rejected by the tier check too, independent of its verdict.
+    # A genuinely fuzz-tier record (a goal that fell back to fuzz, or output from
+    # a build without the smt feature) must be rejected by the tier check too,
+    # independent of its verdict.
     ok, _ = green_property({"status": "passed", "proof_tier": "fuzz", "samples": 100,
                             "arith_model": "real", "composite_verdict": "fuzz_validated",
                             "assumptions": []})

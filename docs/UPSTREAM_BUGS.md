@@ -45,17 +45,6 @@ enforced workaround; nothing upstream blocks shipping the current surface.
   on prove-tier lowering or goal-site inlining. chelis#425 (draft:
   `issue_drafts/nested_fmax_goal_site.md`).
 
-- **SMT prove is absent from the released chelis tarball.** `chelis prove` only
-  reaches the SMT tier when the binary is built `cargo build --release -p
-  chelis-cli --features smt` (linked against cvc5). The released tarball is
-  fuzz-only and silently degrades an inequality goal to a sampled pass, which for
-  this shell would turn every economic green amber. Affected surface: the whole
-  proof story. Workaround: build the SMT binary from source
-  (`scripts/build_chelis_smt.py`) and run the prove gate against it; CI builds it
-  in the `smt-prove-gate` job. Re-probe trigger: any release note shipping the
-  `smt` feature in the published tarball. chelis#422 (draft:
-  `issue_drafts/smt_in_release_tarball.md`).
-
 - **eval does not resolve imports for standalone files.** `prove` resolves module
   imports, so the proven properties reach the real exported functions, but `eval`
   on a standalone file does not resolve a package import. Affected surface: a C
@@ -66,12 +55,13 @@ enforced workaround; nothing upstream blocks shipping the current surface.
   shipped bodies). Re-probe trigger: any release note naming eval-side import
   resolution. chelis#423 (draft: `issue_drafts/eval_side_import_resolution.md`).
 
-- **No bound scalar `max`/`min`/`abs` for `f32`.** At 0.8.0 a bare `max(...)` over
-  `f32` is an unbound variable. Affected surface: the Bellman operator and the
-  sup-norm contraction. Workaround: define local `fmax`/`fabs` with `if/then/else`
-  (they lower as ITE and prove smt-green). Re-probe trigger: any release note
-  adding scalar reductions over `f32` to chelis-std. chelis#424 (draft:
-  `issue_drafts/scalar_max_abs_f32.md`).
+- **No bound scalar `max`/`min`/`abs` for `f32`.** First observed at 0.8.0 (a bare
+  `max(...)` over `f32` is an unbound variable); not re-probed at the current
+  0.14.0 pin, where the local-helper workaround still ships. Affected surface: the
+  Bellman operator and the sup-norm contraction. Workaround: define local
+  `fmax`/`fabs` with `if/then/else` (they lower as ITE and prove smt-green).
+  Re-probe trigger: any release note adding scalar reductions over `f32` to
+  chelis-std. chelis#424 (draft: `issue_drafts/scalar_max_abs_f32.md`).
 
 - **Nested `fmax`-style helper calls at a property goal site do not lower to
   Tier B.** A goal that nests local `fmax` helper calls (e.g. `fmax(fmax(a, b), c)`
@@ -98,4 +88,15 @@ enforced workaround; nothing upstream blocks shipping the current surface.
 
 ## Archived
 
-None.
+- **SMT prove was absent from the released chelis tarball. RESOLVED (chelis
+  v0.11.0).** `chelis prove` historically reached the SMT tier only in a
+  from-source `--features smt` build (linked against cvc5); the released tarball
+  was fuzz-only and silently degraded an inequality goal to a sampled pass, which
+  for this shell would have turned every economic green amber. SMT now ships in
+  the released binary as of chelis v0.11.0. Verified at the pinned 0.14.0 release
+  binary on 2026-07-10: `scripts/prove_gate.py` is fully green (every property
+  `proof_tier: smt`, `samples: 0`, unqualified verdict) run against
+  `~/.local/share/chelis/0.14.0/bin/chelis`. Consequently the prove gate, `ci.yml`,
+  and `nightly.yml` run on the release binary; the from-source build and
+  `scripts/build_chelis_smt.py` were removed. chelis#422 (draft:
+  `issue_drafts/smt_in_release_tarball.md`).

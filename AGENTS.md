@@ -52,18 +52,15 @@ boundaries are mandatory:
   numbers anywhere else; tooling and CI read them from `reef.toml` directly.
   The Economoist package `version` track is its own and is not aligned to the
   compiler pin.
-- **Two-binary reality.** Two `chelis` binaries are in play and they are not
-  interchangeable:
-  - The released `chelis` tarball drives `fmt`, `lint`, `reef build`, and
-    `eval`. It is consumed as a tarball from the private
-    `Chelis-Lang/chelis` releases.
-  - SMT prove requires a **from-source** binary built with
-    `cargo build --release -p chelis-cli --features smt` (it links cvc5, so
-    the build host needs `cmake`, `g++`, and `libclang-dev`). It is installed
-    side-by-side as `~/.local/share/chelis/0.9.0/chelis-smt`. See
-    `scripts/build_chelis_smt.py`.
-- Never vendor or build the chelis compiler into this shell beyond that
-  from-source SMT binary. Consume the released tarball for everything else.
+- **One-binary reality.** A single released `chelis` tarball drives every stage
+  -- `fmt`, `lint`, `reef build`, `eval`, and `prove`. SMT ships in the released
+  binary as of chelis v0.11.0 (chelis#422 resolved; verified at the 0.14.0 pin on
+  2026-07-10, `scripts/prove_gate.py` fully green against
+  `~/.local/share/chelis/<pin>/bin/chelis`). The tarball is consumed from the
+  private `Chelis-Lang/chelis` releases and installed side-by-side under
+  `~/.local/share/chelis/<pin>/` via `scripts/install_chelis_toolchain.py`.
+- Never vendor or build the chelis compiler into this shell. Consume the released
+  tarball for everything, `prove` included.
 - Compiler bumps land in **every** Chelis shell in the same change set; do
   not bump Economoist unilaterally.
 - CI authenticates to the private `Chelis-Lang/chelis` releases via the repo
@@ -77,8 +74,7 @@ one change set:
 1. Update **every** pin location: `reef.toml` plus each workflow's
    `CHELIS_TAG`/`CHELIS_VERSION` env pair. Verify with the offline pin check
    (`scripts/audit_workarounds.py --pins-only`). Install the toolchain via
-   the checked-in installer, and rebuild the from-source SMT binary via
-   `scripts/build_chelis_smt.py`.
+   the checked-in installer (`scripts/install_chelis_toolchain.py`).
 2. Run the blocked-probe suite. **FIX-detected** means the upstream bug is
    gone: execute the sidecar's de-narrowing instructions, promote the probe
    to a real test, and archive the matching `UPSTREAM_BUGS` entry. **DRIFTED**
@@ -134,8 +130,12 @@ Install the local git hooks with:
 git config core.hooksPath ./hooks
 ```
 
-**Recorded divergence.** The `smt-prove-gate` job caches the from-source
-`chelis-smt` binary keyed on the chelis tag (and pins `ubuntu-24.04`), so cvc5
-compiles once per pin rather than every push. This is an Economoist-first
-improvement that is not yet mirrored to the sibling shells; propagate it to them
-(c-note, shoals) in a follow-up change set per this rule.
+**Recorded convergence.** The SMT prove gate once required a from-source
+`--features smt` build (an Economoist-specific `smt-prove-gate` job that cached a
+`chelis-smt` binary per chelis tag). That narrowing is retired now that SMT ships
+in the released binary (chelis#422, resolved v0.11.0): the prove gate installs the
+pinned release toolchain via the shared `.github/actions/install-chelis` composite
+action and runs per-PR, the same release-binary path the sibling shells use. The
+offline pin guard now recognizes composite-action installs (the
+`actions/install-chelis` marker in `scripts/audit_workarounds.py`); mirror that
+marker into the sibling shells' pin guards per this rule.

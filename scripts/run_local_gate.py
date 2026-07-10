@@ -21,9 +21,9 @@ usable before those harnesses land. A stage whose source directory holds
 no ``.ch`` files yet is skipped with a printed notice rather than failing.
 
 The ``chelis`` binary is taken from the ``CHELIS_BIN`` environment
-variable, defaulting to ``chelis`` on PATH; this lets the gate run against
-the side-by-side smt binary at
-``~/.local/share/chelis/0.9.0/chelis-smt``.
+variable, then the reef.toml-pinned release install
+(``~/.local/share/chelis/<pin>/bin/chelis``), then ``chelis`` on PATH.
+SMT ships in the release binary, so one binary drives every stage.
 
 Exits 0 only if every stage that ran succeeds.
 
@@ -50,20 +50,21 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 def _resolve_bin() -> str:
     """Resolve a chelis binary matching the reef pin, so a stale `chelis` on
-    PATH (a different version that cannot parse 0.9.0 syntax) is not used."""
+    PATH (a different version) is not used. SMT ships in the release binary
+    (chelis#422 resolved at v0.11.0), so there is no separate from-source smt
+    binary to prefer."""
     for env in ("CHELIS_BIN", "CHELIS_SMT_BIN"):
         v = os.environ.get(env)
         if v and (Path(v).expanduser().is_file() or which(v)):
             return str(Path(v).expanduser())
     m = re.search(r'compiler\s*=\s*"=([^"]+)"', (REPO_ROOT / "reef.toml").read_text())
     if m:
-        for name in ("chelis-smt", "chelis"):
-            cand = Path.home() / ".local/share/chelis" / m.group(1) / name
+        base = Path.home() / ".local/share/chelis" / m.group(1)
+        for cand in (base / "bin" / "chelis", base / "chelis"):
             if cand.is_file():
                 return str(cand)
-    for name in ("chelis-smt", "chelis"):
-        if which(name):
-            return name
+    if which("chelis"):
+        return "chelis"
     sys.exit("error: no chelis binary found; set CHELIS_BIN")
 
 

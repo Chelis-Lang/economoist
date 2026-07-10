@@ -56,7 +56,7 @@ intended outcome, not a failure of the model.
 ### Prove summary
 
 ```
-chelis-smt prove properties/growth.ch --json --tier smt-only --smt-timeout 15000
+chelis prove properties/growth.ch --json --tier smt-only --smt-timeout 15000
 ```
 
 reports, per property, `proof_tier: smt`, `arith_model: real`, and
@@ -112,21 +112,21 @@ At the concrete point `D = 2, r = 0.1, g = 0.05` the denominator is `r - g =
 Value of the shipped expression:
 
 ```
-chelis-smt eval '(fn (d: f32, r: f32, g: f32) -> (d / (r - g)))(2.0, 0.1, 0.05)'
+chelis eval '(fn (d: f32, r: f32, g: f32) -> (d / (r - g)))(2.0, 0.1, 0.05)'
 # 40
 ```
 
 Gradient with respect to `r` (the body is the identical `gordon_pv` expression):
 
 ```
-chelis-smt eval 'grad(fn (d: f32, r: f32, g: f32) -> (d / (r - g)), wrt=r)(2.0, 0.1, 0.05)'
+chelis eval 'grad(fn (d: f32, r: f32, g: f32) -> (d / (r - g)), wrt=r)(2.0, 0.1, 0.05)'
 # tensor(shape=[], data=[-799.9999761581425])
 ```
 
 Gradient with respect to `g`:
 
 ```
-chelis-smt eval 'grad(fn (d: f32, r: f32, g: f32) -> (d / (r - g)), wrt=g)(2.0, 0.1, 0.05)'
+chelis eval 'grad(fn (d: f32, r: f32, g: f32) -> (d / (r - g)), wrt=g)(2.0, 0.1, 0.05)'
 # tensor(shape=[], data=[799.9999761581425])
 ```
 
