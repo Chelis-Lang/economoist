@@ -1,5 +1,5 @@
 module Economoist.Properties.Growth
-import Economoist.Growth (gordon_pv)
+import Economoist.Growth (gordon_pv, gordon_pv_strict)
 -- Structural and comparative-statics properties of the Gordon growth present
 -- value P = D / (r - g), proven at the SMT tier over the reals. Every goal
 -- REFERENCES the exported gordon_pv operator (positivity calls it once;
@@ -34,4 +34,14 @@ import Economoist.Growth (gordon_pv)
 @property gordon_increasing_in_d_guards_satisfiable forall(d1: f32, d2: f32, r: f32, g: f32) where (r > g), (d2 > d1):
   false
 @property gordon_decreasing_in_r_guards_satisfiable forall(d: f32, r1: f32, r2: f32, g: f32) where (d > 0.0), (r1 > g), (r2 > r1):
+  false
+-- Strict (margin-of-safety) positivity. Under D > 0 and the tighter convergence
+-- condition r > g + 0.01 (the discount spread clears a one-point safety margin),
+-- the conservative present value gordon_pv_strict(d, r, g) is strictly positive.
+-- Same division-form call as gordon_positive; the tighter guard IS the documented
+-- domain of use, and its proven region {d > 0, r > g + 0.01} nests strictly
+-- inside gordon_positive's {d > 0, r > g}.
+@property gordon_strict_positive forall(d: f32, r: f32, g: f32) where (d > 0.0), (r > (g + 0.01)):
+  (gordon_pv_strict(d, r, g) > 0.0)
+@property gordon_strict_positive_guards_satisfiable forall(d: f32, r: f32, g: f32) where (d > 0.0), (r > (g + 0.01)):
   false

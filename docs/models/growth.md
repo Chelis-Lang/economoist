@@ -96,6 +96,36 @@ green is load-bearing rather than merely satisfiable in some corner:
   correct model, passes) pin that the break is a genuine mispricing inside the
   valid region, not an out-of-region artifact.
 
+## The strict (margin-of-safety) variant and the nested-region implication
+
+`gordon_pv_strict(d, r, g) = (d / (r - g))` in `src/growth.ch` is the
+conservative variant of the model: numerically the identical closed form, but the
+one a cautious analyst uses when the discount spread `r - g` must clear a safety
+margin before the valuation is trusted. Its documented domain of use is the
+strict region `r > g + 0.01` (the spread clears a one-point margin), a proper
+subset of `gordon_pv`'s convergence region `r > g`. It is a real modeling
+artifact, not a demo property: the same perpetuity, valued under a tighter stated
+domain.
+
+Shipping it as its own export and manifest model (`gordon_strict`, kind
+`econ.perpetuity_pv`, same params) lets the characterization surface state a
+proof-backed organization implication. The strict positivity invariant
+`gordon_strict_positive` proves `gordon_pv_strict(d, r, g) > 0` under `d > 0` and
+`r > (g + 0.01)` (same division-form call, verified via probe p01), and its
+proven region
+
+```
+{ d > 0, r > g + 0.01 }   nests strictly inside   { d > 0, r > g }
+```
+
+the proven region of `gordon_positive`. Because the strict region is a subset of
+the standard region, anything sound under `gordon_pv_strict` is sound under
+`gordon_pv`: the implication strict -> standard is backed by the two proofs, not
+asserted. The manifest records it as `econ.inv.gordon_strict_positive.v1` with
+`nests_inside: econ.inv.gordon_positive.v1`, which the consumer surfaces as a
+candidate org implication. Its out-of-region twin `gordon_strict_positive_wrong`
+(guard flipped to `g > r`) refutes, pinning that the strict guard is load-bearing.
+
 ## Honesty boundaries
 
 Three boundaries are stated explicitly, per the repo contract.

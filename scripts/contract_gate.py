@@ -126,6 +126,11 @@ def precond_string(pc: dict) -> str:
         rhs_s = repr(float(rhs["const"]))
     elif "input" in rhs:
         rhs_s = str(rhs["input"])
+    elif "expr" in rhs:
+        # A margin/relational RHS expression, written LEFT-ASSOCIATED (binary
+        # nesting) to match the prover's canonical where-clause text, e.g.
+        # `g + 0.01` for a guard `(r > (g + 0.01))`.
+        rhs_s = rhs["expr"]
     else:
         rhs_s = "<bad-rhs>"
     return f"{pc['lhs']}{op}{rhs_s}"

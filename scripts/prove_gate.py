@@ -299,7 +299,12 @@ def eval_arith(expr: str, env: dict[str, Fraction]) -> Fraction:
 def precond_holds(pc: dict, env: dict[str, Fraction]) -> bool:
     lhs = eval_arith(pc["lhs"], env)
     rhs = pc["rhs"]
-    rv = Fraction(str(rhs["const"])) if "const" in rhs else env[rhs["input"]]
+    if "const" in rhs:
+        rv = Fraction(str(rhs["const"]))
+    elif "input" in rhs:
+        rv = env[rhs["input"]]
+    else:  # {"expr": ...} -- a margin/relational RHS such as "g + 0.01"
+        rv = eval_arith(rhs["expr"], env)
     op = pc["op"]
     return {"gt": lhs > rv, "gte": lhs >= rv, "lt": lhs < rv,
             "lte": lhs <= rv, "eq": lhs == rv}[op]
@@ -452,7 +457,12 @@ def gate_manifest(binary: str, manifest: dict, records: dict[str, dict],
 def precond_string(pc: dict) -> str:
     sym = {"gt": ">", "gte": ">=", "lt": "<", "lte": "<=", "eq": "=="}[pc["op"]]
     rhs = pc["rhs"]
-    rv = repr(float(rhs["const"])) if "const" in rhs else str(rhs["input"])
+    if "const" in rhs:
+        rv = repr(float(rhs["const"]))
+    elif "input" in rhs:
+        rv = str(rhs["input"])
+    else:
+        rv = rhs["expr"]
     return f"{pc['lhs']} {sym} {rv}"
 
 

@@ -3,6 +3,24 @@
 All notable changes to the Economoist shell are recorded here. The package
 `version` tracks its own line (not the chelis compiler pin).
 
+## [0.2.1] - 2026-07-12
+
+### Added
+- `gordon_pv_strict` (src/growth.ch) — the conservative margin-of-safety Gordon
+  variant: the same closed form as `gordon_pv`, but with a documented strict
+  domain of use `r > g + 0.01`. Manifest model `gordon_strict` and invariant
+  `econ.inv.gordon_strict_positive.v1` (preconditions `d > 0` AND `r > (g + 0.01)`,
+  proven), with `nests_inside: econ.inv.gordon_positive.v1`.
+- Its proven positivity region `{d>0, r>g+0.01}` nests strictly inside gordon's
+  `{d>0, r>g}` — a proof-backed org implication (strict -> standard) the
+  characterization consumer surfaces as a candidate. `properties/growth.ch` gains
+  `gordon_strict_positive` + its `_guards_satisfiable` witness;
+  `demos/businesswrong.ch` gains the out-of-region twin
+  `gordon_strict_positive_wrong`/`_control`.
+- Manifest preconditions now support an `{expr}` RHS (e.g. `g + 0.01`), written
+  left-associated to match the prover's canonical where-clause text; contract_gate
+  and prove_gate evaluate it.
+
 ## [0.2.0] - 2026-07-10
 
 The econ canon: honest, output-referencing invariants under the characterization
