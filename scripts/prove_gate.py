@@ -23,6 +23,12 @@ the gate checks:
      f32 re-execution of the shipped body at the witness must reproduce the break;
      for an out-of-region break the witness must violate a precondition; for a
      fuzz-lane break the counterexample is in-domain f32 by construction.
+  3. (properties/ proven greens) METAMORPHIC anti-vacuity: re-proving the same
+     goal with the referenced output fn's body substituted by distinct
+     alternatives must flip the verdict (proven -> disproved) under at least one,
+     so the green genuinely depends on the model. A canceling `F(x)-F(x)` or
+     reflexive `F(x)==F(x)` goal survives every substitution and is rejected --
+     the syntactic goal-string reference check alone cannot catch that.
 
 Beyond the manifest it keeps the shell's structural discipline: every
 `properties/` green is SMT/real/zero-sample; `*_guards_satisfiable` witnesses
@@ -521,6 +527,128 @@ def honesty_self_test() -> None:
 
 
 # ----------------------------------------------------------------------------
+# Metamorphic anti-vacuity: a properties/ green must DEPEND on the model.
+# ----------------------------------------------------------------------------
+# The goal-string reference check ("the goal calls the output fn") is syntactic
+# and forgeable: a canceling call `F(x) - F(x) < c` or a reflexive `F(x) == F(x)`
+# references F textually but is true for ANY F, so it stays proven even against a
+# deliberately broken model body -- the exact surface a red-team defeated
+# engine-side. This check is semantic: re-prove the SAME goal with F's body
+# replaced by DISTINCT alternative bodies and require the verdict to CHANGE
+# (proven -> disproved) under at least one substitution. A goal whose truth is
+# model-independent survives every substitution, so the gate rejects it.
+
+
+def _src_file_of(fn: str, pkg_dir: Path) -> Path | None:
+    for ch in sorted((pkg_dir / "src").glob("*.ch")):
+        if re.search(rf'^\s*def\s+{re.escape(fn)}\s*\(', ch.read_text(), re.M):
+            return ch
+    return None
+
+
+def _fn_params(src_text: str, fn: str) -> list[str]:
+    m = re.search(rf'def\s+{re.escape(fn)}\s*\(([^)]*)\)', src_text)
+    return [p.split(":")[0].strip() for p in m.group(1).split(",") if p.strip()] if m else []
+
+
+def _alt_bodies(params: list[str]) -> list[str]:
+    """Distinct well-typed f32 bodies over the fn's own params. A model-dependent
+    goal changes verdict under at least one; a canceling/reflexive goal under none."""
+    p0 = params[0]
+    if len(params) >= 2:
+        p1 = params[1]
+        return [f"(0.0 - {p0})", f"({p0} + {p1})", f"({p0} - {p1})"]
+    return [f"(0.0 - {p0})", f"({p0} + {p0})", f"({p0} * {p0})"]
+
+
+def _substitute_body(src_text: str, fn: str, new_body: str) -> str:
+    pat = re.compile(rf'^(\s*def\s+{re.escape(fn)}\s*\([^)]*\)\s*->\s*[^=]+=\s*).*$', re.M)
+    return pat.sub(lambda m: m.group(1) + new_body, src_text, count=1)
+
+
+def _copy_package(pkg_dir: Path, dst: Path) -> None:
+    shutil.copy(pkg_dir / "reef.toml", dst / "reef.toml")
+    for d in ("src", "properties", "demos", "sampled", "tests"):
+        s = pkg_dir / d
+        if s.is_dir():
+            shutil.copytree(s, dst / d)
+
+
+_meta_cache: dict[tuple, dict[str, dict]] = {}
+
+
+def _reprove_substituted(binary: str, pkg_dir: Path, fn: str, alt_body: str,
+                         prop_file_rel: str) -> dict[str, dict]:
+    """Copy the package, replace fn's body with alt_body in its src file, and
+    re-prove prop_file_rel; return {property_name: record}. Cached per (fn, alt,
+    file) since several invariants share an output fn and property file."""
+    key = (str(pkg_dir), fn, alt_body, prop_file_rel)
+    if key in _meta_cache:
+        return _meta_cache[key]
+    src_file = _src_file_of(fn, pkg_dir)
+    result: dict[str, dict] = {}
+    if src_file is not None:
+        src_rel = src_file.relative_to(pkg_dir)
+        with tempfile.TemporaryDirectory(prefix="econ-meta-") as tmp:
+            tmpd = Path(tmp)
+            _copy_package(pkg_dir, tmpd)
+            target = tmpd / src_rel
+            target.write_text(_substitute_body(target.read_text(), fn, alt_body))
+            result = run_prove(binary, tmpd / prop_file_rel, "smt-only", smt_timeout=20000, cwd=tmpd)
+    _meta_cache[key] = result
+    return result
+
+
+def metamorphic_flips(binary: str, pkg_dir: Path, fn: str, prop_file_rel: str,
+                      prop_name: str) -> tuple[bool, str]:
+    """True if SOME distinct substitution of fn's body flips prop_name from proven
+    to disproved -- the goal's truth genuinely depends on fn."""
+    src_file = _src_file_of(fn, pkg_dir)
+    if src_file is None:
+        return False, f"output fn {fn} not found in {pkg_dir}/src"
+    params = _fn_params(src_file.read_text(), fn)
+    if not params:
+        return False, f"could not parse params of {fn}"
+    tried = []
+    for alt in _alt_bodies(params):
+        rec = _reprove_substituted(binary, pkg_dir, fn, alt, prop_file_rel).get(prop_name)
+        status = rec.get("status") if rec else "no-record"
+        tried.append(f"{fn}:={alt} -> {status}")
+        if status == "failed":  # disproved for the alternative model: genuine dependence
+            return True, f"flips under {fn}:={alt}"
+    return False, f"NO substitution flipped {prop_name} (model-independent): {tried}"
+
+
+def gate_metamorphic(binary: str, manifest: dict, records: dict[str, dict],
+                     pin: str, failures: list[str]) -> int:
+    """Run the metamorphic anti-vacuity check on every properties/ proven,
+    direct-call invariant."""
+    output_fns = {m["output_fn"] for m in manifest.get("models", [])}
+    checked = 0
+    for inv in manifest.get("invariants", []):
+        if inv.get("expected_tier_per_pin", {}).get(pin) != "proven":
+            continue
+        if inv.get("binding", {}).get("references_output_fn") != "direct":
+            continue
+        prop = inv.get("property", {})
+        prop_file, prop_name = prop.get("file", ""), prop.get("name")
+        if not prop_file.startswith("properties/"):
+            continue
+        sat = records.get(inv["controls"]["satisfying"]["name"])
+        if sat is None:
+            continue
+        goal = re.sub(r"\s+", "", sat.get("goal", ""))
+        matched = sorted((fn for fn in output_fns if f"{fn}(" in goal), key=len, reverse=True)
+        if not matched:
+            continue  # the goal-string check already flagged a goal that calls no output fn
+        checked += 1
+        ok, detail = metamorphic_flips(binary, REPO_ROOT, matched[0], prop_file, prop_name)
+        if not ok:
+            failures.append(f"{inv['id']}: metamorphic anti-vacuity -- {detail}; a green that survives every model substitution is vacuous")
+    return checked
+
+
+# ----------------------------------------------------------------------------
 def main() -> int:
     failures: list[str] = []
     try:
@@ -562,6 +690,7 @@ def main() -> int:
             all_records.update({k: v for k, v in recs.items() if k != "__errors__"})
 
     checked = gate_manifest(binary, manifest, all_records, pin, failures)
+    meta_checked = gate_metamorphic(binary, manifest, all_records, pin, failures)
 
     name_lint(failures)
     doc_lint(failures)
@@ -573,8 +702,9 @@ def main() -> int:
             print(f"  FAIL {f}")
         return 1
     print(f"prove_gate OK: {checked} manifest invariants match their expected tier and break with in-domain "
-          f"witnesses; every properties/ green is an unqualified SMT green; sampled/ greens are honest fuzz "
-          f"amber; witnesses/twins/controls behave; name, doc, and collision lints clean.")
+          f"witnesses; {meta_checked} properties/ greens pass the metamorphic anti-vacuity check (verdict flips "
+          f"under a model substitution); every properties/ green is an unqualified SMT green; sampled/ greens are "
+          f"honest fuzz amber; witnesses/twins/controls behave; name, doc, and collision lints clean.")
     return 0
 
 

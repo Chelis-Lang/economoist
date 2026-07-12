@@ -4,7 +4,7 @@
 Invokes, in order:
 
   1. ``chelis fmt --check`` over every ``.ch`` file in ``src/``,
-     ``properties/``, ``demos/``, ``tests/``.
+     ``properties/``, ``demos/``, ``sampled/``, ``tests/``.
   2. ``chelis lint --check`` over the same set of ``.ch`` files.
   3. ``chelis reef build`` for package-level compiler validation.
   4. ``chelis test tests/`` for the native unit suite.
@@ -13,10 +13,12 @@ Invokes, in order:
   6. Blocked probes (``python3 scripts/run_blocked_probes.py``): every
      ``.ch`` under ``tests_blocked/`` must still fail with its pinned
      diagnostic (a now-passing probe surfaces as FIX-detected).
-  7. ``scripts/prove_gate.py`` IF that file exists (SMT proof harness).
-  8. ``scripts/oracle_harness.py`` IF that file exists (numeric oracle).
+  7. ``scripts/contract_gate.py`` (offline manifest consistency).
+  8. ``scripts/prove_gate.py`` (SMT keystone gate, release binary).
+  9. ``scripts/run_forge_tests.py`` (metamorphic anti-vacuity forge negatives).
+  10. ``scripts/oracle_harness.py`` (numeric oracle).
 
-Stages 7 and 8 are conditional on their script existing, so the gate is
+Stages 7-10 are conditional on their script existing, so the gate is
 usable before those harnesses land. A stage whose source directory holds
 no ``.ch`` files yet is skipped with a printed notice rather than failing.
 
@@ -107,7 +109,7 @@ def main() -> int:
     args = parser.parse_args()
     quiet = args.quiet
 
-    print("[1/9] chelis fmt --check")
+    print("[1/10] chelis fmt --check")
     fmt_any = False
     for dirname in SOURCE_DIRS:
         for path in ch_files_in(dirname):
@@ -120,7 +122,7 @@ def main() -> int:
     if not fmt_any:
         print("  notice: no .ch files under src/ properties/ demos/ sampled/ tests/; skipping fmt")
 
-    print("[2/9] chelis lint --check")
+    print("[2/10] chelis lint --check")
     lint_targets = [f"{d}/" for d in SOURCE_DIRS if ch_files_in(d)]
     if lint_targets:
         rc = run([CHELIS, "lint", "--check", *lint_targets], quiet=False)
@@ -130,13 +132,13 @@ def main() -> int:
     else:
         print("  notice: no .ch files under src/ properties/ demos/ sampled/ tests/; skipping lint")
 
-    print("[3/9] chelis reef build")
+    print("[3/10] chelis reef build")
     rc = run([CHELIS, "reef", "build"], quiet=False)
     if rc != 0:
         print("FAIL: chelis reef build")
         return rc
 
-    print("[4/9] chelis test tests/")
+    print("[4/10] chelis test tests/")
     if ch_files_in("tests"):
         rc = run([CHELIS, "test", "tests/"], quiet=False)
         if rc != 0:
@@ -145,19 +147,19 @@ def main() -> int:
     else:
         print("  notice: no .ch files under tests/; skipping test stage")
 
-    print("[5/9] negative tests")
+    print("[5/10] negative tests")
     rc = run([sys.executable, "scripts/run_negative_tests.py"], quiet=False)
     if rc != 0:
         print("FAIL: scripts/run_negative_tests.py")
         return rc
 
-    print("[6/9] blocked probes")
+    print("[6/10] blocked probes")
     rc = run([sys.executable, "scripts/run_blocked_probes.py"], quiet=False)
     if rc != 0:
         print("FAIL: scripts/run_blocked_probes.py")
         return rc
 
-    print("[7/9] contract gate (manifest consistency, offline)")
+    print("[7/10] contract gate (manifest consistency, offline)")
     if (REPO_ROOT / "scripts" / "contract_gate.py").exists():
         rc = run([sys.executable, "scripts/contract_gate.py"], quiet=False)
         if rc != 0:
@@ -166,7 +168,7 @@ def main() -> int:
     else:
         print("  notice: scripts/contract_gate.py not present yet; skipping")
 
-    print("[8/9] prove gate (keystone, release binary)")
+    print("[8/10] prove gate (keystone, release binary)")
     if (REPO_ROOT / "scripts" / "prove_gate.py").exists():
         rc = run([sys.executable, "scripts/prove_gate.py"], quiet=False)
         if rc != 0:
@@ -175,7 +177,16 @@ def main() -> int:
     else:
         print("  notice: scripts/prove_gate.py not present yet; skipping")
 
-    print("[9/9] oracle harness")
+    print("[9/10] forge negatives (metamorphic anti-vacuity)")
+    if (REPO_ROOT / "scripts" / "run_forge_tests.py").exists():
+        rc = run([sys.executable, "scripts/run_forge_tests.py"], quiet=False)
+        if rc != 0:
+            print("FAIL: scripts/run_forge_tests.py")
+            return rc
+    else:
+        print("  notice: scripts/run_forge_tests.py not present yet; skipping")
+
+    print("[10/10] oracle harness")
     if (REPO_ROOT / "scripts" / "oracle_harness.py").exists():
         rc = run([sys.executable, "scripts/oracle_harness.py"], quiet=False)
         if rc != 0:

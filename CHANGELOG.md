@@ -3,6 +3,26 @@
 All notable changes to the Economoist shell are recorded here. The package
 `version` tracks its own line (not the chelis compiler pin).
 
+## [0.2.3] - 2026-07-13
+
+Metamorphic anti-vacuity hardening: close the forge surface the red-team defeated
+engine-side, in the shell gate itself.
+
+### Added
+- **Metamorphic anti-vacuity check in `prove_gate.py`.** The syntactic
+  "goal calls the output fn" check is forgeable — a canceling call
+  `F(x) - F(x) < c` or a reflexive `F(x) == F(x)` references `F` textually and
+  passes both it and an honest violating control, yet is true for any `F`. For
+  each `properties/` proven, direct-call invariant the gate now re-proves the
+  goal with the referenced output fn's body substituted by distinct alternative
+  bodies and requires the verdict to CHANGE (proven → disproved) under at least
+  one substitution; a green that survives every substitution is model-independent
+  and fails the gate. Strictly stronger than the goal-string + corrupt-flip pair.
+- **`scripts/run_forge_tests.py`** — executable forge negatives: a throwaway
+  package with canceling and reflexive greens (must be rejected) plus an honest
+  green (must be accepted), asserting the metamorphic check behaves. Wired into
+  `run_local_gate.py` and the `prove-gate` CI job.
+
 ## [0.2.2] - 2026-07-13
 
 Honest close of a real hole a red-team forge found: the manifest under-declared
