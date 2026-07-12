@@ -552,13 +552,13 @@ def _fn_params(src_text: str, fn: str) -> list[str]:
 
 
 def _alt_bodies(params: list[str]) -> list[str]:
-    """Distinct well-typed f32 bodies over the fn's own params. A model-dependent
-    goal changes verdict under at least one; a canceling/reflexive goal under none."""
+    """Three distinct well-typed f32 alternative bodies: identity of the first
+    param, its negation, and a distinct constant. Enough diversity that any
+    genuinely F-dependent goal is disproved under at least one substitution, while
+    a canceling (`F(x)-F(x)`) or reflexive (`F(x)==F(x)`) goal is disproved under
+    none (it stays true, or degenerates to unsupported, for every body)."""
     p0 = params[0]
-    if len(params) >= 2:
-        p1 = params[1]
-        return [f"(0.0 - {p0})", f"({p0} + {p1})", f"({p0} - {p1})"]
-    return [f"(0.0 - {p0})", f"({p0} + {p0})", f"({p0} * {p0})"]
+    return [f"{p0}", f"(0.0 - {p0})", "cast(1.0, f32)"]
 
 
 def _substitute_body(src_text: str, fn: str, new_body: str) -> str:
