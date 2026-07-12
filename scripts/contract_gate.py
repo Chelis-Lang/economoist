@@ -126,6 +126,11 @@ def precond_string(pc: dict) -> str:
         rhs_s = repr(float(rhs["const"]))
     elif "input" in rhs:
         rhs_s = str(rhs["input"])
+    elif "expr" in rhs:
+        # A margin/relational RHS expression, written LEFT-ASSOCIATED (binary
+        # nesting) to match the prover's canonical where-clause text, e.g.
+        # `g + 0.01` for a guard `(r > (g + 0.01))`.
+        rhs_s = rhs["expr"]
     else:
         rhs_s = "<bad-rhs>"
     return f"{pc['lhs']}{op}{rhs_s}"
@@ -167,6 +172,8 @@ def main() -> int:
 
     if not manifest.get("invariants"):
         failures.append("no invariants in manifest")
+
+    invariant_ids = {inv.get("id") for inv in manifest.get("invariants", [])}
 
     for inv in manifest.get("invariants", []):
         iid = inv.get("id", "<unnamed>")
@@ -218,6 +225,12 @@ def main() -> int:
         dm = inv.get("defective_model")
         if dm is not None and dm not in model_ids:
             failures.append(f"{iid}: defective_model {dm!r} is not a manifest model")
+
+        # nests_inside (org-implication pointer) must name a real invariant, so it
+        # cannot silently rot to a renamed/deleted invariant id.
+        ni = inv.get("nests_inside")
+        if ni is not None and ni not in invariant_ids:
+            failures.append(f"{iid}: nests_inside {ni!r} is not a manifest invariant id")
 
     if failures:
         print(f"contract_gate FAILED with {len(failures)} finding(s):")

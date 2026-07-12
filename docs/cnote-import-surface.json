@@ -2,9 +2,9 @@
   "schema_id": "chelis-shell.invariant-surface",
   "schema_version": "1.0",
   "pkg": "economoist",
-  "pkg_version": "0.2.0",
+  "pkg_version": "0.2.1",
   "chelis_pin": "0.14.0",
-  "purpose": "Economoist's canon model + invariant surface for C Note. Every proven-tier invariant here is a genuine unqualified SMT green that CALLS the shipped operator (not a guard restatement); the one fuzz_validated invariant is an honest amber in the sampled lane, carrying a tier_upgrade_trigger. C Note vendors this file and the byte-identical release asset economoist-0.2.0.invariants.json. See docs/contracts/characterization_contract_v1.md (schema chelis-shell.invariant-surface/1.0).",
+  "purpose": "Economoist's canon model + invariant surface for C Note. Every proven-tier invariant here is a genuine unqualified SMT green that CALLS the shipped operator (not a guard restatement); the one fuzz_validated invariant is an honest amber in the sampled lane, carrying a tier_upgrade_trigger. C Note vendors this file and the byte-identical release asset economoist-0.2.1.invariants.json. See docs/contracts/characterization_contract_v1.md (schema chelis-shell.invariant-surface/1.0).",
   "models": [
     {
       "id": "gordon",
@@ -39,6 +39,23 @@
       "sensitivities": [],
       "defective": true,
       "notes": "A DEFECTIVE reference model: a mispriced perpetuity returning the negative of the correct present value. Its positivity canon breaks IN its validity region r > g with an f32-confirmed in-domain witness (econ.inv.gordon_mispriced_positive.v1). Exercises the in-region-defect break class; not an economics claim."
+    },
+    {
+      "id": "gordon_strict",
+      "kind": "econ.perpetuity_pv",
+      "module": "Economoist.Growth",
+      "output_fn": "gordon_pv_strict",
+      "sig": "(d: f32, r: f32, g: f32) -> f32",
+      "params": [
+        {"name": "d", "meaning": "next-period dividend", "unit": "currency", "domain": {"gt": 0.0}, "sweep_default": {"min": 0.5, "max": 9.5, "value": 2.0}},
+        {"name": "r", "meaning": "required return", "unit": "rate", "domain": {"gt": 0.0, "lt": 1.0, "rel": {"lhs": "r", "op": "gt", "rhs": "g"}}, "sweep_default": {"min": 0.02, "max": 0.5, "value": 0.1}},
+        {"name": "g", "meaning": "dividend growth rate", "unit": "rate", "domain": {"gte": 0.0, "lt": 1.0}, "sweep_default": {"min": 0.0, "max": 0.4, "value": 0.05}}
+      ],
+      "salient_dims": ["r", "g"],
+      "output": {"meaning": "conservative (margin-of-safety) present value of the growing perpetuity", "unit": "currency"},
+      "sensitivities": [],
+      "defective": false,
+      "notes": "Conservative Gordon variant, numerically identical to gordon_pv but with a documented strict domain of use r > g + 0.01 (the discount spread clears a one-point safety margin). Its proven positivity region {d>0, r>g+0.01} nests strictly inside gordon's {d>0, r>g} -- the proof-backed org implication strict -> standard. Same closed form; dimension-free; limit convergence held out."
     },
     {
       "id": "bellman_n2",
@@ -127,6 +144,25 @@
       "dischargeability_probe": "p01_gordon_div_positive",
       "violation_text": "the model prices a positive-dividend perpetuity at or below zero inside its convergence region r > g",
       "break_class": "out_of_region_expected"
+    },
+    {
+      "id": "econ.inv.gordon_strict_positive.v1",
+      "kind_applies_to": ["econ.perpetuity_pv"],
+      "property": {"file": "properties/growth.ch", "name": "gordon_strict_positive", "module": "Economoist.Properties.Growth"},
+      "binding": {"mechanism": "direct-call", "references_output_fn": "direct", "goal_pattern": "({{output_fn}}(d, r, g) > 0.0)", "contracts": []},
+      "preconditions": [
+        {"lhs": "d", "op": "gt", "rhs": {"const": 0.0}},
+        {"lhs": "r", "op": "gt", "rhs": {"expr": "g + 0.01"}}
+      ],
+      "controls": {
+        "satisfying": {"name": "gordon_strict_positive", "expected": "passed"},
+        "violating": {"name": "gordon_strict_positive_wrong", "expected": "failed", "witness_required": true}
+      },
+      "expected_tier_per_pin": {"0.14.0": "proven"},
+      "dischargeability_probe": "p01_gordon_div_positive",
+      "violation_text": "the conservative model prices a positive-dividend perpetuity at or below zero once the inputs leave the convergence region r > g (which its strict domain r > g + 0.01 is contained in); the margin is a domain-of-use choice, not the positivity hypothesis",
+      "break_class": "out_of_region_expected",
+      "nests_inside": "econ.inv.gordon_positive.v1"
     },
     {
       "id": "econ.inv.gordon_decreasing_in_r.v1",

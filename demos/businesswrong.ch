@@ -1,6 +1,6 @@
 module Economoist.Demos.Businesswrong
 import Economoist.Markov (next_mass, mass3_next)
-import Economoist.Growth (gordon_pv, gordon_pv_negated)
+import Economoist.Growth (gordon_pv, gordon_pv_strict, gordon_pv_negated)
 import Economoist.Bellman (bellman_state0, bellman_state0_n3, fmax, fmax3, fabs)
 -- Business-wrong economic demos: importable content with stable IDs for C Note.
 -- Each demo pairs a corrupted premise or model (a *_wrong property that must be
@@ -41,6 +41,18 @@ import Economoist.Bellman (bellman_state0, bellman_state0_n3, fmax, fmax3, fabs)
   (gordon_pv_negated(d, r, g) > 0.0)
 @property gordon_pv_corrupted_control forall(d: f32, r: f32, g: f32) where (d > 0.0), (r > g):
   (gordon_pv(d, r, g) > 0.0)
+-- Demo 3b (out-of-region break, strict variant): the conservative
+-- gordon_pv_strict model priced with growth above the discount is outside its
+-- strict validity region r > g + 0.01 (and outside r > g entirely). The wrong
+-- property asserts positivity under g > r; cvc5 returns a witness with the growth
+-- above the discount for which the present value is negative. The control keeps
+-- the strict margin r > g + 0.01 and passes. This is the out-of-region twin for
+-- the strict positivity invariant whose proven region nests inside the standard
+-- one.
+@property gordon_strict_positive_wrong forall(d: f32, r: f32, g: f32) where (d > 0.0), (g > r):
+  (gordon_pv_strict(d, r, g) > 0.0)
+@property gordon_strict_positive_control forall(d: f32, r: f32, g: f32) where (d > 0.0), (r > (g + 0.01)):
+  (gordon_pv_strict(d, r, g) > 0.0)
 -- Demo 4 (chelis#426 regression control): two calls of the ITE-bodied
 -- bellman_state0 operator, subtracted. Before chelis#426 was fixed, subtracting
 -- two calls of the same if/then/else-bodied def collapsed the pair to a constant

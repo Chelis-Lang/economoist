@@ -1,5 +1,5 @@
 module Economoist.Growth
-export (gordon_pv, gordon_pv_negated)
+export (gordon_pv, gordon_pv_strict, gordon_pv_negated)
 -- Economoist.Growth: the Gordon growth model present value of a perpetuity whose
 -- cash flow grows at a constant rate. With next-period dividend D, required
 -- return r, and growth rate g (all under the convergence condition r > g), the
@@ -31,6 +31,18 @@ export (gordon_pv, gordon_pv_negated)
 --   No f32 float claim is made: the green is real arithmetic.
 -- gordon_pv_negated below is a DEFECTIVE reference model, not a proven fact.
 def gordon_pv(d: f32, r: f32, g: f32) -> f32 = (d / (r - g))
+-- The conservative (margin-of-safety) Gordon variant. Numerically identical to
+-- gordon_pv -- the present value of the same growing perpetuity -- but it is the
+-- model a cautious analyst uses when the discount spread r - g must clear a
+-- safety margin before the valuation is trusted. Its documented domain of use is
+-- the strict region r > g + 0.01 (the spread clears a one-point margin), which is
+-- a proper subset of gordon_pv's convergence region r > g. Shipping it as its own
+-- export lets the characterization surface state the proof-backed org
+-- implication: the strict model's proven positivity region nests inside the
+-- standard model's, so anything sound under gordon_pv_strict is sound under
+-- gordon_pv. Same closed form, tighter stated domain; not a separate economics
+-- claim. See docs/models/growth.md.
+def gordon_pv_strict(d: f32, r: f32, g: f32) -> f32 = (d / (r - g))
 -- A DEFECTIVE reference model: a mispriced perpetuity that returns the negative
 -- of the correct Gordon present value. It is a first-class model in the manifest
 -- (defective: true) whose canon positivity invariant breaks IN its stated
