@@ -160,7 +160,7 @@
       },
       "expected_tier_per_pin": {"0.14.0": "proven"},
       "dischargeability_probe": "p01_gordon_div_positive",
-      "violation_text": "the conservative model prices a positive-dividend perpetuity at or below zero outside its strict domain r > g + 0.01",
+      "violation_text": "the conservative model prices a positive-dividend perpetuity at or below zero once the inputs leave the convergence region r > g (which its strict domain r > g + 0.01 is contained in); the margin is a domain-of-use choice, not the positivity hypothesis",
       "break_class": "out_of_region_expected",
       "nests_inside": "econ.inv.gordon_positive.v1"
     },

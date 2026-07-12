@@ -109,22 +109,34 @@ domain.
 
 Shipping it as its own export and manifest model (`gordon_strict`, kind
 `econ.perpetuity_pv`, same params) lets the characterization surface state a
-proof-backed organization implication. The strict positivity invariant
+region-nesting relationship precisely. The strict positivity invariant
 `gordon_strict_positive` proves `gordon_pv_strict(d, r, g) > 0` under `d > 0` and
-`r > (g + 0.01)` (same division-form call, verified via probe p01), and its
-proven region
+`r > (g + 0.01)` (same division-form call, verified via probe p01), and
+`gordon_positive` proves the same for `gordon_pv` under `d > 0` and `r > g`. The
+region inclusion is pure arithmetic -- `r > g + 0.01` implies `r > g` -- so the
+strict proven region is contained in the standard one:
 
 ```
-{ d > 0, r > g + 0.01 }   nests strictly inside   { d > 0, r > g }
+{ d > 0, r > g + 0.01 }   subset of   { d > 0, r > g }
 ```
 
-the proven region of `gordon_positive`. Because the strict region is a subset of
-the standard region, anything sound under `gordon_pv_strict` is sound under
-`gordon_pv`: the implication strict -> standard is backed by the two proofs, not
-asserted. The manifest records it as `econ.inv.gordon_strict_positive.v1` with
+The two proofs establish positivity on each region; the arithmetic inclusion is
+what makes it an organization implication: any use inside the strict domain is a
+valid use inside the standard domain (never the reverse). The manifest records
+this as `econ.inv.gordon_strict_positive.v1` with
 `nests_inside: econ.inv.gordon_positive.v1`, which the consumer surfaces as a
-candidate org implication. Its out-of-region twin `gordon_strict_positive_wrong`
-(guard flipped to `g > r`) refutes, pinning that the strict guard is load-bearing.
+candidate org implication.
+
+The `+ 0.01` margin is a domain-of-USE choice, not a positivity necessity.
+Positivity of `D / (r - g)` holds throughout the convergence region `r > g`, so
+for any `r` in `(g, g + 0.01]` the value is still positive; the margin encodes an
+analyst's trust threshold on the discount spread `r - g` (a razor-thin spread
+makes the closed form ill-conditioned in `f32`), not a mathematical requirement
+for a positive price. The out-of-region twin `gordon_strict_positive_wrong` flips
+the guard to `g > r`, which leaves the CONVERGENCE region `r > g` (not merely the
+margin band); it refutes with an in-domain witness, demonstrating that the
+`r > g` convergence guard -- the one shared with `gordon_positive` -- is the
+load-bearing hypothesis for positivity.
 
 ## Honesty boundaries
 
