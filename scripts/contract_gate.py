@@ -117,6 +117,25 @@ def _norm(s: str) -> str:
     return re.sub(r'[\s()]', "", s)
 
 
+def split_guards(where: str) -> list[str]:
+    """Split a where-clause into its individual guards on top-level commas (guards
+    are boolean scalar expressions, so a comma at paren-depth 0 separates them)."""
+    out, depth, cur = [], 0, ""
+    for ch in where:
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+        if ch == "," and depth == 0:
+            out.append(cur)
+            cur = ""
+        else:
+            cur += ch
+    if cur.strip():
+        out.append(cur)
+    return [g for g in out if g.strip()]
+
+
 def precond_string(pc: dict) -> str:
     op = OP_SYMBOL.get(pc["op"])
     if op is None:
@@ -202,13 +221,25 @@ def main() -> int:
             if k not in KIND_TAXONOMY:
                 failures.append(f"{iid}: kind_applies_to {k!r} not in taxonomy")
 
-        # Preconditions appear in the property's where-clause.
+        # Preconditions cross-check the property's where-clause -- BOTH directions.
         if pname in props:
-            where_norm = _norm(props[pname][1])
+            where_clause = props[pname][1]
+            where_norm = _norm(where_clause)
+            declared_norm = {_norm(precond_string(pc)) for pc in inv.get("preconditions", [])}
+            # (a) Soundness: every declared precondition appears in the where-clause
+            #     (the manifest cannot claim a guard the proof does not carry).
             for pc in inv.get("preconditions", []):
                 recon = _norm(precond_string(pc))
                 if recon not in where_norm:
                     failures.append(f"{iid}: precondition {precond_string(pc)!r} not found in {pname} where-clause")
+            # (b) Completeness: every guard in the where-clause is declared (the
+            #     manifest cannot UNDER-declare, which would let the consumer derive
+            #     a validity region WIDER than the proof covers -- the forge the
+            #     red-team found). declared preconditions must COVER the where-clause.
+            for guard in split_guards(where_clause):
+                gnorm = _norm(guard)
+                if gnorm and gnorm not in declared_norm:
+                    failures.append(f"{iid}: property {pname} where-clause guard {guard.strip()!r} is NOT declared in the manifest preconditions (under-declaration widens the derived validity region)")
 
         # expected_tier_per_pin: entry for current pin, valid token, trigger for amber.
         etp = inv.get("expected_tier_per_pin", {})
@@ -240,8 +271,8 @@ def main() -> int:
     n_models = len(manifest.get("models", []))
     n_inv = len(manifest.get("invariants", []))
     print(f"contract_gate OK: manifest {SCHEMA_ID}/{SCHEMA_VERSION} consistent at pin {reef_pin} "
-          f"({n_models} models, {n_inv} invariants; properties/controls resolve, preconditions match "
-          f"where-clauses, output_fns exported, tiers cited).")
+          f"({n_models} models, {n_inv} invariants; properties/controls resolve, preconditions COVER "
+          f"their where-clauses both directions, output_fns exported, tiers cited).")
     return 0
 
 

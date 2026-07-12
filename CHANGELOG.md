@@ -3,6 +3,27 @@
 All notable changes to the Economoist shell are recorded here. The package
 `version` tracks its own line (not the chelis compiler pin).
 
+## [0.2.2] - 2026-07-13
+
+Honest close of a real hole a red-team forge found: the manifest under-declared
+preconditions, so a consumer could derive a validity region wider than the proof
+covers (a non-stochastic witness `p00 = -1` claimed in-region).
+
+### Fixed
+- **Completed under-declared preconditions.** `econ.inv.bellman_monotone.v1` and
+  `econ.inv.bellman_contraction.v1` each gain their four `p** >= 0.0`
+  nonnegativity guards; `econ.inv.bellman3_contraction.v1` gains its six. Every
+  invariant's declared `preconditions` now exactly match the referenced
+  property's full where-clause. (No proof changed — the properties always carried
+  these guards; only the manifest under-declared them.)
+
+### Added
+- **contract_gate.py completeness check.** For each invariant, the gate now
+  parses the referenced property's where-clause and asserts the declared
+  preconditions COVER every guard (declared ⊇ where-clause), not merely that each
+  declared guard appears in the where-clause (⊆). Under-declaration now fails the
+  gate, naming the missing guard. Negative-tested.
+
 ## [0.2.1] - 2026-07-12
 
 ### Added
