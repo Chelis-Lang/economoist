@@ -29,6 +29,17 @@ SMT ships in the release binary, so one binary drives every stage.
 
 Exits 0 only if every stage that ran succeeds.
 
+Per-PR CI (``.github/workflows/ci.yml``) mirrors only stages 1-3, 5, 6
+(the ``Chelis gate`` job: fmt + lint + reef build + negative tests +
+blocked probes) and stage 7 (the offline ``contract-gate`` job) -- this is
+the LEAN per-PR gate. Stages 8-9 (``scripts/prove_gate.py``, the SMT
+keystone, and its metamorphic anti-vacuity forge negatives) do NOT run
+per-PR: an audit found this pair costing every PR ~5-9 min of real-SMT
+wall, so both moved to ``.github/workflows/nightly.yml`` (the ``prove``
+job, daily + ``workflow_dispatch``, pinned RELEASE toolchain), alongside
+stage 10 (the oracle harness). This local gate still runs every stage
+before push, regardless of which CI workflow covers it.
+
 Usage:
 
     python3 scripts/run_local_gate.py [--quiet]

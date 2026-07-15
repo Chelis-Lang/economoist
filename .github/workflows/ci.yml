@@ -120,28 +120,13 @@ jobs:
       - name: Validate the invariant-surface manifest against the contract
         run: python3 scripts/contract_gate.py
 
-  prove-gate:
-    name: SMT prove gate (release binary)
-    # SMT ships in the released chelis tarball as of v0.11.0 (chelis#422
-    # resolved), so the prove gate installs the pinned RELEASE toolchain via the
-    # shared composite action and runs per-PR -- no from-source cvc5 build, no
-    # push-to-main narrowing. prove_gate.py resolves `chelis` from PATH (the
-    # composite action puts it there and asserts the pinned version).
-    runs-on: ubuntu-latest
-    needs: [hard-rule-guard, no-ai-authorship]
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install chelis toolchain (cached)
-        uses: ./.github/actions/install-chelis
-        with:
-          chelis-tag: ${{ env.CHELIS_TAG }}
-          chelis-version: ${{ env.CHELIS_VERSION }}
-          gh-token: ${{ secrets.CHELIS_RELEASE_TOKEN }}
-
-      - name: Run prove gate
-        run: python3 scripts/prove_gate.py
-
-      - name: Run forge negatives (metamorphic anti-vacuity)
-        run: python3 scripts/run_forge_tests.py
+  # NOTE: the real-SMT keystone canon gate (scripts/prove_gate.py) plus its
+  # metamorphic anti-vacuity forge negatives (scripts/run_forge_tests.py) are
+  # NOT on the per-PR path -- an audit measured this job at ~5-9 min of
+  # real-SMT wall (cvc5 over the full properties/ + demos/ canon), the tallest
+  # slice of the old per-PR gate. It now runs in
+  # .github/workflows/nightly.yml (the `prove` job: daily + workflow_dispatch,
+  # pinned RELEASE toolchain) and in the local gate
+  # (scripts/run_local_gate.py stages 8-9) before push. The offline
+  # contract-gate above still validates the manifest on every PR; the compile
+  # signal is the `Chelis gate` job's `chelis reef build`.

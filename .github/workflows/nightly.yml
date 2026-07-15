@@ -1,18 +1,30 @@
 name: nightly
 
-# Weekly re-run of the SMT proof gate and the numeric oracle harness against
-# the pinned RELEASE chelis binary. SMT ships in the released tarball as of
-# chelis v0.11.0 (chelis#422 resolved), so this installs the pinned toolchain
-# via the shared composite action -- no from-source cvc5 build. Per-PR CI
-# (ci.yml) runs the same prove gate on every PR; this weekly job is a drift
-# detector that fires even with no economoist push, surfacing an upstream
-# proof-tier regression at the pinned release. The chelis pin is carried as a
-# literal CHELIS_TAG/CHELIS_VERSION env pair (read by the offline pin guard) and
+# The scheduled real-chelis/real-SMT validation that does NOT belong on the
+# per-PR path. Per-PR CI (ci.yml) stays LEAN: the offline gates
+# (hard-rule-guard, no-ai-authorship, contract-gate) plus the `Chelis gate`
+# job's fmt + lint + reef-build compile signal + fast negative/blocked-probe
+# checks. Everything real-SMT runs here, DAILY (03:00 UTC) plus
+# workflow_dispatch:
+#
+#   - `prove` : the keystone canon self-audit (scripts/prove_gate.py, real-SMT
+#     ~5-9 min against the full properties/ + demos/ canon) plus its
+#     metamorphic anti-vacuity forge negatives (scripts/run_forge_tests.py).
+#     This is the gate an audit found running on every PR -- moved here so it
+#     no longer costs every PR ~5-9 min of real-SMT wall. It doubles as a
+#     drift detector that fires even with no economoist push, surfacing an
+#     upstream proof-tier regression at the pinned release.
+#   - the numeric oracle harness (scripts/oracle_harness.py), when present.
+#
+# SMT ships in the released tarball as of chelis v0.11.0 (chelis#422
+# resolved), so this installs the pinned toolchain via the shared composite
+# action -- no from-source cvc5 build. The chelis pin is carried as a literal
+# CHELIS_TAG/CHELIS_VERSION env pair (read by the offline pin guard) and
 # cross-checked at runtime against reef.toml, the single source of truth.
 
 on:
   schedule:
-    - cron: '0 6 * * 0'   # 06:00 UTC, Sundays (weekly)
+    - cron: '0 3 * * *'   # 03:00 UTC daily -- the `prove` gate
   workflow_dispatch:
 
 concurrency:
@@ -29,8 +41,11 @@ env:
   CHELIS_VERSION: 0.14.0
 
 jobs:
+  # The keystone canon self-audit against the pinned RELEASE binary -- moved
+  # off the per-PR path. Real-SMT ~5-9 min over the full properties/ + demos/
+  # canon. Runs DAILY (and on workflow_dispatch).
   prove:
-    name: SMT prove + oracle (release binary)
+    name: SMT prove + forge + oracle (release binary)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -63,6 +78,9 @@ jobs:
 
       - name: Run prove gate
         run: python3 scripts/prove_gate.py
+
+      - name: Run forge negatives (metamorphic anti-vacuity)
+        run: python3 scripts/run_forge_tests.py
 
       - name: Run oracle harness
         if: hashFiles('scripts/oracle_harness.py') != ''
