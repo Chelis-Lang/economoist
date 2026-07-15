@@ -168,7 +168,18 @@ git config core.hooksPath ./hooks
 `chelis-smt` binary per chelis tag). That narrowing is retired now that SMT ships
 in the released binary (chelis#422, resolved v0.11.0): the prove gate installs the
 pinned release toolchain via the shared `.github/actions/install-chelis` composite
-action and runs per-PR, the same release-binary path the sibling shells use. The
-offline pin guard now recognizes composite-action installs (the
-`actions/install-chelis` marker in `scripts/audit_workarounds.py`); mirror that
-marker into the sibling shells' pin guards per this rule.
+action, the same release-binary path the sibling shells use. The offline pin
+guard now recognizes composite-action installs (the `actions/install-chelis`
+marker in `scripts/audit_workarounds.py`); mirror that marker into the sibling
+shells' pin guards per this rule.
+
+**Lean per-PR / real-SMT nightly.** The prove gate (`scripts/prove_gate.py`)
+and its metamorphic anti-vacuity forge negatives (`scripts/run_forge_tests.py`)
+do NOT run per-PR: an audit found this job costing every PR ~5-9 min of
+real-SMT wall, the same anti-pattern the Scaffolding Drift Rule flagged in
+Shoals (shoals#32). Both now run in `.github/workflows/nightly.yml` (the
+`prove` job: daily + `workflow_dispatch`, pinned RELEASE toolchain) and in
+`scripts/run_local_gate.py` before push. Per-PR CI (`.github/workflows/ci.yml`)
+stays lean: `hard-rule-guard` + `no-ai-authorship` (offline), `contract-gate`
+(offline manifest validation), and `Chelis gate` (fmt + lint + `chelis reef
+build` compile signal + the fast negative-test/blocked-probe suites).

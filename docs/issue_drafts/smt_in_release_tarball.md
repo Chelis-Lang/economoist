@@ -5,9 +5,11 @@ Filed upstream as chelis#422 on 2026-06-20.
 **RESOLVED (chelis v0.11.0).** SMT ships in the released chelis tarball as of
 v0.11.0; re-verified at the pinned 0.14.0 release binary on 2026-07-10
 (`scripts/prove_gate.py` fully green -- every property `proof_tier: smt`,
-`samples: 0`). Archived in `docs/UPSTREAM_BUGS.md`; economoist's prove gate,
-`ci.yml`, and `nightly.yml` now run on the release binary, and
-`scripts/build_chelis_smt.py` was removed.
+`samples: 0`). Archived in `docs/UPSTREAM_BUGS.md`; economoist's prove gate
+runs on the release binary, and `scripts/build_chelis_smt.py` was removed.
+(The prove gate itself later moved off the per-PR `ci.yml` path onto the
+`nightly.yml` schedule -- a lean-CI split, tracked separately from this
+resolved release-binary issue.)
 
 **Summary.** `chelis prove` reaches the SMT tier only when the binary is built
 with `--features smt` (linked against cvc5). The released `chelis-vX.Y.Z` tarball

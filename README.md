@@ -47,6 +47,16 @@ prove` over the properties in `properties/` and the demos in `demos/`;
 `reef.toml` is the single source of truth for the compiler and `chelis-std` pins
 and the package version.
 
+The **lean per-PR** CI gate (`.github/workflows/ci.yml`) runs the fast checks
+only: `chelis fmt --check`, `chelis lint --check`, `chelis reef build`, the
+negative-test and blocked-probe suites, plus the offline `hard-rule-guard`,
+`no-ai-authorship`, and `contract-gate` jobs. `scripts/prove_gate.py` (the SMT
+keystone) and its metamorphic anti-vacuity forge negatives
+(`scripts/run_forge_tests.py`) do NOT run per-PR -- real-SMT wall over the full
+canon runs ~5-9 min -- so both run in the **nightly** CI gate
+(`.github/workflows/nightly.yml`, daily + `workflow_dispatch`) instead.
+`scripts/run_local_gate.py` runs every stage locally before push.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
