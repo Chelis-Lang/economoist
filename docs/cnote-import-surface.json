@@ -2,8 +2,8 @@
   "schema_id": "chelis-shell.invariant-surface",
   "schema_version": "1.0",
   "pkg": "economoist",
-  "pkg_version": "0.2.3",
-  "chelis_pin": "0.14.0",
+  "pkg_version": "0.2.4",
+  "chelis_pin": "0.16.1",
   "purpose": "Economoist's canon model + invariant surface for C Note. Every proven-tier invariant here is a genuine unqualified SMT green that CALLS the shipped operator (not a guard restatement); the one fuzz_validated invariant is an honest amber in the sampled lane, carrying a tier_upgrade_trigger. C Note vendors this file and the byte-identical release asset economoist-0.2.3.invariants.json. See docs/contracts/characterization_contract_v1.md (schema chelis-shell.invariant-surface/1.0).",
   "models": [
     {
@@ -13,13 +13,68 @@
       "output_fn": "gordon_pv",
       "sig": "(d: f32, r: f32, g: f32) -> f32",
       "params": [
-        {"name": "d", "meaning": "next-period dividend", "unit": "currency", "domain": {"gt": 0.0}, "sweep_default": {"min": 0.5, "max": 9.5, "value": 2.0}},
-        {"name": "r", "meaning": "required return", "unit": "rate", "domain": {"gt": 0.0, "lt": 1.0, "rel": {"lhs": "r", "op": "gt", "rhs": "g"}}, "sweep_default": {"min": 0.02, "max": 0.5, "value": 0.1}},
-        {"name": "g", "meaning": "dividend growth rate", "unit": "rate", "domain": {"gte": 0.0, "lt": 1.0}, "sweep_default": {"min": 0.0, "max": 0.4, "value": 0.05}}
+        {
+          "name": "d",
+          "meaning": "next-period dividend",
+          "unit": "currency",
+          "domain": {
+            "gt": 0.0
+          },
+          "sweep_default": {
+            "min": 0.5,
+            "max": 9.5,
+            "value": 2.0
+          }
+        },
+        {
+          "name": "r",
+          "meaning": "required return",
+          "unit": "rate",
+          "domain": {
+            "gt": 0.0,
+            "lt": 1.0,
+            "rel": {
+              "lhs": "r",
+              "op": "gt",
+              "rhs": "g"
+            }
+          },
+          "sweep_default": {
+            "min": 0.02,
+            "max": 0.5,
+            "value": 0.1
+          }
+        },
+        {
+          "name": "g",
+          "meaning": "dividend growth rate",
+          "unit": "rate",
+          "domain": {
+            "gte": 0.0,
+            "lt": 1.0
+          },
+          "sweep_default": {
+            "min": 0.0,
+            "max": 0.4,
+            "value": 0.05
+          }
+        }
       ],
-      "salient_dims": ["r", "g"],
-      "output": {"meaning": "present value of the growing perpetuity", "unit": "currency"},
-      "sensitivities": [{"wrt": "r", "fn": "gordon_dP_dr_negative_grad", "order": 1}],
+      "salient_dims": [
+        "r",
+        "g"
+      ],
+      "output": {
+        "meaning": "present value of the growing perpetuity",
+        "unit": "currency"
+      },
+      "sensitivities": [
+        {
+          "wrt": "r",
+          "fn": "gordon_dP_dr_negative_grad",
+          "order": 1
+        }
+      ],
       "defective": false,
       "notes": "Closed-form Gordon growth model P = D/(r-g); dimension-free, so the general-n caveat is not applicable. Held out: convergence of the discounted sum to the closed form (a limit)."
     },
@@ -30,12 +85,61 @@
       "output_fn": "gordon_pv_negated",
       "sig": "(d: f32, r: f32, g: f32) -> f32",
       "params": [
-        {"name": "d", "meaning": "next-period dividend", "unit": "currency", "domain": {"gt": 0.0}, "sweep_default": {"min": 0.5, "max": 9.5, "value": 2.0}},
-        {"name": "r", "meaning": "required return", "unit": "rate", "domain": {"gt": 0.0, "lt": 1.0, "rel": {"lhs": "r", "op": "gt", "rhs": "g"}}, "sweep_default": {"min": 0.02, "max": 0.5, "value": 0.1}},
-        {"name": "g", "meaning": "dividend growth rate", "unit": "rate", "domain": {"gte": 0.0, "lt": 1.0}, "sweep_default": {"min": 0.0, "max": 0.4, "value": 0.05}}
+        {
+          "name": "d",
+          "meaning": "next-period dividend",
+          "unit": "currency",
+          "domain": {
+            "gt": 0.0
+          },
+          "sweep_default": {
+            "min": 0.5,
+            "max": 9.5,
+            "value": 2.0
+          }
+        },
+        {
+          "name": "r",
+          "meaning": "required return",
+          "unit": "rate",
+          "domain": {
+            "gt": 0.0,
+            "lt": 1.0,
+            "rel": {
+              "lhs": "r",
+              "op": "gt",
+              "rhs": "g"
+            }
+          },
+          "sweep_default": {
+            "min": 0.02,
+            "max": 0.5,
+            "value": 0.1
+          }
+        },
+        {
+          "name": "g",
+          "meaning": "dividend growth rate",
+          "unit": "rate",
+          "domain": {
+            "gte": 0.0,
+            "lt": 1.0
+          },
+          "sweep_default": {
+            "min": 0.0,
+            "max": 0.4,
+            "value": 0.05
+          }
+        }
       ],
-      "salient_dims": ["r", "g"],
-      "output": {"meaning": "(mispriced) present value; negative of the correct Gordon PV", "unit": "currency"},
+      "salient_dims": [
+        "r",
+        "g"
+      ],
+      "output": {
+        "meaning": "(mispriced) present value; negative of the correct Gordon PV",
+        "unit": "currency"
+      },
       "sensitivities": [],
       "defective": true,
       "notes": "A DEFECTIVE reference model: a mispriced perpetuity returning the negative of the correct present value. Its positivity canon breaks IN its validity region r > g with an f32-confirmed in-domain witness (econ.inv.gordon_mispriced_positive.v1). Exercises the in-region-defect break class; not an economics claim."
@@ -47,12 +151,61 @@
       "output_fn": "gordon_pv_strict",
       "sig": "(d: f32, r: f32, g: f32) -> f32",
       "params": [
-        {"name": "d", "meaning": "next-period dividend", "unit": "currency", "domain": {"gt": 0.0}, "sweep_default": {"min": 0.5, "max": 9.5, "value": 2.0}},
-        {"name": "r", "meaning": "required return", "unit": "rate", "domain": {"gt": 0.0, "lt": 1.0, "rel": {"lhs": "r", "op": "gt", "rhs": "g"}}, "sweep_default": {"min": 0.02, "max": 0.5, "value": 0.1}},
-        {"name": "g", "meaning": "dividend growth rate", "unit": "rate", "domain": {"gte": 0.0, "lt": 1.0}, "sweep_default": {"min": 0.0, "max": 0.4, "value": 0.05}}
+        {
+          "name": "d",
+          "meaning": "next-period dividend",
+          "unit": "currency",
+          "domain": {
+            "gt": 0.0
+          },
+          "sweep_default": {
+            "min": 0.5,
+            "max": 9.5,
+            "value": 2.0
+          }
+        },
+        {
+          "name": "r",
+          "meaning": "required return",
+          "unit": "rate",
+          "domain": {
+            "gt": 0.0,
+            "lt": 1.0,
+            "rel": {
+              "lhs": "r",
+              "op": "gt",
+              "rhs": "g"
+            }
+          },
+          "sweep_default": {
+            "min": 0.02,
+            "max": 0.5,
+            "value": 0.1
+          }
+        },
+        {
+          "name": "g",
+          "meaning": "dividend growth rate",
+          "unit": "rate",
+          "domain": {
+            "gte": 0.0,
+            "lt": 1.0
+          },
+          "sweep_default": {
+            "min": 0.0,
+            "max": 0.4,
+            "value": 0.05
+          }
+        }
       ],
-      "salient_dims": ["r", "g"],
-      "output": {"meaning": "conservative (margin-of-safety) present value of the growing perpetuity", "unit": "currency"},
+      "salient_dims": [
+        "r",
+        "g"
+      ],
+      "output": {
+        "meaning": "conservative (margin-of-safety) present value of the growing perpetuity",
+        "unit": "currency"
+      },
       "sensitivities": [],
       "defective": false,
       "notes": "Conservative Gordon variant, numerically identical to gordon_pv but with a documented strict domain of use r > g + 0.01 (the discount spread clears a one-point safety margin). Its proven positivity region {d>0, r>g+0.01} nests strictly inside gordon's {d>0, r>g} -- the proof-backed org implication strict -> standard. Same closed form; dimension-free; limit convergence held out."
@@ -64,12 +217,51 @@
       "output_fn": "bellman_state0",
       "sig": "(v0: f32, v1: f32, r0: f32, p00: f32, p01: f32, r1: f32, p10: f32, p11: f32, g: f32) -> f32",
       "params": [
-        {"name": "v0", "meaning": "continuation value, state 0", "unit": "value", "domain": {}, "sweep_default": {"min": -5.0, "max": 5.0, "value": 1.0}},
-        {"name": "v1", "meaning": "continuation value, state 1", "unit": "value", "domain": {}, "sweep_default": {"min": -5.0, "max": 5.0, "value": 2.0}},
-        {"name": "g", "meaning": "discount factor", "unit": "rate", "domain": {"gt": 0.0, "lt": 1.0}, "sweep_default": {"min": 0.1, "max": 0.99, "value": 0.9}}
+        {
+          "name": "v0",
+          "meaning": "continuation value, state 0",
+          "unit": "value",
+          "domain": {},
+          "sweep_default": {
+            "min": -5.0,
+            "max": 5.0,
+            "value": 1.0
+          }
+        },
+        {
+          "name": "v1",
+          "meaning": "continuation value, state 1",
+          "unit": "value",
+          "domain": {},
+          "sweep_default": {
+            "min": -5.0,
+            "max": 5.0,
+            "value": 2.0
+          }
+        },
+        {
+          "name": "g",
+          "meaning": "discount factor",
+          "unit": "rate",
+          "domain": {
+            "gt": 0.0,
+            "lt": 1.0
+          },
+          "sweep_default": {
+            "min": 0.1,
+            "max": 0.99,
+            "value": 0.9
+          }
+        }
       ],
-      "salient_dims": ["v0", "v1"],
-      "output": {"meaning": "one application of the Bellman operator (Tv) at output state 0", "unit": "value"},
+      "salient_dims": [
+        "v0",
+        "v1"
+      ],
+      "output": {
+        "meaning": "one application of the Bellman operator (Tv) at output state 0",
+        "unit": "value"
+      },
       "sensitivities": [],
       "defective": false,
       "notes": "Bellman optimality operator, 2 states x 2 actions. Transition rows p0*, p1* are guarded row-stochastic; rewards r0, r1 free. Fixed dimension n=2: general-n and value-iteration convergence are held out (need induction)."
@@ -81,13 +273,63 @@
       "output_fn": "bellman_state0_n3",
       "sig": "(v0: f32, v1: f32, v2: f32, r0: f32, p00: f32, p01: f32, p02: f32, r1: f32, p10: f32, p11: f32, p12: f32, g: f32) -> f32",
       "params": [
-        {"name": "v0", "meaning": "continuation value, state 0", "unit": "value", "domain": {}, "sweep_default": {"min": -5.0, "max": 5.0, "value": 1.0}},
-        {"name": "v1", "meaning": "continuation value, state 1", "unit": "value", "domain": {}, "sweep_default": {"min": -5.0, "max": 5.0, "value": 2.0}},
-        {"name": "v2", "meaning": "continuation value, state 2", "unit": "value", "domain": {}, "sweep_default": {"min": -5.0, "max": 5.0, "value": 3.0}},
-        {"name": "g", "meaning": "discount factor", "unit": "rate", "domain": {"gt": 0.0, "lt": 1.0}, "sweep_default": {"min": 0.1, "max": 0.99, "value": 0.9}}
+        {
+          "name": "v0",
+          "meaning": "continuation value, state 0",
+          "unit": "value",
+          "domain": {},
+          "sweep_default": {
+            "min": -5.0,
+            "max": 5.0,
+            "value": 1.0
+          }
+        },
+        {
+          "name": "v1",
+          "meaning": "continuation value, state 1",
+          "unit": "value",
+          "domain": {},
+          "sweep_default": {
+            "min": -5.0,
+            "max": 5.0,
+            "value": 2.0
+          }
+        },
+        {
+          "name": "v2",
+          "meaning": "continuation value, state 2",
+          "unit": "value",
+          "domain": {},
+          "sweep_default": {
+            "min": -5.0,
+            "max": 5.0,
+            "value": 3.0
+          }
+        },
+        {
+          "name": "g",
+          "meaning": "discount factor",
+          "unit": "rate",
+          "domain": {
+            "gt": 0.0,
+            "lt": 1.0
+          },
+          "sweep_default": {
+            "min": 0.1,
+            "max": 0.99,
+            "value": 0.9
+          }
+        }
       ],
-      "salient_dims": ["v0", "v1", "v2"],
-      "output": {"meaning": "one application of the Bellman operator (Tv) at output state 0", "unit": "value"},
+      "salient_dims": [
+        "v0",
+        "v1",
+        "v2"
+      ],
+      "output": {
+        "meaning": "one application of the Bellman operator (Tv) at output state 0",
+        "unit": "value"
+      },
       "sensitivities": [],
       "defective": false,
       "notes": "Bellman optimality operator, 3 states x 2 actions. The n=3 per-state sup-norm contraction now ships green (chelis#425 and chelis#426 both resolved; cnote.dischargeability p04/p15). Fixed dimension n=3: general-n and convergence held out."
@@ -99,11 +341,43 @@
       "output_fn": "next_mass",
       "sig": "(p: f32, q: f32, ta: f32, tb: f32) -> f32",
       "params": [
-        {"name": "p", "meaning": "input mass, state 0", "unit": "probability", "domain": {"gte": 0.0, "lte": 1.0}, "sweep_default": {"min": 0.0, "max": 1.0, "value": 0.6}},
-        {"name": "q", "meaning": "input mass, state 1", "unit": "probability", "domain": {"gte": 0.0, "lte": 1.0}, "sweep_default": {"min": 0.0, "max": 1.0, "value": 0.4}}
+        {
+          "name": "p",
+          "meaning": "input mass, state 0",
+          "unit": "probability",
+          "domain": {
+            "gte": 0.0,
+            "lte": 1.0
+          },
+          "sweep_default": {
+            "min": 0.0,
+            "max": 1.0,
+            "value": 0.6
+          }
+        },
+        {
+          "name": "q",
+          "meaning": "input mass, state 1",
+          "unit": "probability",
+          "domain": {
+            "gte": 0.0,
+            "lte": 1.0
+          },
+          "sweep_default": {
+            "min": 0.0,
+            "max": 1.0,
+            "value": 0.4
+          }
+        }
       ],
-      "salient_dims": ["p", "q"],
-      "output": {"meaning": "one output mass entry of a 2-state transition step", "unit": "probability"},
+      "salient_dims": [
+        "p",
+        "q"
+      ],
+      "output": {
+        "meaning": "one output mass entry of a 2-state transition step",
+        "unit": "probability"
+      },
       "sensitivities": [],
       "defective": false,
       "notes": "One output mass entry of a row-stochastic 2-state Markov step. Fixed dimension n=2; stationarity/convergence held out."
@@ -115,12 +389,58 @@
       "output_fn": "mass3_next",
       "sig": "(p0: f32, p1: f32, p2: f32, ta: f32, tb: f32, tc: f32) -> f32",
       "params": [
-        {"name": "p0", "meaning": "input mass, state 0", "unit": "probability", "domain": {"gte": 0.0, "lte": 1.0}, "sweep_default": {"min": 0.0, "max": 1.0, "value": 0.2}},
-        {"name": "p1", "meaning": "input mass, state 1", "unit": "probability", "domain": {"gte": 0.0, "lte": 1.0}, "sweep_default": {"min": 0.0, "max": 1.0, "value": 0.3}},
-        {"name": "p2", "meaning": "input mass, state 2", "unit": "probability", "domain": {"gte": 0.0, "lte": 1.0}, "sweep_default": {"min": 0.0, "max": 1.0, "value": 0.5}}
+        {
+          "name": "p0",
+          "meaning": "input mass, state 0",
+          "unit": "probability",
+          "domain": {
+            "gte": 0.0,
+            "lte": 1.0
+          },
+          "sweep_default": {
+            "min": 0.0,
+            "max": 1.0,
+            "value": 0.2
+          }
+        },
+        {
+          "name": "p1",
+          "meaning": "input mass, state 1",
+          "unit": "probability",
+          "domain": {
+            "gte": 0.0,
+            "lte": 1.0
+          },
+          "sweep_default": {
+            "min": 0.0,
+            "max": 1.0,
+            "value": 0.3
+          }
+        },
+        {
+          "name": "p2",
+          "meaning": "input mass, state 2",
+          "unit": "probability",
+          "domain": {
+            "gte": 0.0,
+            "lte": 1.0
+          },
+          "sweep_default": {
+            "min": 0.0,
+            "max": 1.0,
+            "value": 0.5
+          }
+        }
       ],
-      "salient_dims": ["p0", "p1", "p2"],
-      "output": {"meaning": "one output mass entry of a 3-state transition step", "unit": "probability"},
+      "salient_dims": [
+        "p0",
+        "p1",
+        "p2"
+      ],
+      "output": {
+        "meaning": "one output mass entry of a 3-state transition step",
+        "unit": "probability"
+      },
       "sensitivities": [],
       "defective": false,
       "notes": "One output mass entry of a row-stochastic 3-state Markov step. Fixed dimension n=3; stationarity/convergence held out."
@@ -129,36 +449,102 @@
   "invariants": [
     {
       "id": "econ.inv.gordon_positive.v1",
-      "kind_applies_to": ["econ.perpetuity_pv"],
-      "property": {"file": "properties/growth.ch", "name": "gordon_positive", "module": "Economoist.Properties.Growth"},
-      "binding": {"mechanism": "direct-call", "references_output_fn": "direct", "goal_pattern": "({{output_fn}}(d, r, g) > 0.0)", "contracts": []},
+      "kind_applies_to": [
+        "econ.perpetuity_pv"
+      ],
+      "property": {
+        "file": "properties/growth.ch",
+        "name": "gordon_positive",
+        "module": "Economoist.Properties.Growth"
+      },
+      "binding": {
+        "mechanism": "direct-call",
+        "references_output_fn": "direct",
+        "goal_pattern": "({{output_fn}}(d, r, g) > 0.0)",
+        "contracts": []
+      },
       "preconditions": [
-        {"lhs": "d", "op": "gt", "rhs": {"const": 0.0}},
-        {"lhs": "r", "op": "gt", "rhs": {"input": "g"}}
+        {
+          "lhs": "d",
+          "op": "gt",
+          "rhs": {
+            "const": 0.0
+          }
+        },
+        {
+          "lhs": "r",
+          "op": "gt",
+          "rhs": {
+            "input": "g"
+          }
+        }
       ],
       "controls": {
-        "satisfying": {"name": "gordon_positive", "expected": "passed"},
-        "violating": {"name": "gordon_positive_wrong", "expected": "failed", "witness_required": true}
+        "satisfying": {
+          "name": "gordon_positive",
+          "expected": "passed"
+        },
+        "violating": {
+          "name": "gordon_positive_wrong",
+          "expected": "failed",
+          "witness_required": true
+        }
       },
-      "expected_tier_per_pin": {"0.14.0": "proven"},
+      "expected_tier_per_pin": {
+        "0.14.0": "proven",
+        "0.16.1": "proven"
+      },
       "dischargeability_probe": "p01_gordon_div_positive",
       "violation_text": "the model prices a positive-dividend perpetuity at or below zero inside its convergence region r > g",
       "break_class": "out_of_region_expected"
     },
     {
       "id": "econ.inv.gordon_strict_positive.v1",
-      "kind_applies_to": ["econ.perpetuity_pv"],
-      "property": {"file": "properties/growth.ch", "name": "gordon_strict_positive", "module": "Economoist.Properties.Growth"},
-      "binding": {"mechanism": "direct-call", "references_output_fn": "direct", "goal_pattern": "({{output_fn}}(d, r, g) > 0.0)", "contracts": []},
+      "kind_applies_to": [
+        "econ.perpetuity_pv"
+      ],
+      "property": {
+        "file": "properties/growth.ch",
+        "name": "gordon_strict_positive",
+        "module": "Economoist.Properties.Growth"
+      },
+      "binding": {
+        "mechanism": "direct-call",
+        "references_output_fn": "direct",
+        "goal_pattern": "({{output_fn}}(d, r, g) > 0.0)",
+        "contracts": []
+      },
       "preconditions": [
-        {"lhs": "d", "op": "gt", "rhs": {"const": 0.0}},
-        {"lhs": "r", "op": "gt", "rhs": {"expr": "g + 0.01"}}
+        {
+          "lhs": "d",
+          "op": "gt",
+          "rhs": {
+            "const": 0.0
+          }
+        },
+        {
+          "lhs": "r",
+          "op": "gt",
+          "rhs": {
+            "expr": "g + 0.01"
+          }
+        }
       ],
       "controls": {
-        "satisfying": {"name": "gordon_strict_positive", "expected": "passed"},
-        "violating": {"name": "gordon_strict_positive_wrong", "expected": "failed", "witness_required": true}
+        "satisfying": {
+          "name": "gordon_strict_positive",
+          "expected": "passed"
+        },
+        "violating": {
+          "name": "gordon_strict_positive_wrong",
+          "expected": "failed",
+          "witness_required": true
+        }
       },
-      "expected_tier_per_pin": {"0.14.0": "proven"},
+      "expected_tier_per_pin": {
+        "0.14.0": "proven",
+        "0.16.1": "proven"
+      },
       "dischargeability_probe": "p01_gordon_div_positive",
       "violation_text": "the conservative model prices a positive-dividend perpetuity at or below zero once the inputs leave the convergence region r > g (which its strict domain r > g + 0.01 is contained in); the margin is a domain-of-use choice, not the positivity hypothesis",
       "break_class": "out_of_region_expected",
@@ -166,152 +552,539 @@
     },
     {
       "id": "econ.inv.gordon_decreasing_in_r.v1",
-      "kind_applies_to": ["econ.perpetuity_pv"],
-      "property": {"file": "properties/growth.ch", "name": "gordon_decreasing_in_r", "module": "Economoist.Properties.Growth"},
-      "binding": {"mechanism": "direct-call", "references_output_fn": "direct", "goal_pattern": "({{output_fn}}(d, r2, g) < {{output_fn}}(d, r1, g))", "contracts": []},
+      "kind_applies_to": [
+        "econ.perpetuity_pv"
+      ],
+      "property": {
+        "file": "properties/growth.ch",
+        "name": "gordon_decreasing_in_r",
+        "module": "Economoist.Properties.Growth"
+      },
+      "binding": {
+        "mechanism": "direct-call",
+        "references_output_fn": "direct",
+        "goal_pattern": "({{output_fn}}(d, r2, g) < {{output_fn}}(d, r1, g))",
+        "contracts": []
+      },
       "preconditions": [
-        {"lhs": "d", "op": "gt", "rhs": {"const": 0.0}},
-        {"lhs": "r1", "op": "gt", "rhs": {"input": "g"}},
-        {"lhs": "r2", "op": "gt", "rhs": {"input": "r1"}}
+        {
+          "lhs": "d",
+          "op": "gt",
+          "rhs": {
+            "const": 0.0
+          }
+        },
+        {
+          "lhs": "r1",
+          "op": "gt",
+          "rhs": {
+            "input": "g"
+          }
+        },
+        {
+          "lhs": "r2",
+          "op": "gt",
+          "rhs": {
+            "input": "r1"
+          }
+        }
       ],
       "controls": {
-        "satisfying": {"name": "gordon_decreasing_in_r", "expected": "passed"},
-        "violating": {"name": "gordon_decreasing_in_r_wrong", "expected": "failed", "witness_required": true}
+        "satisfying": {
+          "name": "gordon_decreasing_in_r",
+          "expected": "passed"
+        },
+        "violating": {
+          "name": "gordon_decreasing_in_r_wrong",
+          "expected": "failed",
+          "witness_required": true
+        }
       },
-      "expected_tier_per_pin": {"0.14.0": "proven"},
+      "expected_tier_per_pin": {
+        "0.14.0": "proven",
+        "0.16.1": "proven"
+      },
       "dischargeability_probe": "p02_gordon_two_point_r",
       "violation_text": "raising the required return does not strictly lower the present value",
       "break_class": "out_of_region_expected"
     },
     {
       "id": "econ.inv.markov_mass_preserved.v1",
-      "kind_applies_to": ["econ.markov_step.fixed_dim"],
-      "property": {"file": "properties/markov.ch", "name": "markov_mass_preserved", "module": "Economoist.Properties.Markov"},
-      "binding": {"mechanism": "direct-call", "references_output_fn": "direct", "goal_pattern": null, "contracts": []},
+      "kind_applies_to": [
+        "econ.markov_step.fixed_dim"
+      ],
+      "property": {
+        "file": "properties/markov.ch",
+        "name": "markov_mass_preserved",
+        "module": "Economoist.Properties.Markov"
+      },
+      "binding": {
+        "mechanism": "direct-call",
+        "references_output_fn": "direct",
+        "goal_pattern": null,
+        "contracts": []
+      },
       "preconditions": [
-        {"lhs": "p0 + p1", "op": "eq", "rhs": {"const": 1.0}},
-        {"lhs": "t00 + t01", "op": "eq", "rhs": {"const": 1.0}},
-        {"lhs": "t10 + t11", "op": "eq", "rhs": {"const": 1.0}}
+        {
+          "lhs": "p0 + p1",
+          "op": "eq",
+          "rhs": {
+            "const": 1.0
+          }
+        },
+        {
+          "lhs": "t00 + t01",
+          "op": "eq",
+          "rhs": {
+            "const": 1.0
+          }
+        },
+        {
+          "lhs": "t10 + t11",
+          "op": "eq",
+          "rhs": {
+            "const": 1.0
+          }
+        }
       ],
       "controls": {
-        "satisfying": {"name": "markov_mass_preserved", "expected": "passed"},
-        "violating": {"name": "markov_mass_wrong", "expected": "failed", "witness_required": true}
+        "satisfying": {
+          "name": "markov_mass_preserved",
+          "expected": "passed"
+        },
+        "violating": {
+          "name": "markov_mass_wrong",
+          "expected": "failed",
+          "witness_required": true
+        }
       },
-      "expected_tier_per_pin": {"0.14.0": "proven"},
+      "expected_tier_per_pin": {
+        "0.14.0": "proven",
+        "0.16.1": "proven"
+      },
       "dischargeability_probe": "p13_economoist_published_properties",
       "violation_text": "a non-stochastic transition row lets total probability mass drift off one",
       "break_class": "out_of_region_expected"
     },
     {
       "id": "econ.inv.markov3_mass_preserved.v1",
-      "kind_applies_to": ["econ.markov_step.fixed_dim"],
-      "property": {"file": "properties/markov.ch", "name": "markov3_mass_preserved", "module": "Economoist.Properties.Markov"},
-      "binding": {"mechanism": "direct-call", "references_output_fn": "direct", "goal_pattern": null, "contracts": []},
+      "kind_applies_to": [
+        "econ.markov_step.fixed_dim"
+      ],
+      "property": {
+        "file": "properties/markov.ch",
+        "name": "markov3_mass_preserved",
+        "module": "Economoist.Properties.Markov"
+      },
+      "binding": {
+        "mechanism": "direct-call",
+        "references_output_fn": "direct",
+        "goal_pattern": null,
+        "contracts": []
+      },
       "preconditions": [
-        {"lhs": "p0 + p1 + p2", "op": "eq", "rhs": {"const": 1.0}},
-        {"lhs": "t00 + t01 + t02", "op": "eq", "rhs": {"const": 1.0}},
-        {"lhs": "t10 + t11 + t12", "op": "eq", "rhs": {"const": 1.0}},
-        {"lhs": "t20 + t21 + t22", "op": "eq", "rhs": {"const": 1.0}}
+        {
+          "lhs": "p0 + p1 + p2",
+          "op": "eq",
+          "rhs": {
+            "const": 1.0
+          }
+        },
+        {
+          "lhs": "t00 + t01 + t02",
+          "op": "eq",
+          "rhs": {
+            "const": 1.0
+          }
+        },
+        {
+          "lhs": "t10 + t11 + t12",
+          "op": "eq",
+          "rhs": {
+            "const": 1.0
+          }
+        },
+        {
+          "lhs": "t20 + t21 + t22",
+          "op": "eq",
+          "rhs": {
+            "const": 1.0
+          }
+        }
       ],
       "controls": {
-        "satisfying": {"name": "markov3_mass_preserved", "expected": "passed"},
-        "violating": {"name": "markov3_mass_wrong", "expected": "failed", "witness_required": true}
+        "satisfying": {
+          "name": "markov3_mass_preserved",
+          "expected": "passed"
+        },
+        "violating": {
+          "name": "markov3_mass_wrong",
+          "expected": "failed",
+          "witness_required": true
+        }
       },
-      "expected_tier_per_pin": {"0.14.0": "proven"},
+      "expected_tier_per_pin": {
+        "0.14.0": "proven",
+        "0.16.1": "proven"
+      },
       "dischargeability_probe": "p13_economoist_published_properties",
       "violation_text": "a non-stochastic transition row lets total probability mass drift off one (n=3)",
       "break_class": "out_of_region_expected"
     },
     {
       "id": "econ.inv.bellman_monotone.v1",
-      "kind_applies_to": ["econ.dp_operator.fixed_dim"],
-      "property": {"file": "properties/bellman.ch", "name": "bellman_monotone", "module": "Economoist.Properties.Bellman"},
-      "binding": {"mechanism": "direct-call", "references_output_fn": "direct", "goal_pattern": null, "contracts": []},
+      "kind_applies_to": [
+        "econ.dp_operator.fixed_dim"
+      ],
+      "property": {
+        "file": "properties/bellman.ch",
+        "name": "bellman_monotone",
+        "module": "Economoist.Properties.Bellman"
+      },
+      "binding": {
+        "mechanism": "direct-call",
+        "references_output_fn": "direct",
+        "goal_pattern": null,
+        "contracts": []
+      },
       "preconditions": [
-        {"lhs": "v0", "op": "lte", "rhs": {"input": "w0"}},
-        {"lhs": "v1", "op": "lte", "rhs": {"input": "w1"}},
-        {"lhs": "p00", "op": "gte", "rhs": {"const": 0.0}},
-        {"lhs": "p01", "op": "gte", "rhs": {"const": 0.0}},
-        {"lhs": "p10", "op": "gte", "rhs": {"const": 0.0}},
-        {"lhs": "p11", "op": "gte", "rhs": {"const": 0.0}},
-        {"lhs": "p00 + p01", "op": "eq", "rhs": {"const": 1.0}},
-        {"lhs": "p10 + p11", "op": "eq", "rhs": {"const": 1.0}},
-        {"lhs": "g", "op": "gt", "rhs": {"const": 0.0}},
-        {"lhs": "g", "op": "lt", "rhs": {"const": 1.0}}
+        {
+          "lhs": "v0",
+          "op": "lte",
+          "rhs": {
+            "input": "w0"
+          }
+        },
+        {
+          "lhs": "v1",
+          "op": "lte",
+          "rhs": {
+            "input": "w1"
+          }
+        },
+        {
+          "lhs": "p00",
+          "op": "gte",
+          "rhs": {
+            "const": 0.0
+          }
+        },
+        {
+          "lhs": "p01",
+          "op": "gte",
+          "rhs": {
+            "const": 0.0
+          }
+        },
+        {
+          "lhs": "p10",
+          "op": "gte",
+          "rhs": {
+            "const": 0.0
+          }
+        },
+        {
+          "lhs": "p11",
+          "op": "gte",
+          "rhs": {
+            "const": 0.0
+          }
+        },
+        {
+          "lhs": "p00 + p01",
+          "op": "eq",
+          "rhs": {
+            "const": 1.0
+          }
+        },
+        {
+          "lhs": "p10 + p11",
+          "op": "eq",
+          "rhs": {
+            "const": 1.0
+          }
+        },
+        {
+          "lhs": "g",
+          "op": "gt",
+          "rhs": {
+            "const": 0.0
+          }
+        },
+        {
+          "lhs": "g",
+          "op": "lt",
+          "rhs": {
+            "const": 1.0
+          }
+        }
       ],
       "controls": {
-        "satisfying": {"name": "bellman_monotone", "expected": "passed"},
-        "violating": {"name": "bellman_call_collapse_wrong", "expected": "failed", "witness_required": true}
+        "satisfying": {
+          "name": "bellman_monotone",
+          "expected": "passed"
+        },
+        "violating": {
+          "name": "bellman_call_collapse_wrong",
+          "expected": "failed",
+          "witness_required": true
+        }
       },
-      "expected_tier_per_pin": {"0.14.0": "proven"},
+      "expected_tier_per_pin": {
+        "0.14.0": "proven",
+        "0.16.1": "proven"
+      },
       "dischargeability_probe": "p04_ite_two_call",
       "violation_text": "one Bellman step is not monotone in the continuation value when domination v <= w is dropped (chelis#426 regression guard)",
       "break_class": "out_of_region_expected"
     },
     {
       "id": "econ.inv.bellman_contraction.v1",
-      "kind_applies_to": ["econ.dp_operator.fixed_dim"],
-      "property": {"file": "properties/bellman.ch", "name": "bellman_contraction_state0", "module": "Economoist.Properties.Bellman"},
-      "binding": {"mechanism": "direct-call", "references_output_fn": "direct", "goal_pattern": null, "contracts": []},
+      "kind_applies_to": [
+        "econ.dp_operator.fixed_dim"
+      ],
+      "property": {
+        "file": "properties/bellman.ch",
+        "name": "bellman_contraction_state0",
+        "module": "Economoist.Properties.Bellman"
+      },
+      "binding": {
+        "mechanism": "direct-call",
+        "references_output_fn": "direct",
+        "goal_pattern": null,
+        "contracts": []
+      },
       "preconditions": [
-        {"lhs": "p00", "op": "gte", "rhs": {"const": 0.0}},
-        {"lhs": "p01", "op": "gte", "rhs": {"const": 0.0}},
-        {"lhs": "p10", "op": "gte", "rhs": {"const": 0.0}},
-        {"lhs": "p11", "op": "gte", "rhs": {"const": 0.0}},
-        {"lhs": "p00 + p01", "op": "eq", "rhs": {"const": 1.0}},
-        {"lhs": "p10 + p11", "op": "eq", "rhs": {"const": 1.0}},
-        {"lhs": "g", "op": "gt", "rhs": {"const": 0.0}},
-        {"lhs": "g", "op": "lt", "rhs": {"const": 1.0}}
+        {
+          "lhs": "p00",
+          "op": "gte",
+          "rhs": {
+            "const": 0.0
+          }
+        },
+        {
+          "lhs": "p01",
+          "op": "gte",
+          "rhs": {
+            "const": 0.0
+          }
+        },
+        {
+          "lhs": "p10",
+          "op": "gte",
+          "rhs": {
+            "const": 0.0
+          }
+        },
+        {
+          "lhs": "p11",
+          "op": "gte",
+          "rhs": {
+            "const": 0.0
+          }
+        },
+        {
+          "lhs": "p00 + p01",
+          "op": "eq",
+          "rhs": {
+            "const": 1.0
+          }
+        },
+        {
+          "lhs": "p10 + p11",
+          "op": "eq",
+          "rhs": {
+            "const": 1.0
+          }
+        },
+        {
+          "lhs": "g",
+          "op": "gt",
+          "rhs": {
+            "const": 0.0
+          }
+        },
+        {
+          "lhs": "g",
+          "op": "lt",
+          "rhs": {
+            "const": 1.0
+          }
+        }
       ],
       "controls": {
-        "satisfying": {"name": "bellman_contraction_state0", "expected": "passed"},
-        "violating": {"name": "bellman_contraction_rowsum_wrong", "expected": "failed", "witness_required": true}
+        "satisfying": {
+          "name": "bellman_contraction_state0",
+          "expected": "passed"
+        },
+        "violating": {
+          "name": "bellman_contraction_rowsum_wrong",
+          "expected": "failed",
+          "witness_required": true
+        }
       },
-      "expected_tier_per_pin": {"0.14.0": "proven"},
+      "expected_tier_per_pin": {
+        "0.14.0": "proven",
+        "0.16.1": "proven"
+      },
       "dischargeability_probe": "p04_ite_two_call",
       "violation_text": "dropping row-stochasticity lets the discounted expectation amplify the value gap past the g-contraction bound",
       "break_class": "out_of_region_expected"
     },
     {
       "id": "econ.inv.bellman3_contraction.v1",
-      "kind_applies_to": ["econ.dp_operator.fixed_dim"],
-      "property": {"file": "properties/bellman.ch", "name": "bellman_contraction_state0_n3", "module": "Economoist.Properties.Bellman"},
-      "binding": {"mechanism": "direct-call", "references_output_fn": "direct", "goal_pattern": null, "contracts": []},
+      "kind_applies_to": [
+        "econ.dp_operator.fixed_dim"
+      ],
+      "property": {
+        "file": "properties/bellman.ch",
+        "name": "bellman_contraction_state0_n3",
+        "module": "Economoist.Properties.Bellman"
+      },
+      "binding": {
+        "mechanism": "direct-call",
+        "references_output_fn": "direct",
+        "goal_pattern": null,
+        "contracts": []
+      },
       "preconditions": [
-        {"lhs": "p00", "op": "gte", "rhs": {"const": 0.0}},
-        {"lhs": "p01", "op": "gte", "rhs": {"const": 0.0}},
-        {"lhs": "p02", "op": "gte", "rhs": {"const": 0.0}},
-        {"lhs": "p10", "op": "gte", "rhs": {"const": 0.0}},
-        {"lhs": "p11", "op": "gte", "rhs": {"const": 0.0}},
-        {"lhs": "p12", "op": "gte", "rhs": {"const": 0.0}},
-        {"lhs": "p00 + p01 + p02", "op": "eq", "rhs": {"const": 1.0}},
-        {"lhs": "p10 + p11 + p12", "op": "eq", "rhs": {"const": 1.0}},
-        {"lhs": "g", "op": "gt", "rhs": {"const": 0.0}},
-        {"lhs": "g", "op": "lt", "rhs": {"const": 1.0}}
+        {
+          "lhs": "p00",
+          "op": "gte",
+          "rhs": {
+            "const": 0.0
+          }
+        },
+        {
+          "lhs": "p01",
+          "op": "gte",
+          "rhs": {
+            "const": 0.0
+          }
+        },
+        {
+          "lhs": "p02",
+          "op": "gte",
+          "rhs": {
+            "const": 0.0
+          }
+        },
+        {
+          "lhs": "p10",
+          "op": "gte",
+          "rhs": {
+            "const": 0.0
+          }
+        },
+        {
+          "lhs": "p11",
+          "op": "gte",
+          "rhs": {
+            "const": 0.0
+          }
+        },
+        {
+          "lhs": "p12",
+          "op": "gte",
+          "rhs": {
+            "const": 0.0
+          }
+        },
+        {
+          "lhs": "p00 + p01 + p02",
+          "op": "eq",
+          "rhs": {
+            "const": 1.0
+          }
+        },
+        {
+          "lhs": "p10 + p11 + p12",
+          "op": "eq",
+          "rhs": {
+            "const": 1.0
+          }
+        },
+        {
+          "lhs": "g",
+          "op": "gt",
+          "rhs": {
+            "const": 0.0
+          }
+        },
+        {
+          "lhs": "g",
+          "op": "lt",
+          "rhs": {
+            "const": 1.0
+          }
+        }
       ],
       "controls": {
-        "satisfying": {"name": "bellman_contraction_state0_n3", "expected": "passed"},
-        "violating": {"name": "bellman_contraction_rowsum_n3_wrong", "expected": "failed", "witness_required": true}
+        "satisfying": {
+          "name": "bellman_contraction_state0_n3",
+          "expected": "passed"
+        },
+        "violating": {
+          "name": "bellman_contraction_rowsum_n3_wrong",
+          "expected": "failed",
+          "witness_required": true
+        }
       },
-      "expected_tier_per_pin": {"0.14.0": "proven"},
+      "expected_tier_per_pin": {
+        "0.14.0": "proven",
+        "0.16.1": "proven"
+      },
       "dischargeability_probe": "p15_nested_fmax3",
       "violation_text": "dropping row-stochasticity breaks the de-narrowed n=3 per-state contraction bound",
       "break_class": "out_of_region_expected"
     },
     {
       "id": "econ.inv.gordon_mispriced_positive.v1",
-      "kind_applies_to": ["econ.perpetuity_pv"],
-      "property": {"file": "demos/businesswrong.ch", "name": "gordon_pv_corrupted_control", "module": "Economoist.Demos.Businesswrong"},
-      "binding": {"mechanism": "direct-call", "references_output_fn": "direct", "goal_pattern": "({{output_fn}}(d, r, g) > 0.0)", "contracts": []},
+      "kind_applies_to": [
+        "econ.perpetuity_pv"
+      ],
+      "property": {
+        "file": "demos/businesswrong.ch",
+        "name": "gordon_pv_corrupted_control",
+        "module": "Economoist.Demos.Businesswrong"
+      },
+      "binding": {
+        "mechanism": "direct-call",
+        "references_output_fn": "direct",
+        "goal_pattern": "({{output_fn}}(d, r, g) > 0.0)",
+        "contracts": []
+      },
       "preconditions": [
-        {"lhs": "d", "op": "gt", "rhs": {"const": 0.0}},
-        {"lhs": "r", "op": "gt", "rhs": {"input": "g"}}
+        {
+          "lhs": "d",
+          "op": "gt",
+          "rhs": {
+            "const": 0.0
+          }
+        },
+        {
+          "lhs": "r",
+          "op": "gt",
+          "rhs": {
+            "input": "g"
+          }
+        }
       ],
       "controls": {
-        "satisfying": {"name": "gordon_pv_corrupted_control", "expected": "passed"},
-        "violating": {"name": "gordon_pv_corrupted_wrong", "expected": "failed", "witness_required": true}
+        "satisfying": {
+          "name": "gordon_pv_corrupted_control",
+          "expected": "passed"
+        },
+        "violating": {
+          "name": "gordon_pv_corrupted_wrong",
+          "expected": "failed",
+          "witness_required": true
+        }
       },
-      "expected_tier_per_pin": {"0.14.0": "proven"},
+      "expected_tier_per_pin": {
+        "0.14.0": "proven",
+        "0.16.1": "proven"
+      },
       "dischargeability_probe": "p01_gordon_div_positive",
       "violation_text": "the mispriced perpetuity gordon_pv_negated prices a positive-dividend claim below zero INSIDE its validity region r > g -- an in-region defect",
       "break_class": "in_region_defect",
@@ -319,22 +1092,80 @@
     },
     {
       "id": "econ.inv.gordon_dP_dr_negative_grad.v1",
-      "kind_applies_to": ["econ.perpetuity_pv"],
-      "property": {"file": "sampled/growth_sensitivity.ch", "name": "gordon_dP_dr_negative_grad", "module": "Economoist.Sampled.Growth_sensitivity"},
-      "binding": {"mechanism": "grad", "references_output_fn": "equivalent-form", "goal_pattern": null, "contracts": [], "equivalent_form_citation": "docs/issue_drafts/grad_through_import.md"},
+      "kind_applies_to": [
+        "econ.perpetuity_pv"
+      ],
+      "property": {
+        "file": "sampled/growth_sensitivity.ch",
+        "name": "gordon_dP_dr_negative_grad",
+        "module": "Economoist.Sampled.Growth_sensitivity"
+      },
+      "binding": {
+        "mechanism": "grad",
+        "references_output_fn": "equivalent-form",
+        "goal_pattern": null,
+        "contracts": [],
+        "equivalent_form_citation": "docs/issue_drafts/grad_through_import.md"
+      },
       "preconditions": [
-        {"lhs": "d", "op": "gt", "rhs": {"const": 0.5}},
-        {"lhs": "d", "op": "lt", "rhs": {"const": 9.5}},
-        {"lhs": "g", "op": "gt", "rhs": {"const": 0.0}},
-        {"lhs": "g", "op": "lt", "rhs": {"const": 4.0}},
-        {"lhs": "r", "op": "gt", "rhs": {"input": "g"}},
-        {"lhs": "r", "op": "lt", "rhs": {"const": 9.5}}
+        {
+          "lhs": "d",
+          "op": "gt",
+          "rhs": {
+            "const": 0.5
+          }
+        },
+        {
+          "lhs": "d",
+          "op": "lt",
+          "rhs": {
+            "const": 9.5
+          }
+        },
+        {
+          "lhs": "g",
+          "op": "gt",
+          "rhs": {
+            "const": 0.0
+          }
+        },
+        {
+          "lhs": "g",
+          "op": "lt",
+          "rhs": {
+            "const": 4.0
+          }
+        },
+        {
+          "lhs": "r",
+          "op": "gt",
+          "rhs": {
+            "input": "g"
+          }
+        },
+        {
+          "lhs": "r",
+          "op": "lt",
+          "rhs": {
+            "const": 9.5
+          }
+        }
       ],
       "controls": {
-        "satisfying": {"name": "gordon_dP_dr_negative_grad", "expected": "passed"},
-        "violating": {"name": "gordon_dP_dr_negative_grad_wrong", "expected": "failed", "witness_required": true}
+        "satisfying": {
+          "name": "gordon_dP_dr_negative_grad",
+          "expected": "passed"
+        },
+        "violating": {
+          "name": "gordon_dP_dr_negative_grad_wrong",
+          "expected": "failed",
+          "witness_required": true
+        }
       },
-      "expected_tier_per_pin": {"0.14.0": "fuzz_validated"},
+      "expected_tier_per_pin": {
+        "0.14.0": "fuzz_validated",
+        "0.16.1": "fuzz_validated"
+      },
       "tier_upgrade_trigger": "docs/issue_drafts/grad_smt_lowering.md",
       "dischargeability_probe": "p05_grad_fuzz",
       "violation_text": "the AD sensitivity dP/dr comes out non-negative in the convergence region, contradicting the proven decreasing-in-r fact",
@@ -343,8 +1174,17 @@
     }
   ],
   "lanes": {
-    "properties": {"dir": "properties", "tier": "proven", "note": "the unqualified SMT-green boundary; this shell's identity"},
-    "sampled": {"dir": "sampled", "module_prefix": "Economoist.Sampled", "tier": "fuzz_validated", "note": "honest amber; fuzz-validated library invariants, gated separately, name-linted, never colliding with a properties/ green"}
+    "properties": {
+      "dir": "properties",
+      "tier": "proven",
+      "note": "the unqualified SMT-green boundary; this shell's identity"
+    },
+    "sampled": {
+      "dir": "sampled",
+      "module_prefix": "Economoist.Sampled",
+      "tier": "fuzz_validated",
+      "note": "honest amber; fuzz-validated library invariants, gated separately, name-linted, never colliding with a properties/ green"
+    }
   },
   "eval_import_boundary": "prove resolves module imports so proven properties reach the real exported functions; eval does not resolve standalone-file imports (chelis#423), and grad does not lower through a cross-module import call (docs/issue_drafts/grad_through_import.md), so the sampled AD lane inlines the shipped single-expression body. Neither boundary blocks the proof surface.",
   "dependency_edges_boundary": "the prover's summary dependency_edges lists only same-file (local) def references, not cross-module imports (docs/issue_drafts/dependency_edges_imports.md); economoist properties import their output fns from src/, so the producer gate verifies anti-vacuity from the prover-emitted goal string (which carries the imported output fn) plus the corrupt-flip control, not from dependency_edges.",
