@@ -2,8 +2,8 @@
   "schema_id": "chelis-shell.invariant-surface",
   "schema_version": "1.0",
   "pkg": "economoist",
-  "pkg_version": "0.2.4",
-  "chelis_pin": "0.16.1",
+  "pkg_version": "0.2.5",
+  "chelis_pin": "0.17.1",
   "purpose": "Economoist's canon model + invariant surface for C Note. Every proven-tier invariant here is a genuine unqualified SMT green that CALLS the shipped operator (not a guard restatement); the one fuzz_validated invariant is an honest amber in the sampled lane, carrying a tier_upgrade_trigger. C Note vendors this file and the byte-identical release asset economoist-0.2.3.invariants.json. See docs/contracts/characterization_contract_v1.md (schema chelis-shell.invariant-surface/1.0).",
   "models": [
     {
@@ -492,7 +492,8 @@
       },
       "expected_tier_per_pin": {
         "0.14.0": "proven",
-        "0.16.1": "proven"
+        "0.16.1": "proven",
+        "0.17.1": "proven"
       },
       "dischargeability_probe": "p01_gordon_div_positive",
       "violation_text": "the model prices a positive-dividend perpetuity at or below zero inside its convergence region r > g",
@@ -543,7 +544,8 @@
       },
       "expected_tier_per_pin": {
         "0.14.0": "proven",
-        "0.16.1": "proven"
+        "0.16.1": "proven",
+        "0.17.1": "proven"
       },
       "dischargeability_probe": "p01_gordon_div_positive",
       "violation_text": "the conservative model prices a positive-dividend perpetuity at or below zero once the inputs leave the convergence region r > g (which its strict domain r > g + 0.01 is contained in); the margin is a domain-of-use choice, not the positivity hypothesis",
@@ -602,7 +604,8 @@
       },
       "expected_tier_per_pin": {
         "0.14.0": "proven",
-        "0.16.1": "proven"
+        "0.16.1": "proven",
+        "0.17.1": "proven"
       },
       "dischargeability_probe": "p02_gordon_two_point_r",
       "violation_text": "raising the required return does not strictly lower the present value",
@@ -660,7 +663,8 @@
       },
       "expected_tier_per_pin": {
         "0.14.0": "proven",
-        "0.16.1": "proven"
+        "0.16.1": "proven",
+        "0.17.1": "proven"
       },
       "dischargeability_probe": "p13_economoist_published_properties",
       "violation_text": "a non-stochastic transition row lets total probability mass drift off one",
@@ -725,7 +729,8 @@
       },
       "expected_tier_per_pin": {
         "0.14.0": "proven",
-        "0.16.1": "proven"
+        "0.16.1": "proven",
+        "0.17.1": "proven"
       },
       "dischargeability_probe": "p13_economoist_published_properties",
       "violation_text": "a non-stochastic transition row lets total probability mass drift off one (n=3)",
@@ -832,7 +837,8 @@
       },
       "expected_tier_per_pin": {
         "0.14.0": "proven",
-        "0.16.1": "proven"
+        "0.16.1": "proven",
+        "0.17.1": "proven"
       },
       "dischargeability_probe": "p04_ite_two_call",
       "violation_text": "one Bellman step is not monotone in the continuation value when domination v <= w is dropped (chelis#426 regression guard)",
@@ -925,7 +931,8 @@
       },
       "expected_tier_per_pin": {
         "0.14.0": "proven",
-        "0.16.1": "proven"
+        "0.16.1": "proven",
+        "0.17.1": "proven"
       },
       "dischargeability_probe": "p04_ite_two_call",
       "violation_text": "dropping row-stochasticity lets the discounted expectation amplify the value gap past the g-contraction bound",
@@ -1032,7 +1039,8 @@
       },
       "expected_tier_per_pin": {
         "0.14.0": "proven",
-        "0.16.1": "proven"
+        "0.16.1": "proven",
+        "0.17.1": "proven"
       },
       "dischargeability_probe": "p15_nested_fmax3",
       "violation_text": "dropping row-stochasticity breaks the de-narrowed n=3 per-state contraction bound",
@@ -1083,7 +1091,8 @@
       },
       "expected_tier_per_pin": {
         "0.14.0": "proven",
-        "0.16.1": "proven"
+        "0.16.1": "proven",
+        "0.17.1": "proven"
       },
       "dischargeability_probe": "p01_gordon_div_positive",
       "violation_text": "the mispriced perpetuity gordon_pv_negated prices a positive-dividend claim below zero INSIDE its validity region r > g -- an in-region defect",
@@ -1164,7 +1173,8 @@
       },
       "expected_tier_per_pin": {
         "0.14.0": "fuzz_validated",
-        "0.16.1": "fuzz_validated"
+        "0.16.1": "fuzz_validated",
+        "0.17.1": "fuzz_validated"
       },
       "tier_upgrade_trigger": "docs/issue_drafts/grad_smt_lowering.md",
       "dischargeability_probe": "p05_grad_fuzz",
