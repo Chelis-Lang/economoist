@@ -45,48 +45,6 @@ the current surface.
   fixed. Re-probe trigger: any release note adding scalar `max`/`min` reductions
   over `f32` to chelis-std. chelis#424 (draft: `issue_drafts/scalar_max_abs_f32.md`).
 
-- **prove --json `dependency_edges` omits cross-module import references.** The
-  `dependency_edges` array lists only calls to defs in the same file; a call to a
-  function imported from another module resolves and proves but does not appear in
-  the array (it is `[]`). Affected surface: the characterization-contract
-  anti-vacuity check for proven properties, which import their output fns from
-  `src/`. Workaround: `scripts/prove_gate.py` verifies anti-vacuity from the
-  prover-emitted `goal` string (which does carry the mangled imported reference)
-  plus the corrupt-flip control, a stronger guarantee than `dependency_edges`
-  alone. Re-probe trigger: `dependency_edges` still omits import references at the
-  next release. Draft: `issue_drafts/dependency_edges_imports.md` (not yet filed;
-  cite the path).
-
-- **Compiler-owned cross-module dependency attribution is not published yet.**
-  Chelis#922 is included in the prepared 0.17.2 PR #926 binary and adds a linker-owned
-  `dependency_graph` with stable declaration identity, source ownership, and
-  resolved cross-module edges. `scripts/prove_gate.py` already consumes that
-  graph when present and fails closed if a complete graph omits the required
-  direct binding; at the 0.17.1 pin it retains the compiler-emitted goal plus
-  corrupt-flip compatibility oracle. Archive this entry only after the
-  published 0.17.2 release emits a complete graph for the sampled Gordon property and
-  the direct edge to `Economoist.Growth.gordon_pv` is observed.
-
-- **Supported scalar-grad SMT lowering is implemented but not published.**
-  Chelis#923 is included in the prepared 0.17.2 PR #926 binary with fail-closed Tier-B lowering for the
-  supported single-target scalar gradient plus compiler/backend parity. The
-  Economoist pre-release package probe currently fails earlier in that
-  precheck: imported `gordon_pv` is reported unbound even though the emitted
-  compiler dependency graph contains the correct resolved edges. This is a
-  release blocker, not a successful compatibility result. The
-  shipped Gordon AD invariant deliberately remains `fuzz_validated`: it checks
-  concrete `f32` execution, while `gordon_decreasing_in_r` separately states
-  the unqualified real-arithmetic theorem. Release re-probe must confirm the
-  scalar-grad SMT behavior, but it does not promote or merge these two lanes.
-
-- **The published 0.17.1 package context still pays the fixed cost.** Chelis#924
-  is included in the prepared 0.17.2 PR #926 binary; it persists the prepared Reef graph and prunes post-verdict
-  checks to linker-reachable declarations. Economoist's sampled gate now runs
-  its checked-in direct-import file in the real package context so the
-  integration surface is no longer hidden by a copy-out workaround. The
-  latency fix remains pre-release-only until the published 0.17.2 binary passes the
-  cold/warm oracle; do not archive this entry based on a development build.
-
 ## Parked
 
 - **Induction for limit and general-n results.** Convergence to stationarity, the
@@ -100,6 +58,24 @@ the current surface.
   propagation and abstract interpretation). Re-probe trigger: Beacon availability.
 
 ## Archived
+
+- **Compiler-owned dependency attribution shipped in Chelis 0.17.2
+  (chelis#922).** The 0.17.3 source-candidate gate observes a complete
+  linker-owned graph and direct stable-ID edges from both sampled Gordon
+  properties to `Economoist.Growth.gordon_pv`. The gate fails closed if a
+  complete graph omits either edge. The older flat `dependency_edges` field
+  still omits cross-module references, but it is now a compatibility field
+  rather than a narrowing: the compiler-owned graph supersedes it.
+
+- **Scalar-grad SMT lowering shipped in Chelis 0.17.2 (chelis#923).** The
+  supported real-arithmetic lane is available. Economoist intentionally keeps
+  its concrete `f32` AD characterization fuzz-validated and its mathematical
+  monotonicity theorem separately SMT-proven.
+
+- **Persistent package prove preparation shipped in Chelis 0.17.2
+  (chelis#924).** Economoist's sampled gate now executes the checked-in
+  direct-import property in its real Reef package context. The 0.17.3 official
+  release asset must repeat the local candidate timing before publication.
 
 - **Direct grad through an imported function. RESOLVED at the 0.17.1 pin
   (economoist#13).** A two-module package re-probe returned a fuzz verdict whose

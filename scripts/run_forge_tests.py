@@ -16,6 +16,7 @@ Python-stdlib-only. Exit 0 only if the metamorphic check behaves as required.
 
 from __future__ import annotations
 
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -23,11 +24,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import prove_gate as pg  # noqa: E402
 
-REEF = '''\
+REEF_TEMPLATE = '''\
 [package]
 name = "forge"
 version = "0.0.0"
-compiler = "=0.14.0"
+compiler = "=__COMPILER_VERSION__"
 module_prefix = "Forge"
 additional_sources = ["properties"]
 
@@ -58,13 +59,35 @@ import Forge.Model (ff)
 '''
 
 
+def reef_for_binary(binary: str) -> str:
+    """Render the throwaway package manifest for the compiler under test."""
+    version_output = subprocess.run(
+        [binary, "--version"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    if not version_output.startswith("chelis "):
+        raise ValueError(f"unexpected compiler version output {version_output!r}")
+    compiler_version = version_output.removeprefix("chelis ")
+    if not compiler_version:
+        raise ValueError(f"unexpected compiler version output {version_output!r}")
+    return REEF_TEMPLATE.replace("__COMPILER_VERSION__", compiler_version)
+
+
 def main() -> int:
     binary = pg.resolve_bin()
+    try:
+        reef = reef_for_binary(binary)
+    except (subprocess.CalledProcessError, ValueError) as exc:
+        print(f"run_forge_tests FAILED: {exc}")
+        return 1
+
     with tempfile.TemporaryDirectory(prefix="forge-pkg-") as tmp:
         pkg = Path(tmp)
         (pkg / "src").mkdir()
         (pkg / "properties").mkdir()
-        (pkg / "reef.toml").write_text(REEF)
+        (pkg / "reef.toml").write_text(reef)
         (pkg / "src" / "model.ch").write_text(MODEL)
         (pkg / "properties" / "forge.ch").write_text(PROPS)
 

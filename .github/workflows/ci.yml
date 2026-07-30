@@ -12,8 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CHELIS_TAG: v0.17.2
-  CHELIS_VERSION: 0.17.2
+  CHELIS_TAG: v0.17.3
+  CHELIS_VERSION: 0.17.3
 
 jobs:
   hard-rule-guard:
@@ -21,6 +21,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Test release-toolchain installer layout
+        run: python3 scripts/test_install_chelis_toolchain.py
+      - name: Test forge compiler-pin derivation
+        run: python3 scripts/test_run_forge_tests.py
       - name: Hard rule -- all chelis pin locations agree
         run: python3 scripts/audit_workarounds.py --pins-only
 

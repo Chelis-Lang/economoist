@@ -1,9 +1,8 @@
 # Draft: grad-based sensitivity goals do not lower to the SMT tier
 
-Filed as chelis#923 and included in the prepared Chelis 0.17.2 PR #926 binary.
-The Economoist pre-release probe currently exposes an imported-grad precheck
-regression (`gordon_pv` reported unbound before verdict); fix and re-probe are
-required before publication.
+Filed as chelis#923 and released in Chelis 0.17.2.
+The Economoist 0.17.3 source-candidate probe returns the expected direct-import
+verdict when built with the same `smt` feature set as an official release.
 
 **Summary.** A `@property` goal whose body contains `grad(...)` (automatic
 differentiation of a scalar expression) does not lower to Tier B (cvc5); at

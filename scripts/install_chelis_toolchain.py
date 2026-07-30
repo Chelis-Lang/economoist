@@ -35,7 +35,7 @@ resolve_version() {
 }
 
 VER=$(resolve_version)
-BIN="$HOME/.local/share/chelis/$VER/chelis"
+BIN="$HOME/.local/share/chelis/$VER/bin/chelis"
 if [ ! -x "$BIN" ]; then
   echo "error: chelis $VER not installed at $BIN" >&2; exit 1
 fi
@@ -63,7 +63,7 @@ def find_reef_toml() -> Path:
 
 def install(version: str, set_default: bool) -> None:
     dest = INSTALL_BASE / version
-    if dest.exists() and (dest / "chelis").exists():
+    if (dest / "bin" / "chelis").is_file():
         print(f"chelis {version} already installed at {dest}")
     else:
         dest.mkdir(parents=True, exist_ok=True)
