@@ -3,6 +3,24 @@
 All notable changes to the Economoist shell are recorded here. The package
 `version` tracks its own line (not the chelis compiler pin).
 
+## [Unreleased]
+
+### Changed
+
+- **The Gordon AD sensitivity now differentiates the shipped export directly
+  (economoist#13).** Both the satisfying property and its sign-flipped corrupt
+  twin call imported `Economoist.Growth.gordon_pv`; the manifest binding is
+  `direct`, not `equivalent-form`.
+- **The sampled proof gate now exercises the real Reef package context.** The
+  fuzz-only, 500-sample lane no longer copies source into a standalone
+  temporary package. Economoist#13 established direct imported-grad execution
+  at the 0.17.1 pin; chelis#924's development fix removes the remaining
+  package-sized fixed cost pending a published release re-probe.
+- **Direct bindings consume compiler attribution when available.** The proof
+  gate prefers chelis#922's linker-owned `dependency_graph` and fails closed on
+  a complete graph without the required property-to-model edge. The
+  compiler-emitted goal remains the compatibility oracle at the 0.17.1 pin.
+
 ## [0.2.3] - 2026-07-13
 
 Metamorphic anti-vacuity hardening: close the forge surface the red-team defeated

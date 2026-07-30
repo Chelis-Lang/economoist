@@ -45,34 +45,6 @@ the current surface.
   fixed. Re-probe trigger: any release note adding scalar `max`/`min` reductions
   over `f32` to chelis-std. chelis#424 (draft: `issue_drafts/scalar_max_abs_f32.md`).
 
-- **grad goals do not lower to the SMT tier (AD sensitivity is fuzz-only).** A
-  `@property` goal whose body contains `grad(...)` degrades to fuzz at `--tier
-  auto` and reports `unsupported` at `--tier smt-only`; there is no unqualified
-  SMT green for an AD-derivative sign fact. Affected surface: the Gordon
-  comparative-static dP/dr < 0, which therefore ships in the sampled lane
-  (`sampled/growth_sensitivity.ch`, `gordon_dP_dr_negative_grad`, `fuzz_validated`
-  amber) rather than in the proven `properties/` boundary. The same economic
-  content is available as an unqualified SMT green via the two-point form
-  `gordon_decreasing_in_r` over the reals; the grad lane is the AD confirmation at
-  a point, not a proof. Workaround / tier-upgrade trigger: when grad goals lower
-  to SMT the sampled invariant is re-probed and its expected tier bumped from
-  `fuzz_validated` to `proven` (a de-narrowing event). Draft:
-  `issue_drafts/grad_smt_lowering.md` (not yet filed; cite the path).
-
-- **grad does not lower through a cross-module import call (hangs).**
-  `grad(fn (...) -> imported_fn(...), wrt=...)` inside a `@property` goal makes no
-  progress when `imported_fn` is imported from another module of the same package:
-  `chelis prove` hangs with no verdict and no error, whereas the identical grad
-  expression with the callee body inlined lowers and fuzz-validates promptly.
-  Affected surface: the sampled AD-sensitivity lane, which wants to differentiate
-  the exported `Economoist.Growth.gordon_pv`. Workaround: the sampled property
-  inlines gordon_pv's shipped single-expression body `(d / (r - g))` (single-
-  expression discipline; the manifest marks the binding
-  `references_output_fn: "equivalent-form"` and the oracle harness pins the inline
-  body against gordon_pv's numeric goldens so it cannot drift). Re-probe trigger:
-  grad-through-import still hangs at the next release. Draft:
-  `issue_drafts/grad_through_import.md` (not yet filed; cite the path).
-
 - **prove --json `dependency_edges` omits cross-module import references.** The
   `dependency_edges` array lists only calls to defs in the same file; a call to a
   function imported from another module resolves and proves but does not appear in
@@ -84,6 +56,32 @@ the current surface.
   alone. Re-probe trigger: `dependency_edges` still omits import references at the
   next release. Draft: `issue_drafts/dependency_edges_imports.md` (not yet filed;
   cite the path).
+
+- **Compiler-owned cross-module dependency attribution is not published yet.**
+  Chelis#922 is implemented on the development branch and adds a linker-owned
+  `dependency_graph` with stable declaration identity, source ownership, and
+  resolved cross-module edges. `scripts/prove_gate.py` already consumes that
+  graph when present and fails closed if a complete graph omits the required
+  direct binding; at the 0.17.1 pin it retains the compiler-emitted goal plus
+  corrupt-flip compatibility oracle. Archive this entry only after the
+  published release emits a complete graph for the sampled Gordon property and
+  the direct edge to `Economoist.Growth.gordon_pv` is observed.
+
+- **Supported scalar-grad SMT lowering is implemented but not published.**
+  Chelis#923's development commits add fail-closed Tier-B lowering for the
+  supported single-target scalar gradient plus compiler/backend parity. The
+  shipped Gordon AD invariant deliberately remains `fuzz_validated`: it checks
+  concrete `f32` execution, while `gordon_decreasing_in_r` separately states
+  the unqualified real-arithmetic theorem. Release re-probe must confirm the
+  scalar-grad SMT behavior, but it does not promote or merge these two lanes.
+
+- **Package-context proving still pays the 0.17.1 fixed cost.** Chelis#924's
+  development fix persists the prepared Reef graph and prunes post-verdict
+  checks to linker-reachable declarations. Economoist's sampled gate now runs
+  its checked-in direct-import file in the real package context so the
+  integration surface is no longer hidden by a copy-out workaround. The
+  latency fix remains candidate-only until the published binary passes the
+  cold/warm oracle; do not archive this entry based on a development build.
 
 ## Parked
 
@@ -98,6 +96,15 @@ the current surface.
   propagation and abstract interpretation). Re-probe trigger: Beacon availability.
 
 ## Archived
+
+- **Direct grad through an imported function. RESOLVED at the 0.17.1 pin
+  (economoist#13).** A two-module package re-probe returned a fuzz verdict whose
+  compiler-emitted goal directly contained the imported function call.
+  Economoist now differentiates `Economoist.Growth.gordon_pv` directly in both
+  the satisfying property and corrupt sign twin; the manifest binding is
+  `direct`. The distinct package-latency and scalar-grad-SMT issues remain
+  tracked above as chelis#924 and chelis#923. Historical probe:
+  `issue_drafts/grad_through_import.md`.
 
 - **SOUNDNESS: two-call comparison/subtraction of an ITE-bodied def false-proves.
   RESOLVED (chelis v0.10.0).** A goal that compared or subtracted two calls of the

@@ -4,7 +4,7 @@
   "pkg": "economoist",
   "pkg_version": "0.2.5",
   "chelis_pin": "0.17.1",
-  "purpose": "Economoist's canon model + invariant surface for C Note. Every proven-tier invariant here is a genuine unqualified SMT green that CALLS the shipped operator (not a guard restatement); the one fuzz_validated invariant is an honest amber in the sampled lane, carrying a tier_upgrade_trigger. C Note vendors this file and the byte-identical release asset economoist-0.2.3.invariants.json. See docs/contracts/characterization_contract_v1.md (schema chelis-shell.invariant-surface/1.0).",
+  "purpose": "Economoist's canon model + invariant surface for C Note. Every proven-tier invariant here is a genuine unqualified SMT green that CALLS the shipped operator (not a guard restatement); the one fuzz_validated invariant is an honest amber in the sampled lane, carrying a tier_upgrade_trigger. C Note vendors this file and the byte-identical release asset economoist-<pkg_version>.invariants.json. See docs/contracts/characterization_contract_v1.md (schema chelis-shell.invariant-surface/1.0).",
   "models": [
     {
       "id": "gordon",
@@ -1111,10 +1111,9 @@
       },
       "binding": {
         "mechanism": "grad",
-        "references_output_fn": "equivalent-form",
+        "references_output_fn": "direct",
         "goal_pattern": null,
-        "contracts": [],
-        "equivalent_form_citation": "docs/issue_drafts/grad_through_import.md"
+        "contracts": []
       },
       "preconditions": [
         {
@@ -1176,7 +1175,7 @@
         "0.16.1": "fuzz_validated",
         "0.17.1": "fuzz_validated"
       },
-      "tier_upgrade_trigger": "docs/issue_drafts/grad_smt_lowering.md",
+      "tier_upgrade_trigger": "Dated semantic deferral: retain the concrete f32 AD lane at fuzz_validated until a bit-precise floating-point proof tier exists (review 2027-01-30; docs/models/growth.md E4)",
       "dischargeability_probe": "p05_grad_fuzz",
       "violation_text": "the AD sensitivity dP/dr comes out non-negative in the convergence region, contradicting the proven decreasing-in-r fact",
       "fuzz_domain_note": "guards intersect the prover fuzz box [-10,10]^n with ~3% acceptance (cnote.dischargeability p05/p11)",
@@ -1196,8 +1195,8 @@
       "note": "honest amber; fuzz-validated library invariants, gated separately, name-linted, never colliding with a properties/ green"
     }
   },
-  "eval_import_boundary": "prove resolves module imports so proven properties reach the real exported functions; eval does not resolve standalone-file imports (chelis#423), and grad does not lower through a cross-module import call (docs/issue_drafts/grad_through_import.md), so the sampled AD lane inlines the shipped single-expression body. Neither boundary blocks the proof surface.",
-  "dependency_edges_boundary": "the prover's summary dependency_edges lists only same-file (local) def references, not cross-module imports (docs/issue_drafts/dependency_edges_imports.md); economoist properties import their output fns from src/, so the producer gate verifies anti-vacuity from the prover-emitted goal string (which carries the imported output fn) plus the corrupt-flip control, not from dependency_edges.",
+  "eval_import_boundary": "prove resolves module imports so proven and sampled properties reach the real exported functions; eval still does not resolve standalone-file imports (chelis#423). The sampled AD lane directly differentiates the imported gordon_pv export at the 0.17.1 pin (economoist#13). Package-scale latency remains tracked by chelis#924.",
+  "dependency_edges_boundary": "At the 0.17.1 pin, the prover's legacy dependency_edges omits cross-module imports, so the producer gate uses the compiler-emitted goal plus the corrupt-flip control (docs/issue_drafts/dependency_edges_imports.md). When chelis#922's dependency_graph is present, the gate instead requires the complete linker-owned graph to contain the direct property-to-output-function edge and fails closed if it does not.",
   "run": {
     "build": "chelis reef build",
     "contract_gate": "python3 scripts/contract_gate.py",

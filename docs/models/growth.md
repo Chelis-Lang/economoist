@@ -180,16 +180,16 @@ shipped expression and not of a separate restatement.
 The AD sensitivity ships as an honest amber, NOT a proven green. It lives in the
 sampled lane (`sampled/growth_sensitivity.ch`, module prefix
 `Economoist.Sampled`, property `gordon_dP_dr_negative_grad`) at tier
-`fuzz_validated`, kept out of the pure-SMT-green `properties/` boundary. Two
-upstream gaps force this: a `grad` goal does not lower to the SMT tier -- it only
-fuzz-validates (`issue_drafts/grad_smt_lowering.md`) -- and `grad` does not lower
-through a cross-module import call (it hangs), so the sampled property inlines
-`gordon_pv`'s shipped single-expression body `(d / (r - g))` rather than
-referencing the export directly (`issue_drafts/grad_through_import.md`). The
-oracle harness pins the inline body against `gordon_pv`'s numeric goldens so the
-equivalent form cannot drift from the export. When `grad` goals lower to SMT this
-amber is re-probed and its expected tier bumps to `proven` -- a de-narrowing
-event, not a rewrite.
+`fuzz_validated`, kept out of the pure-SMT-green `properties/` boundary because
+this lane exercises the compiler's concrete `f32` AD transform. Chelis#923 has
+a development implementation for lowering the supported scalar gradient to
+SMT, but a published re-probe is still pending, and that real-arithmetic
+theorem would not certify floating-point execution. The real
+comparative-static fact is already the unqualified two-point SMT green
+`gordon_decreasing_in_r`; this sampled property is its deliberately separate
+`f32` execution check. It now differentiates the imported `gordon_pv` export
+directly. The former inline-expression and copy-out workarounds are retired by
+economoist#13; chelis#924's package-latency improvement remains pending release.
 
 At the concrete point `D = 2, r = 0.1, g = 0.05` the denominator is `r - g =
 0.05`, so the analytic values are `P = 2 / 0.05 = 40`, `dP/dr = -D/(r-g)^2 =
@@ -202,7 +202,8 @@ chelis eval '(fn (d: f32, r: f32, g: f32) -> (d / (r - g)))(2.0, 0.1, 0.05)'
 # 40
 ```
 
-Gradient with respect to `r` (the body is the identical `gordon_pv` expression):
+Gradient with respect to `r` (the sampled invariant differentiates the imported
+`gordon_pv` export directly; this standalone expression shows the same value):
 
 ```
 chelis eval 'grad(fn (d: f32, r: f32, g: f32) -> (d / (r - g)), wrt=r)(2.0, 0.1, 0.05)'
@@ -226,7 +227,6 @@ shortfall from the exact `800` is the floating-point residue, which is precisely
 the reals-vs-floats boundary above: the proven fact is the real-arithmetic sign,
 and the `f32` AD value confirms that sign at a point without being itself a proof.
 
-The lambda body `(d / (r - g))` written inline is the exact body of
-`def gordon_pv` in `src/growth.ch`. The inline form is used for the demo because
-`eval --file` loads the whole package context; the inline expression keeps the
-demo self-contained while still differentiating the identical Gordon expression.
+The inline expression in these one-line eval examples keeps the command
+self-contained. It is not the verification binding: the shipped sampled
+property imports and differentiates `Economoist.Growth.gordon_pv` directly.

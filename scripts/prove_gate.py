@@ -15,9 +15,9 @@ the gate checks:
   1. satisfying control holds, classified tier == expected_tier_per_pin[pin]
      (drift in EITHER direction fails -- better-than-expected means "run the
      de-narrowing motion"); assumptions' non_vacuity established; the goal
-     references the shipped output fn (anti-vacuity, read from the prover-emitted
-     goal string because dependency_edges does not cross the module import
-     boundary -- docs/issue_drafts/dependency_edges_imports.md);
+     references the shipped output fn. At compilers exposing chelis#922's
+     `dependency_graph`, linker-owned declaration edges are authoritative; the
+     prover-emitted goal remains the compatibility oracle at older pins;
   2. violating control breaks with a concrete in-domain witness. For a defective
      model (in-region defect) the witness must satisfy every precondition AND the
      f32 re-execution of the shipped body at the witness must reproduce the break;
@@ -110,6 +110,7 @@ def run_prove(binary: str, ch: Path, tier: str, *, samples: int | None = None,
         cmd += ["--smt-timeout", str(smt_timeout)]
     proc = subprocess.run(cmd, cwd=str(cwd or REPO_ROOT), capture_output=True, text=True)
     records: dict[str, dict] = {}
+    dependency_graph: dict | None = None
     for line in proc.stdout.splitlines():
         line = line.strip()
         if not line:
@@ -122,6 +123,14 @@ def run_prove(binary: str, ch: Path, tier: str, *, samples: int | None = None,
             records[r.get("name", "")] = r
         elif r.get("kind") == "error":
             records.setdefault("__errors__", {"reasons": []})["reasons"].append(r.get("reason"))
+        elif r.get("kind") == "summary":
+            graph = r.get("dependency_graph")
+            if isinstance(graph, dict):
+                dependency_graph = graph
+    if dependency_graph is not None:
+        for record in records.values():
+            if record.get("kind") in ("property", "obligation"):
+                record["_dependency_graph"] = dependency_graph
     if proc.returncode not in (0, 1, 2, 3) and not records:
         sys.stderr.write(proc.stdout + proc.stderr)
     return records
@@ -151,6 +160,48 @@ def classify_tier(r: dict) -> str:
     if status == "error":
         return "error"
     return "unknown"
+
+
+def compiler_graph_directly_references(
+    record: dict, property_name: str, output_fns: set[str]
+) -> tuple[bool | None, str]:
+    """Check a direct model binding against chelis#922's linker-owned graph.
+
+    `None` means the current compiler did not provide a complete graph and the
+    caller must use the compatibility oracle. Once a complete graph is present,
+    missing nodes or edges fail closed rather than silently falling back to
+    source/goal reconstruction.
+    """
+    graph = record.get("_dependency_graph")
+    if not isinstance(graph, dict) or graph.get("status") != "complete":
+        return None, "compiler dependency graph unavailable at this pin"
+
+    declarations = graph.get("declarations")
+    edges = graph.get("edges")
+    if not isinstance(declarations, list) or not isinstance(edges, list):
+        return False, "complete compiler dependency graph lacks declarations/edges arrays"
+
+    property_ids = {
+        node.get("id")
+        for node in declarations
+        if node.get("kind") == "property" and node.get("name") == property_name
+    }
+    output_ids = {
+        node.get("id")
+        for node in declarations
+        if node.get("name") in output_fns
+    }
+    if not property_ids:
+        return False, f"compiler dependency graph has no property node for {property_name}"
+    if not output_ids:
+        return False, "compiler dependency graph has no shipped output-function node"
+    if any(
+        edge.get("from") in property_ids and edge.get("to") in output_ids
+        for edge in edges
+        if isinstance(edge, dict)
+    ):
+        return True, "linker-owned direct dependency edge present"
+    return False, "compiler dependency graph has no direct property -> output-function edge"
 
 
 def assumptions_clean(r: dict) -> tuple[bool, str]:
@@ -401,20 +452,25 @@ def gate_manifest(binary: str, manifest: dict, records: dict[str, dict],
             failures.append(f"{iid}: tier drift -- {sat_name} classified {got!r}, manifest expects {expected!r} (run the de-narrowing motion)")
         if sat.get("status") != "passed":
             failures.append(f"{iid}: satisfying control {sat_name} did not pass: {sat.get('status')}")
-        # anti-vacuity. `direct` must reference a shipped output fn in its goal
-        # (read from the prover-emitted goal string, since dependency_edges does
-        # not cross the module import boundary). `equivalent-form` deliberately
-        # inlines the shipped body (e.g. grad-through-import does not lower), so
-        # it is anti-vacuous by its probe citation plus the corrupt-flip control;
-        # the citation must be present.
+        # Anti-vacuity. For `direct`, chelis#922's complete linker-owned graph is
+        # authoritative when present. Older pins fall back to the compiler-
+        # emitted goal string; they never reconstruct ownership from source.
+        # `equivalent-form` deliberately inlines a shipped body and therefore
+        # requires a narrowing citation plus its corrupt-flip control.
         binding = inv.get("binding", {})
         ref_mode = binding.get("references_output_fn")
         goal = re.sub(r"\s+", "", sat.get("goal", ""))
         if ref_mode == "equivalent-form":
             if not binding.get("equivalent_form_citation"):
                 failures.append(f"{iid}: references_output_fn 'equivalent-form' but no equivalent_form_citation")
-        elif not any(f"{fn}(" in goal for fn in output_fns):
-            failures.append(f"{iid}: satisfying control {sat_name} goal references no shipped output fn (vacuity tell)")
+        else:
+            graph_ok, graph_detail = compiler_graph_directly_references(
+                sat, sat_name, output_fns
+            )
+            if graph_ok is False:
+                failures.append(f"{iid}: {graph_detail}")
+            elif graph_ok is None and not any(f"{fn}(" in goal for fn in output_fns):
+                failures.append(f"{iid}: satisfying control {sat_name} goal references no shipped output fn (compatibility vacuity tell)")
         if expected == "proven":
             ok, why = assumptions_clean(sat)
             if not ok:
@@ -524,6 +580,27 @@ def honesty_self_test() -> None:
     masked = rec("fuzz", ["fuzz"])
     masked["composite_verdict"] = "proven_modulo_real_arithmetic"
     assert classify_tier(masked) == "fuzz_validated", "composite_verdict must not promote a fuzz record"
+    graph_record = {
+        "_dependency_graph": {
+            "status": "complete",
+            "declarations": [
+                {"id": "p", "kind": "property", "name": "sensitivity"},
+                {"id": "f", "kind": "function", "name": "gordon_pv"},
+            ],
+            "edges": [{"from": "p", "to": "f"}],
+        }
+    }
+    ok, _ = compiler_graph_directly_references(
+        graph_record, "sensitivity", {"gordon_pv"}
+    )
+    assert ok is True, "linker-owned direct edge was rejected"
+    graph_record["_dependency_graph"]["edges"] = []
+    ok, _ = compiler_graph_directly_references(
+        graph_record, "sensitivity", {"gordon_pv"}
+    )
+    assert ok is False, "complete graph without a direct edge did not fail closed"
+    ok, _ = compiler_graph_directly_references({}, "sensitivity", {"gordon_pv"})
+    assert ok is None, "missing compiler graph must select the compatibility oracle"
 
 
 # ----------------------------------------------------------------------------
@@ -676,18 +753,16 @@ def main() -> int:
         gate_proven_file(recs, ch, failures)
         all_records.update({k: v for k, v in recs.items() if k != "__errors__"})
 
-    # sampled: proven STANDALONE in a scratch dir outside the repo. Package
-    # auto-detection changes prove semantics: an in-package grad goal hangs even
-    # with the body inlined (no imports) -- standalone returns in ~5s, in-package
-    # does not return (docs/issue_drafts/grad_inpackage_hang.md; distinct from the
-    # grad-through-import hang). auto tier so the grad goals degrade to fuzz.
-    with tempfile.TemporaryDirectory(prefix="econ-sampled-") as tmp:
-        for ch in sorted((REPO_ROOT / "sampled").glob("*.ch")):
-            dst = Path(tmp) / ch.name
-            shutil.copy(ch, dst)
-            recs = run_prove(binary, dst, "auto", samples=500, cwd=Path(tmp))
-            gate_sampled_file(recs, ch, failures)
-            all_records.update({k: v for k, v in recs.items() if k != "__errors__"})
+    # Sampled properties run in their real package context and may import the
+    # shipped model directly. Economoist#13 established direct imported-grad
+    # execution at the 0.17.1 pin; chelis#924's prepared-context work removes
+    # the package-sized fixed cost in the next release. Copying source into a
+    # scratch package would discard exactly the linker behavior this gate must
+    # exercise.
+    for ch in sorted((REPO_ROOT / "sampled").glob("*.ch")):
+        recs = run_prove(binary, ch, "fuzz-only", samples=500)
+        gate_sampled_file(recs, ch, failures)
+        all_records.update({k: v for k, v in recs.items() if k != "__errors__"})
 
     checked = gate_manifest(binary, manifest, all_records, pin, failures)
     meta_checked = gate_metamorphic(binary, manifest, all_records, pin, failures)

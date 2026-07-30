@@ -4,17 +4,18 @@ What the Chelis language and the bundled chelis-std actually provide to the
 economic-models domain this shell touches. Read this before designing around a
 suspected language gap.
 
-> **Pinned:** chelis 0.14.0 (chelis-std 0.4.0, bundled) ·
-> **Latest upstream:** 0.14.0 · **Last refreshed:** 2026-07-10
+> **Pinned:** chelis 0.17.1 (chelis-std 0.4.0, bundled) ·
+> **Latest published upstream:** 0.17.1 · **Last refreshed:** 2026-07-30
 
-Rows are marked `@pin` (usable today at 0.14.0) or `@upstream` (expected at the
-next bump). Refresh this table at every pin bump.
+Rows are marked `@pin` (usable today at 0.17.1) or `@upstream` (implemented or
+expected after the current published pin). A development result never promotes
+a row to `@pin`.
 
 ## Proof surface (the spine of this shell)
 
 | Capability | Status | Notes |
 |---|---|---|
-| SMT prove tier (cvc5, QF_NRA over the reals) | `@pin` | `chelis prove --json --tier smt-only`. SMT ships in the released chelis binary as of v0.11.0 (chelis#422 resolved, archived in `UPSTREAM_BUGS.md`); no from-source build. Verified at 0.14.0: `proof_tier: smt`, `samples: 0`. |
+| SMT prove tier (cvc5, QF_NRA over the reals) | `@pin` | `chelis prove --json --tier smt-only`. SMT ships in the released chelis binary as of v0.11.0 (chelis#422 resolved, archived in `UPSTREAM_BUGS.md`); no from-source build. The 0.17.1 release remains this shell's pinned proof binary. |
 | Green markers | `@pin` | `status:"passed"`, `proof_tier:"smt"`, `samples:0`, `arith_model:"real"`, `composite_verdict:"proven_modulo_real_arithmetic"` (chelis 0.9.0; the prover is honest that it proved the goal over the reals, not the f32 rounding behaviour, which is exactly this shell's boundary). The older plain `"proven"` token is also accepted by the gate. |
 | Reals, not floats | `@pin` | A green is a real-arithmetic fact (`arith_model:"real"`), not a statement about `f32` evaluation. Stated per model. |
 | Per-property non-vacuity | `@pin` | A guarded property carries a `preconditions` assumption whose non-vacuity cvc5 establishes (a guard-satisfying model). The gate also ships explicit `*_guards_satisfiable` witnesses that refute. |
@@ -47,8 +48,10 @@ next bump). Refresh this table at every pin bump.
 | AD mode (`grad`) | `@pin` | `grad` is **reverse-mode** automatic differentiation, not forward-mode (`spec/06-transformations.md` §2 title and §2.3 "Algorithm: Reverse-Mode AD"). The signature requires a scalar floating result `B` (§2.1: `f : A -> B`, `B` a scalar floating result; `grad(f) : A -> dA`). In `chelis eval` and the Tide host runtime, `grad` is applied by lowering the runtime transform back into the RISC DAG evaluator using the **same reverse-mode rules** as the tensor lane, not a separate host AD engine (§2.10). |
 | grad-lane rule for `f32` scalars | `@pin` | The E4 demo differentiates a scalar `f32` lambda (`grad(fn (d,r,g) -> d/(r-g), wrt=r)`); the result is a rank-0 tensor (`tensor(shape=[], data=[...])`). Integer-typed parameters are a hard error (`non_differentiable`, §2.7); the Gordon params are all `f32`, so this never bites. The proven sign is the real-arithmetic fact; the `f32` AD value confirms the sign at a point and is not itself a proof (`docs/models/growth.md` E4). |
 | Zero-grad / differentiability lanes | `@pin` | `spec/06-transformations.md` §2.7: `CmpLt` routes **zero gradient** to both inputs (with a compiler warning); `Max(a,b)` is differentiable almost everywhere, the gradient routing to the larger input (subgradient convention, **zero at ties**); `Cast` to integer is zero-gradient. The shipped Gordon body `d/(r-g)` is a smooth rational with no comparison, `max`, or integer cast on the differentiated path, so it has a well-defined nonzero gradient at the demo point and hits none of these zero-grad lanes. The `if/then/else` `fmax`/`fabs` helpers (Bellman, `chelis#424`) are **not** in the AD path; AD is only used for the smooth Gordon expression. |
-| grad goal lowering (tier) | `@upstream` | A `@property` goal whose body contains `grad(...)` does not lower to the SMT tier: it degrades to fuzz at `--tier auto` and reports `unsupported` at `--tier smt-only`. The honest tier for an AD-derivative sign fact is `fuzz_validated`, so the Gordon dP/dr sensitivity ships in the `sampled/` lane (amber), not the proven `properties/` boundary; the same sign is available as the proven two-point green `gordon_decreasing_in_r`. Cite `issue_drafts/grad_smt_lowering.md` (tier-upgrade trigger). |
-| grad through cross-module import | `@upstream` | `grad(fn (...) -> imported_fn(...), ...)` at a goal site hangs (no verdict, no error) when the callee is imported from another module; the identical grad with the callee body inlined lowers and fuzz-validates promptly. The sampled AD property therefore inlines gordon_pv's single-expression body rather than referencing the export directly. Cite `issue_drafts/grad_through_import.md`. |
+| grad goal lowering (tier) | `@upstream` | At 0.17.1 the supported scalar `grad(...)` goal does not provide the desired Tier-B result. Chelis#923 has a fail-closed scalar-grad SMT implementation on the development branch; published re-probe is pending. Economoist will still keep the concrete `f32` AD check `fuzz_validated`, separate from the real-arithmetic two-point green `gordon_decreasing_in_r`. |
+| grad through cross-module import | `@pin` | Economoist#13 re-probed a direct imported gradient at 0.17.1: it returned a fuzz verdict whose compiler-emitted goal contained the imported function. The sampled satisfying and corrupt properties now differentiate `Economoist.Growth.gordon_pv` directly. Package-sized fixed cost is separate (chelis#924). |
+| compiler-owned dependency attribution | `@upstream` | At 0.17.1 legacy `dependency_edges` omits cross-module imports. Chelis#922 adds a linker-owned complete/unavailable `dependency_graph` on the development branch. `scripts/prove_gate.py` consumes it when present and fails closed on a missing direct edge; the current-pin compatibility oracle is the compiler-emitted goal plus corrupt flip. |
+| persistent package prove context | `@upstream` | Chelis#924's development fix caches an integrity-checked prepared Reef graph and limits post-verdict checks to linker-reachable declarations. The pinned release still pays the package-sized fixed cost. The sampled gate now exercises its real package context so release verification observes this path. |
 | Rank polymorphism (`..r`) | n/a | Not relied on. Chelis verbs are **not** implicitly rank-polymorphic and there is **no implicit broadcasting**: all rank/dimension manipulation is explicit via `expand`/`reshape`/`permute` (`spec/04-type-system.md` §4.2). Optional `..r` rank-variable defs exist as an identity-tier feature (`spec/design/rank_polymorphism.md`, "IDENTITY TIER SHIPPED"), but this shell uses **fixed small dimensions** (n=2 and n=3) with **scalar `f32`** params and never writes a `..r` def, so rank polymorphism has no bearing on the proof or AD surface here. |
 
 ## Where to read more
