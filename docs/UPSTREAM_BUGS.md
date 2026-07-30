@@ -58,29 +58,33 @@ the current surface.
   cite the path).
 
 - **Compiler-owned cross-module dependency attribution is not published yet.**
-  Chelis#922 is implemented on the development branch and adds a linker-owned
+  Chelis#922 is included in the prepared 0.17.2 PR #926 binary and adds a linker-owned
   `dependency_graph` with stable declaration identity, source ownership, and
   resolved cross-module edges. `scripts/prove_gate.py` already consumes that
   graph when present and fails closed if a complete graph omits the required
   direct binding; at the 0.17.1 pin it retains the compiler-emitted goal plus
   corrupt-flip compatibility oracle. Archive this entry only after the
-  published release emits a complete graph for the sampled Gordon property and
+  published 0.17.2 release emits a complete graph for the sampled Gordon property and
   the direct edge to `Economoist.Growth.gordon_pv` is observed.
 
 - **Supported scalar-grad SMT lowering is implemented but not published.**
-  Chelis#923's development commits add fail-closed Tier-B lowering for the
+  Chelis#923 is included in the prepared 0.17.2 PR #926 binary with fail-closed Tier-B lowering for the
   supported single-target scalar gradient plus compiler/backend parity. The
+  Economoist pre-release package probe currently fails earlier in that
+  precheck: imported `gordon_pv` is reported unbound even though the emitted
+  compiler dependency graph contains the correct resolved edges. This is a
+  release blocker, not a successful compatibility result. The
   shipped Gordon AD invariant deliberately remains `fuzz_validated`: it checks
   concrete `f32` execution, while `gordon_decreasing_in_r` separately states
   the unqualified real-arithmetic theorem. Release re-probe must confirm the
   scalar-grad SMT behavior, but it does not promote or merge these two lanes.
 
-- **Package-context proving still pays the 0.17.1 fixed cost.** Chelis#924's
-  development fix persists the prepared Reef graph and prunes post-verdict
+- **The published 0.17.1 package context still pays the fixed cost.** Chelis#924
+  is included in the prepared 0.17.2 PR #926 binary; it persists the prepared Reef graph and prunes post-verdict
   checks to linker-reachable declarations. Economoist's sampled gate now runs
   its checked-in direct-import file in the real package context so the
   integration surface is no longer hidden by a copy-out workaround. The
-  latency fix remains candidate-only until the published binary passes the
+  latency fix remains pre-release-only until the published 0.17.2 binary passes the
   cold/warm oracle; do not archive this entry based on a development build.
 
 ## Parked

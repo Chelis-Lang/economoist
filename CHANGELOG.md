@@ -3,7 +3,7 @@
 All notable changes to the Economoist shell are recorded here. The package
 `version` tracks its own line (not the chelis compiler pin).
 
-## [Unreleased]
+## [0.2.6] - 2026-07-30
 
 ### Changed
 
@@ -18,8 +18,17 @@ All notable changes to the Economoist shell are recorded here. The package
   package-sized fixed cost pending a published release re-probe.
 - **Direct bindings consume compiler attribution when available.** The proof
   gate prefers chelis#922's linker-owned `dependency_graph` and fails closed on
-  a complete graph without the required property-to-model edge. The
-  compiler-emitted goal remains the compatibility oracle at the 0.17.1 pin.
+  a complete graph without the required property-to-model edge. The 0.17.2
+  pin is prepared against the pre-release PR #926 binary; published-release
+  validation remains part of the release gate.
+- **Prepared the Chelis 0.17.2 / Economoist 0.2.6 release cascade.** The
+  compiler pin, workflow installers, lockfile, manifest package/pin fields,
+  and every expected-tier row move together. This is release preparation, not
+  a claim that Chelis 0.17.2 has been published. The pre-release integration
+  probe currently exposes an imported-grad precheck regression
+  (`gordon_pv` reported unbound before the linker-owned proof path), so release
+  acceptance remains blocked until the candidate compiler is fixed and
+  re-probed.
 
 ## [0.2.3] - 2026-07-13
 

@@ -1,7 +1,9 @@
 # Draft: grad-based sensitivity goals do not lower to the SMT tier
 
-Filed as chelis#923. A development fix exists; published-release verification
-is pending.
+Filed as chelis#923 and included in the prepared Chelis 0.17.2 PR #926 binary.
+The Economoist pre-release probe currently exposes an imported-grad precheck
+regression (`gordon_pv` reported unbound before verdict); fix and re-probe are
+required before publication.
 
 **Summary.** A `@property` goal whose body contains `grad(...)` (automatic
 differentiation of a scalar expression) does not lower to Tier B (cvc5); at
@@ -26,7 +28,7 @@ wrt=rr)(d, r, g) < 0.0` under `d>0.5, r>g` reports `proof_tier: fuzz`,
 rational is a rational, cvc5-expressible), so AD-sensitivity signs can be proven
 over the reals rather than sampled.
 
-**Candidate resolution.** Chelis#923 adds fail-closed Tier-B lowering for the supported
+**Pre-release resolution.** Chelis#923 adds fail-closed Tier-B lowering for the supported
 single-target scalar gradient and compiler/backend parity tests. Economoist
 keeps `econ.inv.gordon_dP_dr_negative_grad.v1` in the sampled lane by design:
 that lane checks the concrete `f32` AD transform, whereas
