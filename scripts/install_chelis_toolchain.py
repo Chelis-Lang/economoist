@@ -2,10 +2,13 @@
 """Install the Chelis release toolchain for the version pinned in reef.toml."""
 
 import argparse
+import hashlib
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 INSTALL_BASE = Path.home() / ".local" / "share" / "chelis"
@@ -61,31 +64,115 @@ def find_reef_toml() -> Path:
     sys.exit("error: reef.toml not found in any parent directory")
 
 
+def release_asset_name(version: str) -> str:
+    return f"chelis-v{version}-linux-x86_64-glibc2.31.tar.gz"
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def read_sidecar(sidecar: Path, expected_name: str) -> str:
+    fields = sidecar.read_text(encoding="utf-8").strip().split()
+    if len(fields) != 2 or fields[1].lstrip("*") != expected_name:
+        sys.exit(f"error: malformed checksum sidecar {sidecar}")
+    digest = fields[0].lower()
+    if not re.fullmatch(r"[0-9a-f]{64}", digest):
+        sys.exit(f"error: malformed sha256 digest in {sidecar}")
+    return digest
+
+
+def backup_path(dest: Path) -> Path:
+    return dest.with_name(f".{dest.name}.previous")
+
+
+def recover_interrupted_install(dest: Path) -> None:
+    backup = backup_path(dest)
+    if not dest.exists() and backup.exists():
+        os.replace(backup, dest)
+
+
+def replace_install(staged: Path, dest: Path) -> None:
+    """Replace dest while preserving the prior install on every raised error."""
+    backup = backup_path(dest)
+    if backup.exists():
+        shutil.rmtree(backup)
+    if dest.exists():
+        os.replace(dest, backup)
+    try:
+        os.replace(staged, dest)
+    except BaseException:
+        if dest.exists():
+            shutil.rmtree(dest)
+        if backup.exists():
+            os.replace(backup, dest)
+        raise
+    if backup.exists():
+        shutil.rmtree(backup)
+
+
 def install(version: str, set_default: bool) -> None:
     dest = INSTALL_BASE / version
-    if (dest / "bin" / "chelis").is_file():
-        print(f"chelis {version} already installed at {dest}")
-    else:
-        dest.mkdir(parents=True, exist_ok=True)
-        print(f"Downloading chelis v{version} release tarball...")
+    asset = release_asset_name(version)
+    print(f"Downloading official chelis v{version} release asset {asset}...")
+    INSTALL_BASE.mkdir(parents=True, exist_ok=True)
+    recover_interrupted_install(dest)
+    with tempfile.TemporaryDirectory(
+        prefix=f".chelis-{version}-", dir=INSTALL_BASE
+    ) as raw_tmp:
+        tmp = Path(raw_tmp)
         subprocess.run(
-            ["gh", "release", "download", f"v{version}",
-             "--repo", "Chelis-Lang/chelis",
-             "--pattern", "chelis-*-linux-x86_64.tar.gz",
-             "--dir", str(dest)],
+            [
+                "gh",
+                "release",
+                "download",
+                f"v{version}",
+                "--repo",
+                "Chelis-Lang/chelis",
+                "--pattern",
+                asset,
+                "--pattern",
+                f"{asset}.sha256",
+                "--dir",
+                str(tmp),
+            ],
             check=True,
         )
-        # Extract
-        tarballs = list(dest.glob("chelis-*-linux-x86_64.tar.gz"))
-        if not tarballs:
-            sys.exit("error: no tarball downloaded")
+        tarball = tmp / asset
+        sidecar = tmp / f"{asset}.sha256"
+        expected = read_sidecar(sidecar, asset)
+        actual = sha256_file(tarball)
+        if actual != expected:
+            sys.exit(
+                f"error: sha256 mismatch for {asset}: expected {expected}, got {actual}"
+            )
+        staged = tmp / "staged"
+        staged.mkdir()
         subprocess.run(
-            ["tar", "xzf", str(tarballs[0]), "-C", str(dest), "--strip-components=1"],
+            [
+                "tar",
+                "xzf",
+                str(tarball),
+                "-C",
+                str(staged),
+                "--strip-components=1",
+            ],
             check=True,
         )
-        for tb in tarballs:
-            tb.unlink()
-        print(f"Installed chelis {version} to {dest}")
+        binary = staged / "bin" / "chelis"
+        reported = subprocess.check_output([str(binary), "--version"], text=True).strip()
+        if reported != f"chelis {version}":
+            sys.exit(
+                f"error: extracted toolchain reports {reported!r}, "
+                f"expected 'chelis {version}'"
+            )
+        (staged / ".release-sha256").write_text(f"{actual}\n", encoding="utf-8")
+        replace_install(staged, dest)
+    print(f"Installed verified chelis {version} release to {dest}")
 
     # Write launcher
     LAUNCHER_PATH.parent.mkdir(parents=True, exist_ok=True)
