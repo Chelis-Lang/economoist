@@ -145,9 +145,12 @@ invariants (fuzz-validated AD sensitivities) live in a separate top-level
 Shoals instead hosts mixed tiers in `properties/` keyed on expected-tier; this
 per-dir split is an Economoist divergence recorded here and in the contract doc
 per the Scaffolding Drift Rule. Anti-vacuity for imported output fns is verified
-from the prover-emitted `goal` string plus the corrupt-flip control, because
-`dependency_edges` does not cross the module import boundary
-(`docs/issue_drafts/dependency_edges_imports.md`).
+from Chelis 0.17.2 onward by the linker-owned `dependency_graph`: the gate
+requires an exact edge from the property declaration (package, module, source,
+kind, and name) to the exact exported model function. Goal-string inspection is
+only a compatibility oracle for older pins; the legacy flat `dependency_edges`
+limitation is retained as a historical record in
+`docs/issue_drafts/dependency_edges_imports.md`.
 
 ## Shared Local Skills
 

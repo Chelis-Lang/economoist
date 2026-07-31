@@ -15,9 +15,9 @@ the gate checks:
   1. satisfying control holds, classified tier == expected_tier_per_pin[pin]
      (drift in EITHER direction fails -- better-than-expected means "run the
      de-narrowing motion"); assumptions' non_vacuity established; the goal
-     references the shipped output fn. At compilers exposing chelis#922's
-     `dependency_graph`, linker-owned declaration edges are authoritative; the
-     prover-emitted goal remains the compatibility oracle at older pins;
+     references the shipped output fn. From Chelis 0.17.2 onward chelis#922's
+     linker-owned `dependency_graph` is mandatory and authoritative; the
+     prover-emitted goal remains a compatibility oracle only at older pins;
   2. violating control breaks with a concrete in-domain witness. For a defective
      model (in-region defect) the witness must satisfy every precondition AND the
      f32 re-execution of the shipped body at the witness must reproduce the break;
@@ -120,7 +120,7 @@ def run_prove(binary: str, ch: Path, tier: str, *, samples: int | None = None,
         except json.JSONDecodeError:
             continue
         if r.get("kind") in ("property", "obligation"):
-            records[r.get("name", "")] = r
+            collect_prover_record(records, r)
         elif r.get("kind") == "error":
             records.setdefault("__errors__", {"reasons": []})["reasons"].append(r.get("reason"))
         elif r.get("kind") == "summary":
@@ -134,6 +134,17 @@ def run_prove(binary: str, ch: Path, tier: str, *, samples: int | None = None,
     if proc.returncode not in (0, 1, 2, 3) and not records:
         sys.stderr.write(proc.stdout + proc.stderr)
     return records
+
+
+def collect_prover_record(records: dict[str, dict], record: dict) -> None:
+    """Collect one proof record without allowing ambiguous last-write-wins."""
+    name = record.get("name", "")
+    if name in records:
+        records.setdefault("__errors__", {"reasons": []})["reasons"].append(
+            f"duplicate prover record name {name!r} in one compiler invocation"
+        )
+        return
+    records[name] = record
 
 
 def classify_tier(r: dict) -> str:
@@ -163,7 +174,14 @@ def classify_tier(r: dict) -> str:
 
 
 def compiler_graph_directly_references(
-    record: dict, property_name: str, output_fns: set[str]
+    record: dict,
+    *,
+    property_name: str,
+    property_module: str,
+    property_file: str,
+    output_fn: str,
+    output_module: str,
+    package: str,
 ) -> tuple[bool | None, str]:
     """Check a direct model binding against chelis#922's linker-owned graph.
 
@@ -184,17 +202,35 @@ def compiler_graph_directly_references(
     property_ids = {
         node.get("id")
         for node in declarations
-        if node.get("kind") == "property" and node.get("name") == property_name
+        if isinstance(node, dict)
+        and node.get("kind") == "property"
+        and node.get("name") == property_name
+        and node.get("module") == property_module
+        and node.get("package") == package
+        and isinstance(node.get("source"), dict)
+        and node["source"].get("file") == property_file
     }
     output_ids = {
         node.get("id")
         for node in declarations
-        if node.get("name") in output_fns
+        if isinstance(node, dict)
+        and node.get("kind") == "function"
+        and node.get("name") == output_fn
+        and node.get("module") == output_module
+        and node.get("package") == package
     }
     if not property_ids:
-        return False, f"compiler dependency graph has no property node for {property_name}"
+        return (
+            False,
+            "compiler dependency graph has no exact property declaration for "
+            f"{package}:{property_module}:{property_file}:{property_name}",
+        )
     if not output_ids:
-        return False, "compiler dependency graph has no shipped output-function node"
+        return (
+            False,
+            "compiler dependency graph has no exact model declaration for "
+            f"{package}:{output_module}:{output_fn}",
+        )
     if any(
         edge.get("from") in property_ids and edge.get("to") in output_ids
         for edge in edges
@@ -202,6 +238,50 @@ def compiler_graph_directly_references(
     ):
         return True, "linker-owned direct dependency edge present"
     return False, "compiler dependency graph has no direct property -> output-function edge"
+
+
+def direct_binding_references(
+    record: dict,
+    *,
+    property_name: str,
+    property_module: str,
+    property_file: str,
+    output_fn: str,
+    output_module: str,
+    package: str,
+    pin: str,
+) -> tuple[bool, str]:
+    """Require compiler-owned attribution at pins that promise chelis#922."""
+    graph_ok, graph_detail = compiler_graph_directly_references(
+        record,
+        property_name=property_name,
+        property_module=property_module,
+        property_file=property_file,
+        output_fn=output_fn,
+        output_module=output_module,
+        package=package,
+    )
+    if graph_ok is not None:
+        return graph_ok, graph_detail
+
+    match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", pin)
+    if match is None:
+        return False, f"cannot determine dependency-graph contract for pin {pin!r}"
+    version = tuple(int(part) for part in match.groups())
+    if version >= (0, 17, 2):
+        return (
+            False,
+            f"compiler dependency graph is required at pin {pin}, but unavailable",
+        )
+
+    goal = re.sub(r"\s+", "", record.get("goal", ""))
+    if f"{output_fn}(" in goal:
+        return True, "legacy compiler-emitted goal references shipped output function"
+    return (
+        False,
+        f"satisfying control {property_name} goal references no shipped output fn "
+        "(legacy compatibility vacuity tell)",
+    )
 
 
 def assumptions_clean(r: dict) -> tuple[bool, str]:
@@ -426,7 +506,7 @@ def f32_reexec_positive_break(binary: str, fn: str, cx: dict) -> tuple[bool, str
 # ----------------------------------------------------------------------------
 def gate_manifest(binary: str, manifest: dict, records: dict[str, dict],
                   pin: str, failures: list[str]) -> int:
-    output_fns = {m["output_fn"] for m in manifest.get("models", [])}
+    models_by_id = {m["id"]: m for m in manifest.get("models", [])}
     checked = 0
     for inv in manifest.get("invariants", []):
         iid = inv["id"]
@@ -453,24 +533,60 @@ def gate_manifest(binary: str, manifest: dict, records: dict[str, dict],
         if sat.get("status") != "passed":
             failures.append(f"{iid}: satisfying control {sat_name} did not pass: {sat.get('status')}")
         # Anti-vacuity. For `direct`, chelis#922's complete linker-owned graph is
-        # authoritative when present. Older pins fall back to the compiler-
-        # emitted goal string; they never reconstruct ownership from source.
+        # mandatory from 0.17.2 onward. Only older pins fall back to the
+        # compiler-emitted goal string; ownership is never reconstructed from
+        # source.
         # `equivalent-form` deliberately inlines a shipped body and therefore
         # requires a narrowing citation plus its corrupt-flip control.
         binding = inv.get("binding", {})
         ref_mode = binding.get("references_output_fn")
-        goal = re.sub(r"\s+", "", sat.get("goal", ""))
         if ref_mode == "equivalent-form":
             if not binding.get("equivalent_form_citation"):
                 failures.append(f"{iid}: references_output_fn 'equivalent-form' but no equivalent_form_citation")
         else:
-            graph_ok, graph_detail = compiler_graph_directly_references(
-                sat, sat_name, output_fns
+            model = models_by_id.get(inv.get("anchor_model"))
+            if model is None:
+                failures.append(
+                    f"{iid}: anchor_model {inv.get('anchor_model')!r} does not resolve"
+                )
+                continue
+            sat_origin = sat.get("_origin", {})
+            binding_ok, binding_detail = direct_binding_references(
+                sat,
+                property_name=sat_name,
+                property_module=sat_origin.get("module", ""),
+                property_file=sat_origin.get("file", ""),
+                output_fn=model["output_fn"],
+                output_module=model["module"],
+                package=manifest.get("pkg", ""),
+                pin=pin,
             )
-            if graph_ok is False:
-                failures.append(f"{iid}: {graph_detail}")
-            elif graph_ok is None and not any(f"{fn}(" in goal for fn in output_fns):
-                failures.append(f"{iid}: satisfying control {sat_name} goal references no shipped output fn (compatibility vacuity tell)")
+            if not binding_ok:
+                failures.append(f"{iid}: {binding_detail}")
+            violating_model_id = inv.get("defective_model") or inv.get(
+                "anchor_model"
+            )
+            violating_model = models_by_id.get(violating_model_id)
+            if violating_model is None:
+                failures.append(
+                    f"{iid}: violating model {violating_model_id!r} does not resolve"
+                )
+            else:
+                viol_origin = viol.get("_origin", {})
+                violating_ok, violating_detail = direct_binding_references(
+                    viol,
+                    property_name=viol_name,
+                    property_module=viol_origin.get("module", ""),
+                    property_file=viol_origin.get("file", ""),
+                    output_fn=violating_model["output_fn"],
+                    output_module=violating_model["module"],
+                    package=manifest.get("pkg", ""),
+                    pin=pin,
+                )
+                if not violating_ok:
+                    failures.append(
+                        f"{iid}: violating control attribution: {violating_detail}"
+                    )
         if expected == "proven":
             ok, why = assumptions_clean(sat)
             if not ok:
@@ -571,6 +687,17 @@ def honesty_self_test() -> None:
     assert classify_tier(rec("smt", ["real_arithmetic", "fuzz"])) == "proven_modulo_contract"
     assert classify_tier(rec("fuzz", ["fuzz", "fuzz_base"])) == "fuzz_validated"
     assert classify_tier(rec("fuzz", [], status="failed")) == "disproved"
+    duplicate_records: dict[str, dict] = {}
+    collect_prover_record(
+        duplicate_records, {"kind": "property", "name": "duplicate", "status": "passed"}
+    )
+    collect_prover_record(
+        duplicate_records, {"kind": "property", "name": "duplicate", "status": "failed"}
+    )
+    assert duplicate_records["duplicate"]["status"] == "passed"
+    assert duplicate_records["__errors__"]["reasons"] == [
+        "duplicate prover record name 'duplicate' in one compiler invocation"
+    ], "same-invocation duplicate proof records did not fail closed"
     ok, _ = green_property(rec("fuzz", ["fuzz"]))
     assert not ok, "green_property accepted a fuzz-tier record"
     ok, _ = green_property(rec("smt", ["real_arithmetic", "fuzz"]))
@@ -584,23 +711,107 @@ def honesty_self_test() -> None:
         "_dependency_graph": {
             "status": "complete",
             "declarations": [
-                {"id": "p", "kind": "property", "name": "sensitivity"},
-                {"id": "f", "kind": "function", "name": "gordon_pv"},
+                {
+                    "id": "p",
+                    "kind": "property",
+                    "name": "sensitivity",
+                    "module": "Economoist.Sampled.Growth_sensitivity",
+                    "package": "economoist",
+                    "source": {"file": "sampled/growth_sensitivity.ch"},
+                },
+                {
+                    "id": "f",
+                    "kind": "function",
+                    "name": "gordon_pv",
+                    "module": "Economoist.Growth",
+                    "package": "economoist",
+                },
             ],
             "edges": [{"from": "p", "to": "f"}],
         }
     }
-    ok, _ = compiler_graph_directly_references(
-        graph_record, "sensitivity", {"gordon_pv"}
-    )
+    exact = {
+        "property_name": "sensitivity",
+        "property_module": "Economoist.Sampled.Growth_sensitivity",
+        "property_file": "sampled/growth_sensitivity.ch",
+        "output_fn": "gordon_pv",
+        "output_module": "Economoist.Growth",
+        "package": "economoist",
+    }
+    ok, _ = compiler_graph_directly_references(graph_record, **exact)
     assert ok is True, "linker-owned direct edge was rejected"
     graph_record["_dependency_graph"]["edges"] = []
-    ok, _ = compiler_graph_directly_references(
-        graph_record, "sensitivity", {"gordon_pv"}
-    )
+    ok, _ = compiler_graph_directly_references(graph_record, **exact)
     assert ok is False, "complete graph without a direct edge did not fail closed"
-    ok, _ = compiler_graph_directly_references({}, "sensitivity", {"gordon_pv"})
+    ok, _ = compiler_graph_directly_references({}, **exact)
     assert ok is None, "missing compiler graph must select the compatibility oracle"
+    unavailable = {
+        "goal": "(gordon_pv(d, r, g) > 0.0)",
+        "_dependency_graph": {"status": "unavailable"},
+    }
+    ok, _ = direct_binding_references(unavailable, **exact, pin="0.17.4")
+    assert not ok, "0.17.2+ direct binding accepted an unavailable compiler graph"
+    ok, _ = direct_binding_references(unavailable, **exact, pin="0.17.1")
+    assert ok, "pre-chelis#922 pin rejected the compiler-emitted goal oracle"
+    ok, _ = direct_binding_references(unavailable, **exact, pin="not-a-version")
+    assert not ok, "malformed pin bypassed the dependency-graph contract"
+    wrong_model = {
+        "goal": "(gordon_pv(d, r, g) > 0.0)",
+        "_dependency_graph": {
+            "status": "complete",
+            "declarations": [
+                *graph_record["_dependency_graph"]["declarations"],
+                {
+                    "id": "m",
+                    "kind": "function",
+                    "name": "next_mass",
+                    "module": "Economoist.Markov",
+                    "package": "economoist",
+                },
+            ],
+            "edges": [{"from": "p", "to": "m"}],
+        },
+    }
+    ok, _ = direct_binding_references(wrong_model, **exact, pin="0.17.4")
+    assert not ok, "direct binding accepted an edge to the wrong shipped model"
+    decoy_property = {
+        "_dependency_graph": {
+            "status": "complete",
+            "declarations": [
+                {
+                    "id": "p",
+                    "kind": "property",
+                    "name": "sensitivity",
+                    "module": "Attacker.Decoy",
+                    "package": "economoist",
+                    "source": {"file": "sampled/attacker.ch"},
+                },
+                graph_record["_dependency_graph"]["declarations"][1],
+            ],
+            "edges": [{"from": "p", "to": "f"}],
+        }
+    }
+    ok, _ = direct_binding_references(decoy_property, **exact, pin="0.17.4")
+    assert not ok, "direct binding accepted a same-name property from a decoy module"
+    decoy_function = {
+        "_dependency_graph": {
+            "status": "complete",
+            "declarations": [
+                graph_record["_dependency_graph"]["declarations"][0],
+                graph_record["_dependency_graph"]["declarations"][1],
+                {
+                    "id": "attacker",
+                    "kind": "function",
+                    "name": "gordon_pv",
+                    "module": "Attacker.Decoy",
+                    "package": "economoist",
+                },
+            ],
+            "edges": [{"from": "p", "to": "attacker"}],
+        }
+    }
+    ok, _ = direct_binding_references(decoy_function, **exact, pin="0.17.4")
+    assert not ok, "direct binding accepted a same-name function from a decoy module"
 
 
 # ----------------------------------------------------------------------------
@@ -700,7 +911,7 @@ def gate_metamorphic(binary: str, manifest: dict, records: dict[str, dict],
                      pin: str, failures: list[str]) -> int:
     """Run the metamorphic anti-vacuity check on every properties/ proven,
     direct-call invariant."""
-    output_fns = {m["output_fn"] for m in manifest.get("models", [])}
+    models_by_id = {m["id"]: m for m in manifest.get("models", [])}
     checked = 0
     for inv in manifest.get("invariants", []):
         if inv.get("expected_tier_per_pin", {}).get(pin) != "proven":
@@ -714,18 +925,48 @@ def gate_metamorphic(binary: str, manifest: dict, records: dict[str, dict],
         sat = records.get(inv["controls"]["satisfying"]["name"])
         if sat is None:
             continue
-        goal = re.sub(r"\s+", "", sat.get("goal", ""))
-        matched = sorted((fn for fn in output_fns if f"{fn}(" in goal), key=len, reverse=True)
-        if not matched:
-            continue  # the goal-string check already flagged a goal that calls no output fn
+        model = models_by_id.get(inv.get("anchor_model"))
+        if model is None:
+            continue  # contract/gate_manifest already report the unresolved model
+        output_fn = model["output_fn"]
         checked += 1
-        ok, detail = metamorphic_flips(binary, REPO_ROOT, matched[0], prop_file, prop_name)
+        ok, detail = metamorphic_flips(
+            binary, REPO_ROOT, output_fn, prop_file, prop_name
+        )
         if not ok:
             failures.append(f"{inv['id']}: metamorphic anti-vacuity -- {detail}; a green that survives every model substitution is vacuous")
     return checked
 
 
 # ----------------------------------------------------------------------------
+def add_records(
+    all_records: dict[str, dict],
+    records: dict[str, dict],
+    source_file: Path,
+    failures: list[str],
+) -> None:
+    """Attach the exact compilation-unit identity to each prover record.
+
+    Dependency edges still come exclusively from the compiler graph. The
+    invocation identity selects the exact declaration within that graph and
+    prevents a same-name declaration in another module from satisfying it.
+    """
+    source_text = source_file.read_text()
+    module_match = re.search(r"^\s*module\s+(\S+)", source_text, re.M)
+    module = module_match.group(1) if module_match else ""
+    relative_file = str(source_file.relative_to(REPO_ROOT))
+    for name, record in records.items():
+        if name == "__errors__":
+            continue
+        if name in all_records:
+            failures.append(
+                f"duplicate proof record name {name!r} across canonical compilation units"
+            )
+            continue
+        record["_origin"] = {"module": module, "file": relative_file}
+        all_records[name] = record
+
+
 def main() -> int:
     failures: list[str] = []
     try:
@@ -746,23 +987,22 @@ def main() -> int:
         for ch in sorted((REPO_ROOT / d).glob("*.ch")):
             recs = run_prove(binary, ch, "smt-only", smt_timeout=20000)
             gate_proven_file(recs, ch, failures)
-            all_records.update({k: v for k, v in recs.items() if k != "__errors__"})
+            add_records(all_records, recs, ch, failures)
 
     for ch in sorted((REPO_ROOT / "demos").glob("*.ch")):
         recs = run_prove(binary, ch, "smt-only", smt_timeout=15000)
         gate_proven_file(recs, ch, failures)
-        all_records.update({k: v for k, v in recs.items() if k != "__errors__"})
+        add_records(all_records, recs, ch, failures)
 
     # Sampled properties run in their real package context and may import the
     # shipped model directly. Economoist#13 established direct imported-grad
-    # execution at the 0.17.1 pin; chelis#924's prepared-context work removes
-    # the package-sized fixed cost in the next release. Copying source into a
-    # scratch package would discard exactly the linker behavior this gate must
-    # exercise.
+    # execution at the 0.17.1 pin; chelis#924's prepared-context work ships in
+    # the pinned release. Copying source into a scratch package would discard
+    # exactly the linker behavior this gate must exercise.
     for ch in sorted((REPO_ROOT / "sampled").glob("*.ch")):
         recs = run_prove(binary, ch, "fuzz-only", samples=500)
         gate_sampled_file(recs, ch, failures)
-        all_records.update({k: v for k, v in recs.items() if k != "__errors__"})
+        add_records(all_records, recs, ch, failures)
 
     checked = gate_manifest(binary, manifest, all_records, pin, failures)
     meta_checked = gate_metamorphic(binary, manifest, all_records, pin, failures)

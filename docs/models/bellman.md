@@ -92,7 +92,7 @@ components, a one-line arithmetic corollary of the two per-state greens rather
 than an independent SMT goal. The honest headline is therefore the
 per-output-state contraction at both output states, two-sided, with the full
 sup-norm stated as their max. (The nested-`fmax` lowering gap that once forced
-this framing, chelis#425, is candidate-fixed at 0.14.0; the n=3 per-output-state
+this framing, chelis#425, was fixed in 0.14.0; the n=3 per-output-state
 contraction with the `fmax3` three-coordinate sup now lowers and ships as a green
 -- see the n=3 section below.)
 
@@ -207,7 +207,7 @@ The n=3 per-output-state contraction (each per-state difference bounded by `g`
 times `fmax3` over the three coordinate distances) was PREVIOUSLY HELD OUT
 because its goal did not lower to the SMT tier (the three-state sup norm `fmax3`
 over nonlinear arguments exceeded the lowering limit; cvc5 reported it
-unsupported, not proven). At 0.14.0 chelis#425 is candidate-fixed: the goal now
+unsupported, not proven). At 0.14.0 chelis#425 was fixed: the goal now
 lowers and all six greens ship (`bellman_contraction_state{0,1,2}_n3` and their
 `_lower` twins), verified via probe p15 and per-surface (all three output states,
 upper and lower, prove; the six witnesses refute). It is therefore no longer on

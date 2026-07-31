@@ -12,6 +12,7 @@ offline job wired into ci.yml. It checks, mechanically:
   - every model kind is in the frozen taxonomy; every param domain uses only the
     closed key set {gt, gte, lt, lte, rel};
   - every model output_fn is a real exported def in src/;
+  - every invariant names one exact anchor_model whose output_fn it certifies;
   - every invariant.property resolves to a real @property in the named file;
   - every control (satisfying + violating) names a real @property in the canon
     files (properties/, demos/, sampled/);
@@ -75,23 +76,31 @@ def read_reef() -> tuple[str, str]:
     return ver.group(1), pin.group(1)
 
 
-def exported_defs() -> set[str]:
-    """Every `def NAME` in src/ (the real export surface the manifest resolves
-    output_fns against)."""
-    names: set[str] = set()
+def module_name(ch: Path) -> str | None:
+    match = re.search(r"^\s*module\s+(\S+)", ch.read_text(), re.M)
+    return match.group(1) if match else None
+
+
+def exported_defs() -> set[tuple[str, str]]:
+    """Every exact `(module, def)` pair in src/."""
+    names: set[tuple[str, str]] = set()
     for ch in sorted((REPO_ROOT / "src").glob("*.ch")):
+        module = module_name(ch)
+        if module is None:
+            continue
         for m in re.finditer(r'^\s*def\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(', ch.read_text(), re.M):
-            names.add(m.group(1))
+            names.add((module, m.group(1)))
     return names
 
 
-def property_blocks() -> dict[str, tuple[str, str]]:
+def property_blocks() -> tuple[dict[str, tuple[str, str]], set[str]]:
     """Map every @property NAME in the canon dirs to (relative_file, where_clause).
 
     The where-clause is the text between `where` and the FIRST `:` after it (the
     guards contain no `:`, while the forall param list does -- so the first colon
     after `where` is the guards/goal separator)."""
     blocks: dict[str, tuple[str, str]] = {}
+    duplicates: set[str] = set()
     decl = re.compile(r'@property\s+([A-Za-z_][A-Za-z0-9_]*)\b')
     for d in CANON_DIRS:
         for ch in sorted((REPO_ROOT / d).glob("*.ch")):
@@ -107,8 +116,11 @@ def property_blocks() -> dict[str, tuple[str, str]]:
                     after = block[wm.end():]
                     colon = after.find(":")
                     where = after[:colon] if colon != -1 else after
-                blocks[name] = (rel, where)
-    return blocks
+                if name in blocks:
+                    duplicates.add(name)
+                else:
+                    blocks[name] = (rel, where)
+    return blocks, duplicates
 
 
 def _norm(s: str) -> str:
@@ -155,9 +167,39 @@ def precond_string(pc: dict) -> str:
     return f"{pc['lhs']}{op}{rhs_s}"
 
 
+def duplicate_identity_failures(manifest: dict) -> list[str]:
+    failures: list[str] = []
+    for key, label, consequence in (
+        ("models", "model", "anchor_model identity is ambiguous"),
+        ("invariants", "invariant", "consumer identity is ambiguous"),
+    ):
+        seen: set[str | None] = set()
+        for entry in manifest.get(key, []):
+            identity = entry.get("id")
+            if identity in seen:
+                failures.append(
+                    f"duplicate {label} id {identity!r}; {consequence}"
+                )
+            seen.add(identity)
+    return failures
+
+
+def honesty_self_test() -> None:
+    forged = {
+        "models": [{"id": "same"}, {"id": "same"}],
+        "invariants": [{"id": "same"}, {"id": "same"}],
+    }
+    assert duplicate_identity_failures(forged) == [
+        "duplicate model id 'same'; anchor_model identity is ambiguous",
+        "duplicate invariant id 'same'; consumer identity is ambiguous",
+    ]
+
+
 def main() -> int:
     failures: list[str] = []
+    honesty_self_test()
     manifest = json.loads(MANIFEST.read_text())
+    failures.extend(duplicate_identity_failures(manifest))
     reef_version, reef_pin = read_reef()
 
     # Schema + freshness.
@@ -173,17 +215,27 @@ def main() -> int:
         failures.append(f"chelis_pin={manifest.get('chelis_pin')!r} != reef.toml pin {reef_pin!r} (stale manifest)")
 
     exports = exported_defs()
-    props = property_blocks()
+    props, duplicate_props = property_blocks()
+    for name in sorted(duplicate_props):
+        failures.append(
+            f"property {name!r} is declared in multiple canonical files; "
+            "exact compiler attribution would be ambiguous"
+        )
 
     model_ids: set[str] = set()
+    models_by_id: dict[str, dict] = {}
     for m in manifest.get("models", []):
         mid = m.get("id", "<unnamed>")
         model_ids.add(mid)
+        models_by_id[mid] = m
         if m.get("kind") not in KIND_TAXONOMY:
             failures.append(f"model {mid}: kind {m.get('kind')!r} not in frozen taxonomy")
         of = m.get("output_fn")
-        if of not in exports:
-            failures.append(f"model {mid}: output_fn {of!r} is not an exported def in src/")
+        module = m.get("module")
+        if (module, of) not in exports:
+            failures.append(
+                f"model {mid}: exact output {module!r}:{of!r} is not an exported def in src/"
+            )
         for p in m.get("params", []):
             bad = set(p.get("domain", {})) - DOMAIN_KEYS
             if bad:
@@ -192,7 +244,10 @@ def main() -> int:
     if not manifest.get("invariants"):
         failures.append("no invariants in manifest")
 
-    invariant_ids = {inv.get("id") for inv in manifest.get("invariants", [])}
+    invariant_ids: set[str] = set()
+    for inv in manifest.get("invariants", []):
+        iid = inv.get("id")
+        invariant_ids.add(iid)
 
     for inv in manifest.get("invariants", []):
         iid = inv.get("id", "<unnamed>")
@@ -205,6 +260,19 @@ def main() -> int:
             failures.append(f"{iid}: property {pname!r} not found as an @property in canon dirs")
         elif pfile and props[pname][0] != pfile:
             failures.append(f"{iid}: property {pname!r} is in {props[pname][0]}, manifest says {pfile}")
+        elif pfile:
+            source_path = REPO_ROOT / pfile
+            actual_module = module_name(source_path) if source_path.is_file() else None
+            if prop.get("module") != actual_module:
+                failures.append(
+                    f"{iid}: property module {prop.get('module')!r} != "
+                    f"{pfile} module {actual_module!r}"
+                )
+        if pname != inv.get("controls", {}).get("satisfying", {}).get("name"):
+            failures.append(
+                f"{iid}: satisfying control must be the attributed property "
+                f"{pname!r}"
+            )
 
         # Controls exist.
         ctl = inv.get("controls", {})
@@ -220,6 +288,13 @@ def main() -> int:
         for k in inv.get("kind_applies_to", []):
             if k not in KIND_TAXONOMY:
                 failures.append(f"{iid}: kind_applies_to {k!r} not in taxonomy")
+
+        # Direct proof attribution is exact-model, not "some exported function."
+        anchor_model = inv.get("anchor_model")
+        if anchor_model not in models_by_id:
+            failures.append(
+                f"{iid}: anchor_model {anchor_model!r} is not a manifest model"
+            )
 
         # Preconditions cross-check the property's where-clause -- BOTH directions.
         if pname in props:

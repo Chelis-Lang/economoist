@@ -62,9 +62,12 @@ example `d = 1, r = 1, g = 0`), which proves the guards are jointly satisfiable
 and the corresponding green is not vacuous. In the prove summary the three
 witnesses report `status: failed, proof_tier: smt`; that refutation is the
 intended outcome, not a failure of the model. Because every goal now calls
-`gordon_pv`, the prover-emitted goal string carries the mangled export
-reference, which the producer gate cross-checks for anti-vacuity
-(`dependency_edges` does not survive the module-import boundary; see
+`gordon_pv`, Chelis 0.17.2+ reports a linker-owned `dependency_graph` edge from
+the exact property declaration to the exact `Economoist.Growth.gordon_pv`
+function declaration. The producer gate requires that compiler-reported edge
+and fails closed on missing or same-name decoy declarations. Goal-string
+inspection is retained only for older compiler pins; the legacy flat
+`dependency_edges` limitation is historical (see
 `issue_drafts/dependency_edges_imports.md`).
 
 ### Prove summary

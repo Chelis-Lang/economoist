@@ -16,8 +16,8 @@ All notable changes to the Economoist shell are recorded here. The package
   temporary package. Economoist#13 established direct imported-grad execution
   at the 0.17.1 pin; chelis#924 removes the remaining package-sized fixed
   cost, and the published 0.17.4 asset repeats the real-package proof gate.
-- **Direct bindings consume compiler attribution when available.** The proof
-  gate prefers chelis#922's linker-owned `dependency_graph` and fails closed on
+- **Direct bindings consume compiler attribution.** From Chelis 0.17.2 onward,
+  the proof gate requires chelis#922's linker-owned `dependency_graph` and fails closed on
   a complete graph without the required property-to-model edge. The official
   0.17.4 release asset passes the complete dependency-attributed proof gate.
 - **Prepared the Chelis 0.17.4 / Economoist 0.2.6 release cascade.** The

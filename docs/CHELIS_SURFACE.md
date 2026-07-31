@@ -24,7 +24,7 @@ suspected language gap.
 > Its publisher sidecar, version, glibc ceiling, and live cvc5 discharge were
 > independently verified before the complete Economoist gate passed.
 
-Rows are marked `@pin` (present in the prepared 0.17.4 pin) or `@upstream`
+Rows are marked `@pin` (present in the published 0.17.4 pin) or `@upstream`
 (expected after it).
 
 ## Proof surface (the spine of this shell)
@@ -39,7 +39,7 @@ Rows are marked `@pin` (present in the prepared 0.17.4 pin) or `@upstream`
 | `@property forall ... where ...` | `@pin` | Operator-form goals (`>=`, `<=`, `&&`, `*`) lower to cvc5. As of chelis 0.9.0 the builtin-call forms (`gte`, `mul`) also lower to SMT (verified `proven_modulo_real_arithmetic`, tier `smt`, samples 0); they were fuzz-only at 0.8.0. The shipped goals stay in operator form for clarity regardless. Params must be scalar (`f32`); tensor params drop to fuzz. |
 | prove-side import resolution | `@pin` | `prove` resolves module imports, so a property targets the real exported function. |
 | Two-call comparison/subtraction of an ITE-bodied operator at a goal site | `@pin` | A goal that compares or subtracts two calls of the same `if/then/else`-bodied operator def (e.g. `bellman_state0(v...) - bellman_state0(w...)`) now lowers faithfully: true goals prove, false goals refute with a counterexample. The two-call collapse soundness bug (chelis#426) was fixed at chelis 0.10.0 and re-verified at 0.14.0 (probe p04, archived in `UPSTREAM_BUGS.md`); `properties/bellman.ch` calls the exported operators directly at the goal site, and the former `unsound_pattern_lint` was removed. |
-| Nested `fmax`-style sup at a goal site (n=3 sup-norm contraction) | `@pin` | The n=3 per-output-state Bellman sup-norm contraction now lowers to SMT: the `fmax3` three-coordinate sup on the right combined with the two-call n=3 operator arithmetic on the left proves (6 greens + 6 refuting witnesses). The nested-fmax lowering gap (chelis#425) is candidate-fixed at 0.14.0 (probe p15 + per-surface, archived in `UPSTREAM_BUGS.md`). General-`n` and value-iteration convergence remain held out (need induction). |
+| Nested `fmax`-style sup at a goal site (n=3 sup-norm contraction) | `@pin` | The n=3 per-output-state Bellman sup-norm contraction now lowers to SMT: the `fmax3` three-coordinate sup on the right combined with the two-call n=3 operator arithmetic on the left proves (6 greens + 6 refuting witnesses). The nested-fmax lowering gap (chelis#425) was fixed in 0.14.0 (probe p15 + per-surface, archived in `UPSTREAM_BUGS.md`). General-`n` and value-iteration convergence remain held out (need induction). |
 
 ## Numeric and language primitives the domain uses
 

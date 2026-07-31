@@ -17,9 +17,8 @@ import Economoist.Growth (gordon_pv)
 -- ANTI-VACUITY, direct: both the satisfying property and its corrupt sign twin
 -- differentiate the imported Economoist.Growth.gordon_pv export.
 -- Economoist#13 verified this direct binding at the 0.17.1 pin. Chelis#924's
--- candidate package-context cache removes the remaining fixed cost in the next
--- release; no downstream copy or reconstructed expression stands between the
--- property and the shipped model.
+-- package-context cache ships in the pinned release; no downstream copy or
+-- reconstructed expression stands between the property and the shipped model.
 -- Guards sit inside the prover fuzz box [-10,10]^n with comfortable acceptance
 -- (cnote.dischargeability p05/p11). Run at --tier fuzz-only --samples 500 --seed 0.
 -- dP/dr < 0: the AD derivative of the Gordon body wrt r is negative throughout
