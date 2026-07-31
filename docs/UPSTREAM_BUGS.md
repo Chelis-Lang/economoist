@@ -23,15 +23,7 @@ the current surface.
 
 ## Tracking
 
-- **eval does not resolve imports for standalone files.** `prove` resolves module
-  imports, so the proven properties reach the real exported functions, but `eval`
-  on a standalone file does not resolve a package import. Affected surface: a C
-  Note template that needs to numerically `eval` a shell model must inline the
-  model's single-expression body until eval-side import resolution lands. The
-  proof surface is not blocked by this. Workaround: inline the displayed
-  single-expression body (the oracle harness evals inline lambdas identical to the
-  shipped bodies). Re-probe trigger: any release note naming eval-side import
-  resolution. chelis#423 (draft: `issue_drafts/eval_side_import_resolution.md`).
+None.
 
 ## Parked
 
@@ -48,6 +40,13 @@ the current surface.
   Parked rationale: `docs/issue_drafts/large_state_space_beacon.md`.
 
 ## Archived
+
+- **Eval-side package import resolution works in Chelis 0.17.5 (chelis#423).**
+  Re-probed with the official release binary using an ad hoc file outside `src/`
+  that imports `Economoist.Growth.gordon_pv`; `chelis eval --file` resolves the
+  current Reef package and returns `40.0`. The numeric oracle and defective-model
+  witness gate now import and execute shipped exports directly. Their old
+  source-body reconstruction is removed.
 
 - **Scalar `max`/`min`/`abs` for `f32` bind in Chelis 0.17.4 (chelis#424).**
   Real-Reef executable probes against the published 0.17.4 release asset

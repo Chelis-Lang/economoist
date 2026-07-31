@@ -26,24 +26,20 @@ export (bellman_state0, bellman_state1, bellman_state0_n3, bellman_state1_n3, be
 --                          FULL sup-norm contraction over the output vector is
 --                          the max of these per-component facts (see
 --                          docs/models/bellman.md).
--- The property goals INLINE the operator body (they write the fmax(...)
--- arithmetic directly rather than calling these defs): in chelis 0.8.0 a goal
--- that subtracts or compares two calls of the same if/then/else-bodied def
--- collapses the pair to a constant and would mask a false bound, false-proving
--- it at the SMT tier (chelis#426), so the contraction and monotonicity goals are
--- stated inline against the same arithmetic these defs compute. The inlined goal
--- is textually the operator body (single-expression discipline); the exported
--- defs ship and are pinned numerically in tests/bellman.ch.
+-- The property goals call these exported operators directly. In chelis 0.8.0 a
+-- goal that subtracted or compared two calls of the same if/then/else-bodied def
+-- collapsed the pair to a constant and could false-prove a bound (chelis#426).
+-- That soundness bug was fixed in 0.10.0 and remains guarded by the corrupt
+-- control pair in demos/businesswrong.ch; no inline reconstruction remains.
 -- HELD OUT (see docs/models/bellman.md): value-iteration convergence
 --   v_{k+1} = T v_k -> v*, existence and uniqueness of the fixed point (the
 --   Banach argument), which need induction; the general all-n-state, all-m-
 --   action theorem (the greens cover the two fixed instances n=2 and n=3 at
---   m=2, not the all-n,m result); the n=3 per-component contraction (its goal
---   does not lower at this tier, see docs); and any f32 float claim (the green
---   is real arithmetic).
+--   m=2, not the all-n,m result); and any f32 float claim (the green is real
+--   arithmetic).
 -- Scalar binary max, scalar ternary max, and scalar absolute value, as
 -- if/then/else over operator comparisons. Scalar max/min/abs now bind at the
--- 0.17.4 pin (chelis#424 resolved), but fmax/fabs remain stable exported shell
+-- 0.17.5 pin (chelis#424 resolved), but fmax/fabs remain stable exported shell
 -- helpers and preserve the audited ITE-shaped SMT goals. fmax3 is the
 -- three-state sup norm's max as one ITE-bodied def because a nested
 -- fmax(a, fmax(b, c)) once hit a lowering gap (chelis#425); the stable

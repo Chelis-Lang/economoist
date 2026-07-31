@@ -30,7 +30,7 @@ probe. These stay on the manual re-probe list in `docs/UPSTREAM_BUGS.md`:
   reads could exercise. SMT now ships in the released binary; verified at the
   0.14.0 pin by `scripts/prove_gate.py` running green on the release binary.
   Archived in `docs/UPSTREAM_BUGS.md`.
-- **eval does not resolve imports for standalone files.** An `eval`-side
-  resolution gap that `chelis check` does not exercise; `check` and `prove`
-  resolve imports, so no single `check`-rejected file pins it. Re-probed by
-  the oracle harness inlining single-expression bodies.
+- **Eval-side package import resolution. RESOLVED (chelis#423, v0.17.5).** This
+  could not be represented by the check-only blocked adapter. A release-binary
+  `eval --file` probe now imports and executes `Economoist.Growth.gordon_pv`;
+  the oracle harness consumes that direct path.
