@@ -3,7 +3,7 @@
 All notable changes to the Economoist shell are recorded here. The package
 `version` tracks its own line (not the chelis compiler pin).
 
-## [0.2.6] - 2026-07-30
+## [0.2.6] - 2026-07-31
 
 ### Changed
 
@@ -14,20 +14,20 @@ All notable changes to the Economoist shell are recorded here. The package
 - **The sampled proof gate now exercises the real Reef package context.** The
   fuzz-only, 500-sample lane no longer copies source into a standalone
   temporary package. Economoist#13 established direct imported-grad execution
-  at the 0.17.1 pin; chelis#924's development fix removes the remaining
-  package-sized fixed cost pending a published release re-probe.
+  at the 0.17.1 pin; chelis#924 removes the remaining package-sized fixed
+  cost, and the published 0.17.4 asset repeats the real-package proof gate.
 - **Direct bindings consume compiler attribution when available.** The proof
   gate prefers chelis#922's linker-owned `dependency_graph` and fails closed on
-  a complete graph without the required property-to-model edge. The 0.17.4
-  source candidate is locally validated; published-release validation remains
-  part of the release gate.
+  a complete graph without the required property-to-model edge. The official
+  0.17.4 release asset passes the complete dependency-attributed proof gate.
 - **Prepared the Chelis 0.17.4 / Economoist 0.2.6 release cascade.** The
   compiler pin, workflow installers, lockfile, manifest package/pin fields,
   and every expected-tier row move together. Chelis 0.17.2 supplied the
   dependency, gradient, and package-context capabilities, but its auto-batch
   test worker can outlive the useful per-test timeout (chelis#927). The 0.17.4
-  source candidate bounds that suite lifetime; official release assets remain
-  the publication gate. The forge negative's temporary package now derives its
+  release bounds that suite lifetime, and its official SMT-bearing
+  compatibility asset passes all ten local-gate stages. The forge negative's
+  temporary package now derives its
   compiler pin from the binary under test instead of retaining a historical
   0.14.0 pin, so its ACCEPT/REJECT oracle actually executes at every new pin.
 - **Retired the expected-failure fallback (chelis#967).** Negative and blocked
@@ -36,11 +36,17 @@ All notable changes to the Economoist shell are recorded here. The package
   compiler-owned adapter preserves its pinned diagnostic; the duplicate Python
   runners and CI fallback chain are gone.
 - **Archived the stale scalar-intrinsic blocker (chelis#424).** Real Reef
-  executable probes show scalar `max` and `min` compile and pass at the 0.17.4
-  candidate. The old adapter copied the probe outside its Reef dependency
+  executable probes show scalar `max` and `min` compile and pass with the
+  published 0.17.4 toolchain. The old adapter copied the probe outside its Reef dependency
   context and falsely kept reporting `unbound variable`. Stable exported
   `fmax`/`fmax3`/`fabs` helpers remain for API and proof-corpus compatibility,
   not as a narrowing.
+- **Release acquisition now selects and authenticates the compatibility
+  artifact.** Linux automation installs
+  `linux-x86_64-glibc2.31`, verifies the publisher's SHA-256 sidecar before
+  extraction, and rotates the cache namespace. The local installer
+  reauthenticates on every invocation and rolls back a failed replacement
+  without destroying the prior toolchain.
 
 ## [0.2.3] - 2026-07-13
 

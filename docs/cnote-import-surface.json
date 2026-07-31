@@ -1205,8 +1205,8 @@
       "note": "honest amber; fuzz-validated library invariants, gated separately, name-linted, never colliding with a properties/ green"
     }
   },
-  "eval_import_boundary": "prove resolves module imports so proven and sampled properties reach the real exported functions; eval still does not resolve standalone-file imports (chelis#423). The sampled AD lane directly differentiates the imported gordon_pv export (economoist#13). The 0.17.4 source candidate is locally validated; published release-asset validation remains pending.",
-  "dependency_edges_boundary": "At the prepared 0.17.4 pin, the producer gate requires chelis#922's complete linker-owned dependency_graph to contain the direct property-to-output-function edge and fails closed if it does not. Historical 0.17.1 output lacked that graph and used the compiler-emitted goal plus corrupt-flip compatibility oracle (docs/issue_drafts/dependency_edges_imports.md). Published-0.17.4 validation remains pending.",
+  "eval_import_boundary": "prove resolves module imports so proven and sampled properties reach the real exported functions; eval still does not resolve standalone-file imports (chelis#423). The sampled AD lane directly differentiates the imported gordon_pv export (economoist#13). The published 0.17.4 compatibility asset passes the complete real-package gate.",
+  "dependency_edges_boundary": "At the published 0.17.4 pin, the producer gate requires chelis#922's complete linker-owned dependency_graph to contain the direct property-to-output-function edge and fails closed if it does not. Historical 0.17.1 output lacked that graph and used the compiler-emitted goal plus corrupt-flip compatibility oracle (docs/issue_drafts/dependency_edges_imports.md).",
   "run": {
     "build": "chelis reef build",
     "contract_gate": "python3 scripts/contract_gate.py",

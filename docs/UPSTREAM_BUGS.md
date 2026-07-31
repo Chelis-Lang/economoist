@@ -50,7 +50,7 @@ the current surface.
 ## Archived
 
 - **Scalar `max`/`min`/`abs` for `f32` bind in Chelis 0.17.4 (chelis#424).**
-  Real-Reef executable probes against the combined 0.17.4 source candidate
+  Real-Reef executable probes against the published 0.17.4 release asset
   compile and pass for both `max(f32, f32)` and `min(f32, f32)`; `abs` was
   already verified at 0.14.0. The old blocker copied its source into a
   dependency-free standalone directory, so it kept reporting `unbound
@@ -59,8 +59,8 @@ the current surface.
   preserve the audited ITE-shaped proof corpus, not a capability narrowing.
 
 - **Native expected-failure runner preserves bare check-time diagnostics in
-  Chelis 0.17.4 (chelis#967).** Re-probed against the combined 0.17.4 source
-  candidate: the bare `tests_neg/parse/type_mismatch.ch` file, which deliberately
+  Chelis 0.17.4 (chelis#967).** Re-probed against the published 0.17.4 release:
+  the bare `tests_neg/parse/type_mismatch.ch` file, which deliberately
   declares no `test_*` function, is classified `verdict:"ok"` with its pinned
   diagnostic. CI and the local gate now use only
   `chelis test <dir> --expect neg|blocked`; the two Python adapters and the
@@ -68,7 +68,7 @@ the current surface.
   configuration error upstream, so this de-narrowing stays fail-closed.
 
 - **Compiler-owned dependency attribution shipped in Chelis 0.17.2
-  (chelis#922).** The 0.17.4 source-candidate gate observes a complete
+  (chelis#922).** The published 0.17.4 gate observes a complete
   linker-owned graph and direct stable-ID edges from both sampled Gordon
   properties to `Economoist.Growth.gordon_pv`. The gate fails closed if a
   complete graph omits either edge. The older flat `dependency_edges` field
@@ -82,8 +82,8 @@ the current surface.
 
 - **Persistent package prove preparation shipped in Chelis 0.17.2
   (chelis#924).** Economoist's sampled gate now executes the checked-in
-  direct-import property in its real Reef package context. The 0.17.4 official
-  release asset must repeat the local candidate timing before publication.
+  direct-import property in its real Reef package context. The complete
+  ten-stage gate passes with the official 0.17.4 compatibility asset.
 
 - **Direct grad through an imported function. RESOLVED at the 0.17.1 pin
   (economoist#13).** A two-module package re-probe returned a fuzz verdict whose

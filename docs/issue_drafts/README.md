@@ -10,12 +10,12 @@ at narrowing sites and in `UPSTREAM_BUGS.md`.
 |---|---|---|
 | `smt_in_release_tarball.md` | RESOLVED: SMT ships in the released tarball as of chelis v0.11.0 (verified at 0.14.0, 2026-07-10). | Filed as chelis#422 on 2026-06-20; archived in `UPSTREAM_BUGS.md`. |
 | `eval_side_import_resolution.md` | Confirm eval still does not resolve standalone-file imports when a C Note template needs it. | Filed as chelis#423 on 2026-06-20. |
-| `scalar_max_abs_f32.md` | RESOLVED at the 0.17.4 source candidate: real-Reef scalar `max` and `min` probes compile and pass; `abs` was already fixed. | Filed as chelis#424 on 2026-06-20; archived in `UPSTREAM_BUGS.md`. |
+| `scalar_max_abs_f32.md` | RESOLVED in the published 0.17.4 release: real-Reef scalar `max` and `min` probes compile and pass; `abs` was already fixed. | Filed as chelis#424 on 2026-06-20; archived in `UPSTREAM_BUGS.md`. |
 | `nested_fmax_goal_site.md` | CANDIDATE-FIXED at chelis 0.14.0: the n=3 per-output-state contraction lowers and proves (p15 + per-surface). | Filed as chelis#425 on 2026-06-20; archived in `UPSTREAM_BUGS.md`. |
 | `twocall_ite_subtraction_unsound.md` | RESOLVED at chelis 0.10.0, re-verified at 0.14.0 (p04). | Filed as chelis#426 on 2026-06-20; archived in `UPSTREAM_BUGS.md`. |
 | `grad_smt_lowering.md` | FIXED by scalar-grad SMT lowering in chelis#923 / Chelis 0.17.2; the sampled invariant remains intentionally fuzz-only because it checks concrete f32 AD, while the real theorem already ships separately. | Retain as historical issue record. |
 | `grad_through_import.md` | RESOLVED at the 0.17.1 pin: a direct imported gradient returns a fuzz verdict; Economoist de-narrowing is economoist#13. | Archived independently of chelis#923/#924. |
 | `dependency_edges_imports.md` | The legacy flat field omits cross-module references; chelis#922's compiler-owned dependency graph superseded it in Chelis 0.17.2. | Retain as historical issue record. |
-| `grad_inpackage_hang.md` | Reclassified as the package-sized fixed cost fixed by chelis#924; the gate now proves the real package file in place rather than hiding the package path. | Retain as historical issue record; repeat timing on the 0.17.4 asset. |
+| `grad_inpackage_hang.md` | Reclassified as the package-sized fixed cost fixed by chelis#924; the published 0.17.4 gate proves the real package file in place rather than hiding the package path. | Retain as historical issue record. |
 | `induction_fixed_point.md` | Parked language-capability request for induction/fixed-point arguments. | Revisit when Chelis adds an induction or proof-assistant tier. |
 | `large_state_space_beacon.md` | Parked abstract-interpretation request for state spaces beyond the fixed-size SMT canon. | Revisit when Beacon exposes the required bound-propagation surface. |

@@ -1,8 +1,8 @@
 # Draft: grad-based sensitivity goals do not lower to the SMT tier
 
 Filed as chelis#923 and released in Chelis 0.17.2.
-The Economoist 0.17.4 source-candidate probe returns the expected direct-import
-verdict when built with the same `smt` feature set as an official release.
+The official Economoist 0.17.4 compatibility-asset probe returns the expected
+direct-import verdict through the shipped SMT-enabled binary.
 
 **Summary.** A `@property` goal whose body contains `grad(...)` (automatic
 differentiation of a scalar expression) does not lower to Tier B (cvc5); at
@@ -33,5 +33,5 @@ keeps `econ.inv.gordon_dP_dr_negative_grad.v1` in the sampled lane by design:
 that lane checks the concrete `f32` AD transform, whereas
 `gordon_decreasing_in_r` already states the real-arithmetic theorem in the
 unqualified SMT-green lane. This is a semantic lane split, not a reason to
-promote the concrete `f32` sampled record. Archive the compiler gap only after
-the published release re-probe.
+promote the concrete `f32` sampled record. The published-release re-probe
+passed, so this file is retained only as the historical issue record.

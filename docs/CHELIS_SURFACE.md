@@ -14,15 +14,15 @@ What the Chelis language and the bundled chelis-std actually provide to the
 economic-models domain this shell touches. Read this before designing around a
 suspected language gap.
 
-> **Prepared pin:** chelis 0.17.4 (chelis-std 0.4.0, bundled; source candidate
-> `9a58c5781105bbe07d37afbb6ecfc7b3a879e0de`) · **Latest published upstream:** 0.17.2 ·
+> **Pinned release:** chelis 0.17.4 (chelis-std 0.4.0, bundled; source
+> `0b0c92f9916163b05a483fba70473496923730e6`) · **Latest published upstream:** 0.17.4 ·
 > **Last refreshed:** 2026-07-31
 >
-> **Release boundary:** the 0.17.4 source candidate is locally usable for
-> compatibility validation (binary SHA-256
-> `7562c464ab68e8878fd20d24e0194deb204e092aebdff4e7c8c094e535fc4a39`),
-> but no official release asset exists yet. Do not publish Economoist 0.2.6
-> until the tagged tarball repeats the same gates.
+> **Release identity:** official
+> `chelis-v0.17.4-linux-x86_64-glibc2.31.tar.gz`, SHA-256
+> `6b7f477d65b2dea4e85b5107a51ae5714a5113138a6791361b74205f9448a121`.
+> Its publisher sidecar, version, glibc ceiling, and live cvc5 discharge were
+> independently verified before the complete Economoist gate passed.
 
 Rows are marked `@pin` (present in the prepared 0.17.4 pin) or `@upstream`
 (expected after it).
@@ -31,7 +31,7 @@ Rows are marked `@pin` (present in the prepared 0.17.4 pin) or `@upstream`
 
 | Capability | Status | Notes |
 |---|---|---|
-| SMT prove tier (cvc5, QF_NRA over the reals) | `@pin` | `chelis prove --json --tier smt-only`. SMT ships in the released chelis binary as of v0.11.0 (chelis#422 resolved, archived in `UPSTREAM_BUGS.md`); no from-source build. The 0.17.4 source candidate is locally validated; the published binary remains to be installed and re-probed. |
+| SMT prove tier (cvc5, QF_NRA over the reals) | `@pin` | `chelis prove --json --tier smt-only`. SMT ships in the released chelis binary as of v0.11.0 (chelis#422 resolved, archived in `UPSTREAM_BUGS.md`); no from-source build. The official 0.17.4 compatibility asset passes the real-SMT proof and anti-vacuity gates. |
 | Green markers | `@pin` | `status:"passed"`, `proof_tier:"smt"`, `samples:0`, `arith_model:"real"`, `composite_verdict:"proven_modulo_real_arithmetic"` (chelis 0.9.0; the prover is honest that it proved the goal over the reals, not the f32 rounding behaviour, which is exactly this shell's boundary). The older plain `"proven"` token is also accepted by the gate. |
 | Reals, not floats | `@pin` | A green is a real-arithmetic fact (`arith_model:"real"`), not a statement about `f32` evaluation. Stated per model. |
 | Per-property non-vacuity | `@pin` | A guarded property carries a `preconditions` assumption whose non-vacuity cvc5 establishes (a guard-satisfying model). The gate also ships explicit `*_guards_satisfiable` witnesses that refute. |
@@ -48,7 +48,7 @@ Rows are marked `@pin` (present in the prepared 0.17.4 pin) or `@upstream`
 | Arithmetic `+ - * /`, comparisons `>= <= > < == !=` | `@pin` | Lower to cvc5. A `/` with a guarded-nonzero denominator now lowers: the Gordon greens call the exported `gordon_pv(d, r, g) = d / (r - g)` directly at the goal site under the `r > g` guard and prove at SMT (probes p01/p02/p03), replacing the earlier multiplied-through polynomial restatements (which were vacuous). |
 | `if/then/else` | `@pin` | Lowers as ITE in QF_NRA. |
 | Scalar `abs` for `f32` | `@pin` | `abs` binds and proves smt-green (verified at 0.14.0). Exported `fabs` remains stable shell API and preserves the audited ITE proof shape, not a workaround. See archived chelis#424. |
-| Scalar `max`/`min` for `f32` | `@pin` | Real-Reef executable probes at the 0.17.4 source candidate compile and pass for both scalar `max` and `min`. Exported `fmax`/`fmax3` remain stable shell API and preserve the existing ITE-shaped SMT corpus, not a narrowing. See archived chelis#424. |
+| Scalar `max`/`min` for `f32` | `@pin` | Real-Reef executable probes with the published 0.17.4 release compile and pass for both scalar `max` and `min`. Exported `fmax`/`fmax3` remain stable shell API and preserve the existing ITE-shaped SMT corpus, not a narrowing. See archived chelis#424. |
 | `Option[T]`, `Some`/`None`, `match` | `@pin` | Used by the guarded producers. |
 | `@opaque` types with `@invariant` | `@pin` | Field access stays inside the module; values held by consumers only through producers. |
 | `cast`, `f32` literals | `@pin` | Test and eval bodies use builtin-call forms freely; only prove goals require operator form. |
@@ -67,7 +67,7 @@ Rows are marked `@pin` (present in the prepared 0.17.4 pin) or `@upstream`
 | grad goal lowering (tier) | `@pin` | Chelis#923's fail-closed scalar-grad SMT path is present. Economoist still keeps the concrete `f32` AD check `fuzz_validated`, separate from the real-arithmetic two-point green `gordon_decreasing_in_r`. |
 | grad through cross-module import | `@pin` | Economoist#13 re-probed a direct imported gradient at 0.17.1: it returned a fuzz verdict whose compiler-emitted goal contained the imported function. The sampled satisfying and corrupt properties now differentiate `Economoist.Growth.gordon_pv` directly. Package-sized fixed cost is separate (chelis#924). |
 | compiler-owned dependency attribution | `@pin` | Chelis#922's linker-owned complete/unavailable `dependency_graph` contains both direct property-to-`gordon_pv` edges. `scripts/prove_gate.py` fails closed on a missing edge. |
-| persistent package prove context | `@pin` | Chelis#924's integrity-checked prepared Reef graph cache and linker-reachable post-verdict check are present. The sampled gate exercises the real package context; the 0.17.4 release-asset rerun remains pending. |
+| persistent package prove context | `@pin` | Chelis#924's integrity-checked prepared Reef graph cache and linker-reachable post-verdict check are present. The sampled gate exercises the real package context and passes with the published 0.17.4 asset. |
 | Rank polymorphism (`..r`) | n/a | Not relied on. Chelis verbs are **not** implicitly rank-polymorphic and there is **no implicit broadcasting**: all rank/dimension manipulation is explicit via `expand`/`reshape`/`permute` (`spec/04-type-system.md` §4.2). Optional `..r` rank-variable defs exist as an identity-tier feature (`spec/design/rank_polymorphism.md`, "IDENTITY TIER SHIPPED"), but this shell uses **fixed small dimensions** (n=2 and n=3) with **scalar `f32`** params and never writes a `..r` def, so rank polymorphism has no bearing on the proof or AD surface here. |
 
 ## Where to read more

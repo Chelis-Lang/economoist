@@ -1,7 +1,7 @@
 # Draft: grad prove hangs in package context (independent of imports)
 
-Reclassified under chelis#924. The fix shipped in Chelis 0.17.2; the 0.17.4
-asset-level rerun remains pending.
+Reclassified under chelis#924. The fix shipped in Chelis 0.17.2 and the
+official 0.17.4 compatibility asset passes the real-package proof gate.
 
 **Summary.** A `@property` goal containing `grad(...)` over an INLINE closed-form
 body (no imports at all) proves fine as a standalone file but HANGS when the same
@@ -45,6 +45,5 @@ copy-out workaround.
 **Current status.** `scripts/prove_gate.py` now proves the checked-in sampled
 file in its actual Reef package context. It no longer copies source to a
 standalone temporary directory, so package/linker behavior is part of the
-acceptance surface. Chelis#924's development fix removes the fixed preparation
-cost, but this draft remains tracking evidence until the published release
-passes the cold/warm oracle.
+acceptance surface. The published 0.17.4 gate terminates and passes; this draft
+remains only as historical evidence for the retired copy-out workaround.

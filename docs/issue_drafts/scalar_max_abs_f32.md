@@ -2,7 +2,7 @@
 
 Filed upstream as chelis#424 on 2026-06-20.
 
-**Status: RESOLVED at the Chelis 0.17.4 source candidate.** Executable
+**Status: RESOLVED in the published Chelis 0.17.4 release.** Executable
 zero-argument tests in the real Economoist Reef context compile and pass for
 both scalar `max(f32, f32)` and `min(f32, f32)`; `abs` was already verified at
 0.14.0. The historical standalone reproducer below records the original gap,

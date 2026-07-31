@@ -181,15 +181,16 @@ The AD sensitivity ships as an honest amber, NOT a proven green. It lives in the
 sampled lane (`sampled/growth_sensitivity.ch`, module prefix
 `Economoist.Sampled`, property `gordon_dP_dr_negative_grad`) at tier
 `fuzz_validated`, kept out of the pure-SMT-green `properties/` boundary because
-this lane exercises the compiler's concrete `f32` AD transform. Chelis#923 has
-a development implementation for lowering the supported scalar gradient to
-SMT, but a published re-probe is still pending, and that real-arithmetic
-theorem would not certify floating-point execution. The real
+this lane exercises the compiler's concrete `f32` AD transform. Chelis#923's
+supported scalar-gradient SMT lowering ships in 0.17.2 and passes the published
+0.17.4 re-probe, but that real-arithmetic theorem does not certify
+floating-point execution. The real
 comparative-static fact is already the unqualified two-point SMT green
 `gordon_decreasing_in_r`; this sampled property is its deliberately separate
 `f32` execution check. It now differentiates the imported `gordon_pv` export
 directly. The former inline-expression and copy-out workarounds are retired by
-economoist#13; chelis#924's package-latency improvement remains pending release.
+economoist#13; chelis#924's package-context fix passes with the published
+0.17.4 compatibility asset.
 
 At the concrete point `D = 2, r = 0.1, g = 0.05` the denominator is `r - g =
 0.05`, so the analytic values are `P = 2 / 0.05 = 40`, `dP/dr = -D/(r-g)^2 =
