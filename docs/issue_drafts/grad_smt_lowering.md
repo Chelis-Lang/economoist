@@ -1,7 +1,7 @@
 # Draft: grad-based sensitivity goals do not lower to the SMT tier
 
 Filed as chelis#923 and released in Chelis 0.17.2.
-The Economoist 0.17.3 source-candidate probe returns the expected direct-import
+The Economoist 0.17.4 source-candidate probe returns the expected direct-import
 verdict when built with the same `smt` feature set as an official release.
 
 **Summary.** A `@property` goal whose body contains `grad(...)` (automatic

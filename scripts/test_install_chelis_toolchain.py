@@ -32,7 +32,7 @@ class InstallerLayoutTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw_tmp:
             tmp = Path(raw_tmp)
             install_base = tmp / "toolchains"
-            binary = install_base / "0.17.3" / "bin" / "chelis"
+            binary = install_base / "0.17.4" / "bin" / "chelis"
             binary.parent.mkdir(parents=True)
             binary.write_bytes(b"release binary")
             launcher = tmp / "bin" / "chelis"
@@ -42,7 +42,7 @@ class InstallerLayoutTests(unittest.TestCase):
                 mock.patch.object(INSTALLER, "LAUNCHER_PATH", launcher),
                 mock.patch.object(INSTALLER.subprocess, "run") as run,
             ):
-                INSTALLER.install("0.17.3", set_default=False)
+                INSTALLER.install("0.17.4", set_default=False)
 
             run.assert_not_called()
             self.assertEqual(launcher.read_text(), INSTALLER.LAUNCHER_SCRIPT)

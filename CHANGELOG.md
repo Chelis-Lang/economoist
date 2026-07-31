@@ -18,14 +18,14 @@ All notable changes to the Economoist shell are recorded here. The package
   package-sized fixed cost pending a published release re-probe.
 - **Direct bindings consume compiler attribution when available.** The proof
   gate prefers chelis#922's linker-owned `dependency_graph` and fails closed on
-  a complete graph without the required property-to-model edge. The 0.17.3
+  a complete graph without the required property-to-model edge. The 0.17.4
   source candidate is locally validated; published-release validation remains
   part of the release gate.
-- **Prepared the Chelis 0.17.3 / Economoist 0.2.6 release cascade.** The
+- **Prepared the Chelis 0.17.4 / Economoist 0.2.6 release cascade.** The
   compiler pin, workflow installers, lockfile, manifest package/pin fields,
   and every expected-tier row move together. Chelis 0.17.2 supplied the
   dependency, gradient, and package-context capabilities, but its auto-batch
-  test worker can outlive the useful per-test timeout (chelis#927). The 0.17.3
+  test worker can outlive the useful per-test timeout (chelis#927). The 0.17.4
   source candidate bounds that suite lifetime; official release assets remain
   the publication gate. The forge negative's temporary package now derives its
   compiler pin from the binary under test instead of retaining a historical

@@ -1,7 +1,7 @@
 # Draft: grad prove hangs in package context (independent of imports)
 
-Reclassified under chelis#924. The fix is included in the prepared Chelis
-Chelis 0.17.2 release; the 0.17.3 asset-level rerun remains pending.
+Reclassified under chelis#924. The fix shipped in Chelis 0.17.2; the 0.17.4
+asset-level rerun remains pending.
 
 **Summary.** A `@property` goal containing `grad(...)` over an INLINE closed-form
 body (no imports at all) proves fine as a standalone file but HANGS when the same

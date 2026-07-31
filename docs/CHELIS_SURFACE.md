@@ -1,25 +1,37 @@
+<!-- BEGIN CHELIS MANAGED BLOCK: chelis-surface-header chelis@0.17.4 (sha256:28011bed9ccb5778) -->
+This file is a domain-scoped view of the canonical Chelis capability surface,
+generated for the pinned toolchain. Each capability row is marked `@pin` (usable
+at the current pin) or `@upstream` (lands at the next bump). **Read it before
+designing around a suspected language gap** — most downstream over-narrowing
+traces to not knowing the real surface. Regenerate with `chelis reef conform
+sync` at every pin bump; the upstream source of truth is `docs/CHELIS_SURFACE.md`
+in `Chelis-Lang/chelis`.
+<!-- END CHELIS MANAGED BLOCK: chelis-surface-header -->
+
 # Chelis Capability Surface for Economoist
 
 What the Chelis language and the bundled chelis-std actually provide to the
 economic-models domain this shell touches. Read this before designing around a
 suspected language gap.
 
-> **Prepared pin:** chelis 0.17.3 (chelis-std 0.4.0, bundled; source candidate
-> `4dd8dcdb`) · **Latest published upstream:** 0.17.2 ·
-> **Last refreshed:** 2026-07-30
+> **Prepared pin:** chelis 0.17.4 (chelis-std 0.4.0, bundled; source candidate
+> `9a58c5781105bbe07d37afbb6ecfc7b3a879e0de`) · **Latest published upstream:** 0.17.2 ·
+> **Last refreshed:** 2026-07-31
 >
-> **Release boundary:** the 0.17.3 source candidate is locally usable for
-> compatibility validation, but no official release asset exists yet. Do not
-> publish Economoist 0.2.6 until the tagged tarball repeats the same gates.
+> **Release boundary:** the 0.17.4 source candidate is locally usable for
+> compatibility validation (binary SHA-256
+> `7562c464ab68e8878fd20d24e0194deb204e092aebdff4e7c8c094e535fc4a39`),
+> but no official release asset exists yet. Do not publish Economoist 0.2.6
+> until the tagged tarball repeats the same gates.
 
-Rows are marked `@pin` (present in the prepared 0.17.3 pin) or `@upstream`
+Rows are marked `@pin` (present in the prepared 0.17.4 pin) or `@upstream`
 (expected after it).
 
 ## Proof surface (the spine of this shell)
 
 | Capability | Status | Notes |
 |---|---|---|
-| SMT prove tier (cvc5, QF_NRA over the reals) | `@pin` | `chelis prove --json --tier smt-only`. SMT ships in the released chelis binary as of v0.11.0 (chelis#422 resolved, archived in `UPSTREAM_BUGS.md`); no from-source build. The 0.17.3 source candidate is locally validated; the published binary remains to be installed and re-probed. |
+| SMT prove tier (cvc5, QF_NRA over the reals) | `@pin` | `chelis prove --json --tier smt-only`. SMT ships in the released chelis binary as of v0.11.0 (chelis#422 resolved, archived in `UPSTREAM_BUGS.md`); no from-source build. The 0.17.4 source candidate is locally validated; the published binary remains to be installed and re-probed. |
 | Green markers | `@pin` | `status:"passed"`, `proof_tier:"smt"`, `samples:0`, `arith_model:"real"`, `composite_verdict:"proven_modulo_real_arithmetic"` (chelis 0.9.0; the prover is honest that it proved the goal over the reals, not the f32 rounding behaviour, which is exactly this shell's boundary). The older plain `"proven"` token is also accepted by the gate. |
 | Reals, not floats | `@pin` | A green is a real-arithmetic fact (`arith_model:"real"`), not a statement about `f32` evaluation. Stated per model. |
 | Per-property non-vacuity | `@pin` | A guarded property carries a `preconditions` assumption whose non-vacuity cvc5 establishes (a guard-satisfying model). The gate also ships explicit `*_guards_satisfiable` witnesses that refute. |
@@ -55,7 +67,7 @@ Rows are marked `@pin` (present in the prepared 0.17.3 pin) or `@upstream`
 | grad goal lowering (tier) | `@pin` | Chelis#923's fail-closed scalar-grad SMT path is present. Economoist still keeps the concrete `f32` AD check `fuzz_validated`, separate from the real-arithmetic two-point green `gordon_decreasing_in_r`. |
 | grad through cross-module import | `@pin` | Economoist#13 re-probed a direct imported gradient at 0.17.1: it returned a fuzz verdict whose compiler-emitted goal contained the imported function. The sampled satisfying and corrupt properties now differentiate `Economoist.Growth.gordon_pv` directly. Package-sized fixed cost is separate (chelis#924). |
 | compiler-owned dependency attribution | `@pin` | Chelis#922's linker-owned complete/unavailable `dependency_graph` contains both direct property-to-`gordon_pv` edges. `scripts/prove_gate.py` fails closed on a missing edge. |
-| persistent package prove context | `@pin` | Chelis#924's integrity-checked prepared Reef graph cache and linker-reachable post-verdict check are present. The sampled gate exercises the real package context; the 0.17.3 release-asset rerun remains pending. |
+| persistent package prove context | `@pin` | Chelis#924's integrity-checked prepared Reef graph cache and linker-reachable post-verdict check are present. The sampled gate exercises the real package context; the 0.17.4 release-asset rerun remains pending. |
 | Rank polymorphism (`..r`) | n/a | Not relied on. Chelis verbs are **not** implicitly rank-polymorphic and there is **no implicit broadcasting**: all rank/dimension manipulation is explicit via `expand`/`reshape`/`permute` (`spec/04-type-system.md` §4.2). Optional `..r` rank-variable defs exist as an identity-tier feature (`spec/design/rank_polymorphism.md`, "IDENTITY TIER SHIPPED"), but this shell uses **fixed small dimensions** (n=2 and n=3) with **scalar `f32`** params and never writes a `..r` def, so rank polymorphism has no bearing on the proof or AD surface here. |
 
 ## Where to read more

@@ -12,8 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CHELIS_TAG: v0.17.3
-  CHELIS_VERSION: 0.17.3
+  CHELIS_TAG: v0.17.4
+  CHELIS_VERSION: 0.17.4
 
 jobs:
   hard-rule-guard:
@@ -105,11 +105,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.CHELIS_RELEASE_TOKEN }}
         run: chelis reef build .
 
+      - name: Shell contract conformance
+        run: chelis reef conform audit
+
       - name: Negative tests
-        run: python3 scripts/run_negative_tests.py
+        run: |
+          chelis test tests_neg --expect neg
+          python3 scripts/run_negative_tests.py
 
       - name: Blocked probes
-        run: python3 scripts/run_blocked_probes.py
+        # The native runner does not yet surface a bare check-time failure as a
+        # test row; retain the diagnostic-pinning runner as the authoritative
+        # fallback until the native adapter accepts this probe shape (chelis#967).
+        run: chelis test tests_blocked --expect blocked || python3 scripts/run_blocked_probes.py
 
   contract-gate:
     name: Contract gate (manifest consistency)

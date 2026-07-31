@@ -45,22 +45,32 @@ the current surface.
   fixed. Re-probe trigger: any release note adding scalar `max`/`min` reductions
   over `f32` to chelis-std. chelis#424 (draft: `issue_drafts/scalar_max_abs_f32.md`).
 
+- **Native expected-failure runner drops bare check-time diagnostics.** A
+  compile-failing file with no `test_*` declaration is reduced to an empty
+  outcome by `chelis test --expect blocked`, so the adapter emits a
+  configuration error instead of matching the `.expect` diagnostic. CI runs
+  the native command and falls back to the existing isolated diagnostic-pinning
+  runner, which preserves OK/FIX-detected/DRIFTED semantics. Remove the fallback
+  once the native adapter carries file-level compile failures. chelis#967.
+
 ## Parked
 
 - **Induction for limit and general-n results.** Convergence to stationarity, the
   unique Bellman fixed point, ergodicity, value-iteration convergence, and the
   general state-dimension theorems need induction or a fixed-point argument and
   are not reachable by SMT at fixed size. Re-probe trigger: an induction or
-  proof-assistant tier in chelis.
+  proof-assistant tier in chelis. Parked rationale:
+  `docs/issue_drafts/induction_fixed_point.md`.
 
 - **Large concrete state-space verification.** Scaling concrete verification past
   the small fixed dimension SMT can handle is the Beacon roadmap (bound
   propagation and abstract interpretation). Re-probe trigger: Beacon availability.
+  Parked rationale: `docs/issue_drafts/large_state_space_beacon.md`.
 
 ## Archived
 
 - **Compiler-owned dependency attribution shipped in Chelis 0.17.2
-  (chelis#922).** The 0.17.3 source-candidate gate observes a complete
+  (chelis#922).** The 0.17.4 source-candidate gate observes a complete
   linker-owned graph and direct stable-ID edges from both sampled Gordon
   properties to `Economoist.Growth.gordon_pv`. The gate fails closed if a
   complete graph omits either edge. The older flat `dependency_edges` field
@@ -74,7 +84,7 @@ the current surface.
 
 - **Persistent package prove preparation shipped in Chelis 0.17.2
   (chelis#924).** Economoist's sampled gate now executes the checked-in
-  direct-import property in its real Reef package context. The 0.17.3 official
+  direct-import property in its real Reef package context. The 0.17.4 official
   release asset must repeat the local candidate timing before publication.
 
 - **Direct grad through an imported function. RESOLVED at the 0.17.1 pin
