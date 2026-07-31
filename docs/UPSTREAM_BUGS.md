@@ -33,26 +33,6 @@ the current surface.
   shipped bodies). Re-probe trigger: any release note naming eval-side import
   resolution. chelis#423 (draft: `issue_drafts/eval_side_import_resolution.md`).
 
-- **Partial scalar `max`/`min`/`abs` for `f32`: `abs` binds, `max`/`min` still
-  unbound.** First observed at 0.8.0 (a bare `max(...)` over `f32` is an unbound
-  variable). Re-probed at the 0.14.0 pin on 2026-07-10: `abs` over `f32` now binds
-  and proves smt-green, but `max` and `min` over `f32` remain unbound (typecheck
-  error "unbound variable"). Affected surface: the Bellman operator and the
-  sup-norm contraction, which take a max over actions. Workaround: the local
-  `fmax`/`fmax3` `if/then/else` helpers still ship for the max (they lower as ITE
-  and prove smt-green); the local `fabs` is kept for symmetry with `fmax` even
-  though `abs` now binds. Status stays **Tracking**: do not claim `max`/`min` are
-  fixed. Re-probe trigger: any release note adding scalar `max`/`min` reductions
-  over `f32` to chelis-std. chelis#424 (draft: `issue_drafts/scalar_max_abs_f32.md`).
-
-- **Native expected-failure runner drops bare check-time diagnostics.** A
-  compile-failing file with no `test_*` declaration is reduced to an empty
-  outcome by `chelis test --expect blocked`, so the adapter emits a
-  configuration error instead of matching the `.expect` diagnostic. CI runs
-  the native command and falls back to the existing isolated diagnostic-pinning
-  runner, which preserves OK/FIX-detected/DRIFTED semantics. Remove the fallback
-  once the native adapter carries file-level compile failures. chelis#967.
-
 ## Parked
 
 - **Induction for limit and general-n results.** Convergence to stationarity, the
@@ -68,6 +48,24 @@ the current surface.
   Parked rationale: `docs/issue_drafts/large_state_space_beacon.md`.
 
 ## Archived
+
+- **Scalar `max`/`min`/`abs` for `f32` bind in Chelis 0.17.4 (chelis#424).**
+  Real-Reef executable probes against the combined 0.17.4 source candidate
+  compile and pass for both `max(f32, f32)` and `min(f32, f32)`; `abs` was
+  already verified at 0.14.0. The old blocker copied its source into a
+  dependency-free standalone directory, so it kept reporting `unbound
+  variable` after the package surface was usable. That misleading adapter
+  probe is removed. Exported `fmax`/`fmax3`/`fabs` remain stable shell API and
+  preserve the audited ITE-shaped proof corpus, not a capability narrowing.
+
+- **Native expected-failure runner preserves bare check-time diagnostics in
+  Chelis 0.17.4 (chelis#967).** Re-probed against the combined 0.17.4 source
+  candidate: the bare `tests_neg/parse/type_mismatch.ch` file, which deliberately
+  declares no `test_*` function, is classified `verdict:"ok"` with its pinned
+  diagnostic. CI and the local gate now use only
+  `chelis test <dir> --expect neg|blocked`; the two Python adapters and the
+  fallback chain are removed. A genuinely clean testless file remains a
+  configuration error upstream, so this de-narrowing stays fail-closed.
 
 - **Compiler-owned dependency attribution shipped in Chelis 0.17.2
   (chelis#922).** The 0.17.4 source-candidate gate observes a complete

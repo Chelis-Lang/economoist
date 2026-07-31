@@ -30,6 +30,17 @@ All notable changes to the Economoist shell are recorded here. The package
   the publication gate. The forge negative's temporary package now derives its
   compiler pin from the binary under test instead of retaining a historical
   0.14.0 pin, so its ACCEPT/REJECT oracle actually executes at every new pin.
+- **Retired the expected-failure fallback (chelis#967).** Negative and blocked
+  suites now run exclusively through `chelis test <dir> --expect neg|blocked`.
+  The negative corpus includes a bare file-level check failure, proving the
+  compiler-owned adapter preserves its pinned diagnostic; the duplicate Python
+  runners and CI fallback chain are gone.
+- **Archived the stale scalar-intrinsic blocker (chelis#424).** Real Reef
+  executable probes show scalar `max` and `min` compile and pass at the 0.17.4
+  candidate. The old adapter copied the probe outside its Reef dependency
+  context and falsely kept reporting `unbound variable`. Stable exported
+  `fmax`/`fmax3`/`fabs` helpers remain for API and proof-corpus compatibility,
+  not as a narrowing.
 
 ## [0.2.3] - 2026-07-13
 

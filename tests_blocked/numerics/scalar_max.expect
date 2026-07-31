@@ -1,3 +1,0 @@
-unbound variable: max
-Blocker: docs/issue_drafts/scalar_max_abs_f32.md (no bound scalar max/min/abs for f32 at 0.8.0; replace with chelis#NNN once filed). Tracked in docs/UPSTREAM_BUGS.md under Tracking.
-On pass (when chelis-std ships a bound scalar max/abs over f32 and this probe stops failing): replace the local fmax/fabs helpers with the upstream scalar max/abs, promote this probe to a positive test under tests/, and archive the UPSTREAM_BUGS entry.

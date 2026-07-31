@@ -109,15 +109,15 @@ jobs:
         run: chelis reef conform audit
 
       - name: Negative tests
-        run: |
-          chelis test tests_neg --expect neg
-          python3 scripts/run_negative_tests.py
+        run: chelis test tests_neg --expect neg
 
       - name: Blocked probes
-        # The native runner does not yet surface a bare check-time failure as a
-        # test row; retain the diagnostic-pinning runner as the authoritative
-        # fallback until the native adapter accepts this probe shape (chelis#967).
-        run: chelis test tests_blocked --expect blocked || python3 scripts/run_blocked_probes.py
+        run: |
+          if find tests_blocked -name '*.ch' -print -quit | grep -q .; then
+            chelis test tests_blocked --expect blocked
+          else
+            echo "No executable blocked probes at this pin."
+          fi
 
   contract-gate:
     name: Contract gate (manifest consistency)

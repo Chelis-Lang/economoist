@@ -8,11 +8,12 @@ Invokes, in order:
   2. ``chelis lint --check`` over the same set of ``.ch`` files.
   3. ``chelis reef build`` for package-level compiler validation.
   4. ``chelis test tests/`` for the native unit suite.
-  5. Negative tests (``python3 scripts/run_negative_tests.py``): every
+  5. Native negative adapter (``chelis test tests_neg --expect neg``): every
      ``.ch`` under ``tests_neg/`` must fail with its pinned diagnostic.
-  6. Blocked probes (``python3 scripts/run_blocked_probes.py``): every
-     ``.ch`` under ``tests_blocked/`` must still fail with its pinned
-     diagnostic (a now-passing probe surfaces as FIX-detected).
+  6. Native blocked adapter (``chelis test tests_blocked --expect blocked``):
+     every executable probe must still fail with its pinned diagnostic (a
+     now-passing probe surfaces as FIX-detected). The stage is skipped when
+     there are no executable blocked probes at the current pin.
   7. ``scripts/contract_gate.py`` (offline manifest consistency).
   8. ``scripts/prove_gate.py`` (SMT keystone gate, release binary).
   9. ``scripts/run_forge_tests.py`` (metamorphic anti-vacuity forge negatives).
@@ -114,6 +115,11 @@ def ch_files_in(dirname: str) -> list[Path]:
     return sorted(d.glob("*.ch")) if d.exists() else []
 
 
+def ch_files_under(dirname: str) -> list[Path]:
+    d = REPO_ROOT / dirname
+    return sorted(d.rglob("*.ch")) if d.exists() else []
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--quiet", action="store_true", help="suppress per-file lines")
@@ -158,17 +164,23 @@ def main() -> int:
     else:
         print("  notice: no .ch files under tests/; skipping test stage")
 
-    print("[5/10] negative tests")
-    rc = run([sys.executable, "scripts/run_negative_tests.py"], quiet=False)
-    if rc != 0:
-        print("FAIL: scripts/run_negative_tests.py")
-        return rc
+    print("[5/10] native negative tests")
+    if ch_files_under("tests_neg"):
+        rc = run([CHELIS, "test", "tests_neg", "--expect", "neg"], quiet=False)
+        if rc != 0:
+            print("FAIL: chelis test tests_neg --expect neg")
+            return rc
+    else:
+        print("  notice: no .ch files under tests_neg/; skipping negative-test stage")
 
-    print("[6/10] blocked probes")
-    rc = run([sys.executable, "scripts/run_blocked_probes.py"], quiet=False)
-    if rc != 0:
-        print("FAIL: scripts/run_blocked_probes.py")
-        return rc
+    print("[6/10] native blocked probes")
+    if ch_files_under("tests_blocked"):
+        rc = run([CHELIS, "test", "tests_blocked", "--expect", "blocked"], quiet=False)
+        if rc != 0:
+            print("FAIL: chelis test tests_blocked --expect blocked")
+            return rc
+    else:
+        print("  notice: no executable blocked probes at this pin; skipping blocked stage")
 
     print("[7/10] contract gate (manifest consistency, offline)")
     if (REPO_ROOT / "scripts" / "contract_gate.py").exists():

@@ -2,6 +2,12 @@
 
 Filed upstream as chelis#424 on 2026-06-20.
 
+**Status: RESOLVED at the Chelis 0.17.4 source candidate.** Executable
+zero-argument tests in the real Economoist Reef context compile and pass for
+both scalar `max(f32, f32)` and `min(f32, f32)`; `abs` was already verified at
+0.14.0. The historical standalone reproducer below records the original gap,
+not the current package surface.
+
 **Summary.** At chelis 0.8.0 there is no bound scalar `max`/`min`/`abs` for `f32`;
 a bare `max(a, b)` over `f32` is an unbound variable. chelis-std exposes tensor
 reductions and ad hoc per-file helpers, but no scalar elementwise reductions.
