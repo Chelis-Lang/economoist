@@ -42,13 +42,12 @@ export (bellman_state0, bellman_state1, bellman_state0_n3, bellman_state1_n3, be
 --   does not lower at this tier, see docs); and any f32 float claim (the green
 --   is real arithmetic).
 -- Scalar binary max, scalar ternary max, and scalar absolute value, as
--- if/then/else over operator comparisons. fmax and fabs exist because chelis
--- 0.8.0 has no bound scalar max/abs builtin for f32 (a bare max/abs is an
--- unbound variable, chelis#424); written as if/then/else they lower to ITE in
--- QF_NRA so goals over them discharge at the SMT tier. fmax3 is the three-state
--- sup norm's max as one ITE-bodied def because a nested fmax(a, fmax(b, c))
--- written directly at a goal site does NOT lower to Tier B (chelis#425), so the
--- 3-state sup norm uses fmax3 rather than nesting fmax.
+-- if/then/else over operator comparisons. Scalar max/min/abs now bind at the
+-- 0.17.4 pin (chelis#424 resolved), but fmax/fabs remain stable exported shell
+-- helpers and preserve the audited ITE-shaped SMT goals. fmax3 is the
+-- three-state sup norm's max as one ITE-bodied def because a nested
+-- fmax(a, fmax(b, c)) once hit a lowering gap (chelis#425); the stable
+-- three-state spelling remains explicit rather than nested.
 def fmax(a: f32, b: f32) -> f32 = if (a >= b) then a else b
 def fmax3(a: f32, b: f32, c: f32) -> f32 = if (a >= b) then if (a >= c) then a else c else if (b >= c) then b else c
 def fabs(x: f32) -> f32 = if (x >= 0.0) then x else (0.0 - x)

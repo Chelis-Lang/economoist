@@ -12,8 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CHELIS_TAG: v0.17.1
-  CHELIS_VERSION: 0.17.1
+  CHELIS_TAG: v0.17.4
+  CHELIS_VERSION: 0.17.4
 
 jobs:
   hard-rule-guard:
@@ -21,6 +21,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Test release-toolchain installer layout
+        run: python3 scripts/test_install_chelis_toolchain.py
+      - name: Test forge compiler-pin derivation
+        run: python3 scripts/test_run_forge_tests.py
       - name: Hard rule -- all chelis pin locations agree
         run: python3 scripts/audit_workarounds.py --pins-only
 
@@ -101,11 +105,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.CHELIS_RELEASE_TOKEN }}
         run: chelis reef build .
 
+      - name: Shell contract conformance
+        run: chelis reef conform audit
+
       - name: Negative tests
-        run: python3 scripts/run_negative_tests.py
+        run: chelis test tests_neg --expect neg
 
       - name: Blocked probes
-        run: python3 scripts/run_blocked_probes.py
+        run: |
+          if find tests_blocked -name '*.ch' -print -quit | grep -q .; then
+            chelis test tests_blocked --expect blocked
+          else
+            echo "No executable blocked probes at this pin."
+          fi
 
   contract-gate:
     name: Contract gate (manifest consistency)

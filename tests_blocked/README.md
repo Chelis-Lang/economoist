@@ -1,25 +1,24 @@
 # Blocked Probes
 
-Minimal reproducers of open upstream chelis bugs or capability gaps that
-block Economoist. Each probe is EXPECTED TO FAIL at the current pin. Run by
-`python3 scripts/run_blocked_probes.py` (CI and pin-bump checklist).
+Minimal reproducers of open upstream Chelis gaps, plus explicitly labeled
+expected-failure adapter regression sentinels. Each file is EXPECTED TO FAIL
+at the current pin and is run by `chelis test tests_blocked --expect blocked`
+(CI and pin-bump checklist). A regression sentinel locks the adapter contract;
+it is not evidence that its cited language issue remains open.
 
-Convention: `tests_blocked/<area>/<name>.ch` + paired `.expect` sidecar.
-The runner copies each source to a temporary standalone directory and runs
-`chelis check` on it. Line 1 of `.expect` = diagnostic substring the
-failure must contain. Lines 2+ = upstream citation + de-narrowing
-instructions.
+Convention: `tests_blocked/<area>/<name>.ch` + paired `.expect` sidecar. Line 1
+of `.expect` is the diagnostic substring the failure must contain. Lines 2+
+carry the upstream issue citation and de-narrowing instructions. The native
+adapter classifies a pass as FIX-detected and a changed diagnostic as DRIFTED.
 
 ## Probe inventory
 
-| Probe | Blocker | Pinned diagnostic |
+| Probe | Purpose | Pinned diagnostic |
 |---|---|---|
-| `numerics/scalar_max.ch` | No bound scalar `max`/`min`/`abs` for `f32` at 0.8.0 (a bare `max` over `f32` is an unbound variable). Cited as `docs/issue_drafts/scalar_max_abs_f32.md`, to become `chelis#NNN` once filed; tracked in `docs/UPSTREAM_BUGS.md`. | `unbound variable: max` |
+| `adapter/file_level_diagnostic.ch` | Chelis#967 regression sentinel for the native blocked adapter; not a currently blocked language capability. | `precision mismatch: expected f32, got bool` |
 
-A probe must be canonically formatted: `chelis check` enforces the format
-gate before name resolution, so an unformatted file fails on style rather
-than on the blocker. Run `chelis fmt --inplace` on a new probe so its
-failure pins the intended diagnostic.
+A probe must be canonically formatted: the native worker enforces the same
+compiler and style contracts as an ordinary test file.
 
 ## Cannot be probed (binary-level or absence-of-syntax)
 

@@ -2,9 +2,9 @@
   "schema_id": "chelis-shell.invariant-surface",
   "schema_version": "1.0",
   "pkg": "economoist",
-  "pkg_version": "0.2.5",
-  "chelis_pin": "0.17.1",
-  "purpose": "Economoist's canon model + invariant surface for C Note. Every proven-tier invariant here is a genuine unqualified SMT green that CALLS the shipped operator (not a guard restatement); the one fuzz_validated invariant is an honest amber in the sampled lane, carrying a tier_upgrade_trigger. C Note vendors this file and the byte-identical release asset economoist-0.2.3.invariants.json. See docs/contracts/characterization_contract_v1.md (schema chelis-shell.invariant-surface/1.0).",
+  "pkg_version": "0.2.6",
+  "chelis_pin": "0.17.4",
+  "purpose": "Economoist's canon model + invariant surface for C Note. Every proven-tier invariant here is a genuine unqualified SMT green that CALLS the shipped operator (not a guard restatement); the one fuzz_validated invariant is an honest amber in the sampled lane, carrying a tier_upgrade_trigger. C Note vendors this file and the byte-identical release asset economoist-<pkg_version>.invariants.json. See docs/contracts/characterization_contract_v1.md (schema chelis-shell.invariant-surface/1.0).",
   "models": [
     {
       "id": "gordon",
@@ -449,6 +449,7 @@
   "invariants": [
     {
       "id": "econ.inv.gordon_positive.v1",
+      "anchor_model": "gordon",
       "kind_applies_to": [
         "econ.perpetuity_pv"
       ],
@@ -493,7 +494,8 @@
       "expected_tier_per_pin": {
         "0.14.0": "proven",
         "0.16.1": "proven",
-        "0.17.1": "proven"
+        "0.17.1": "proven",
+        "0.17.4": "proven"
       },
       "dischargeability_probe": "p01_gordon_div_positive",
       "violation_text": "the model prices a positive-dividend perpetuity at or below zero inside its convergence region r > g",
@@ -501,6 +503,7 @@
     },
     {
       "id": "econ.inv.gordon_strict_positive.v1",
+      "anchor_model": "gordon_strict",
       "kind_applies_to": [
         "econ.perpetuity_pv"
       ],
@@ -545,7 +548,8 @@
       "expected_tier_per_pin": {
         "0.14.0": "proven",
         "0.16.1": "proven",
-        "0.17.1": "proven"
+        "0.17.1": "proven",
+        "0.17.4": "proven"
       },
       "dischargeability_probe": "p01_gordon_div_positive",
       "violation_text": "the conservative model prices a positive-dividend perpetuity at or below zero once the inputs leave the convergence region r > g (which its strict domain r > g + 0.01 is contained in); the margin is a domain-of-use choice, not the positivity hypothesis",
@@ -554,6 +558,7 @@
     },
     {
       "id": "econ.inv.gordon_decreasing_in_r.v1",
+      "anchor_model": "gordon",
       "kind_applies_to": [
         "econ.perpetuity_pv"
       ],
@@ -605,7 +610,8 @@
       "expected_tier_per_pin": {
         "0.14.0": "proven",
         "0.16.1": "proven",
-        "0.17.1": "proven"
+        "0.17.1": "proven",
+        "0.17.4": "proven"
       },
       "dischargeability_probe": "p02_gordon_two_point_r",
       "violation_text": "raising the required return does not strictly lower the present value",
@@ -613,6 +619,7 @@
     },
     {
       "id": "econ.inv.markov_mass_preserved.v1",
+      "anchor_model": "markov_n2",
       "kind_applies_to": [
         "econ.markov_step.fixed_dim"
       ],
@@ -664,7 +671,8 @@
       "expected_tier_per_pin": {
         "0.14.0": "proven",
         "0.16.1": "proven",
-        "0.17.1": "proven"
+        "0.17.1": "proven",
+        "0.17.4": "proven"
       },
       "dischargeability_probe": "p13_economoist_published_properties",
       "violation_text": "a non-stochastic transition row lets total probability mass drift off one",
@@ -672,6 +680,7 @@
     },
     {
       "id": "econ.inv.markov3_mass_preserved.v1",
+      "anchor_model": "markov_n3",
       "kind_applies_to": [
         "econ.markov_step.fixed_dim"
       ],
@@ -730,7 +739,8 @@
       "expected_tier_per_pin": {
         "0.14.0": "proven",
         "0.16.1": "proven",
-        "0.17.1": "proven"
+        "0.17.1": "proven",
+        "0.17.4": "proven"
       },
       "dischargeability_probe": "p13_economoist_published_properties",
       "violation_text": "a non-stochastic transition row lets total probability mass drift off one (n=3)",
@@ -738,6 +748,7 @@
     },
     {
       "id": "econ.inv.bellman_monotone.v1",
+      "anchor_model": "bellman_n2",
       "kind_applies_to": [
         "econ.dp_operator.fixed_dim"
       ],
@@ -838,7 +849,8 @@
       "expected_tier_per_pin": {
         "0.14.0": "proven",
         "0.16.1": "proven",
-        "0.17.1": "proven"
+        "0.17.1": "proven",
+        "0.17.4": "proven"
       },
       "dischargeability_probe": "p04_ite_two_call",
       "violation_text": "one Bellman step is not monotone in the continuation value when domination v <= w is dropped (chelis#426 regression guard)",
@@ -846,6 +858,7 @@
     },
     {
       "id": "econ.inv.bellman_contraction.v1",
+      "anchor_model": "bellman_n2",
       "kind_applies_to": [
         "econ.dp_operator.fixed_dim"
       ],
@@ -932,7 +945,8 @@
       "expected_tier_per_pin": {
         "0.14.0": "proven",
         "0.16.1": "proven",
-        "0.17.1": "proven"
+        "0.17.1": "proven",
+        "0.17.4": "proven"
       },
       "dischargeability_probe": "p04_ite_two_call",
       "violation_text": "dropping row-stochasticity lets the discounted expectation amplify the value gap past the g-contraction bound",
@@ -940,6 +954,7 @@
     },
     {
       "id": "econ.inv.bellman3_contraction.v1",
+      "anchor_model": "bellman_n3",
       "kind_applies_to": [
         "econ.dp_operator.fixed_dim"
       ],
@@ -1040,7 +1055,8 @@
       "expected_tier_per_pin": {
         "0.14.0": "proven",
         "0.16.1": "proven",
-        "0.17.1": "proven"
+        "0.17.1": "proven",
+        "0.17.4": "proven"
       },
       "dischargeability_probe": "p15_nested_fmax3",
       "violation_text": "dropping row-stochasticity breaks the de-narrowed n=3 per-state contraction bound",
@@ -1048,6 +1064,7 @@
     },
     {
       "id": "econ.inv.gordon_mispriced_positive.v1",
+      "anchor_model": "gordon",
       "kind_applies_to": [
         "econ.perpetuity_pv"
       ],
@@ -1092,7 +1109,8 @@
       "expected_tier_per_pin": {
         "0.14.0": "proven",
         "0.16.1": "proven",
-        "0.17.1": "proven"
+        "0.17.1": "proven",
+        "0.17.4": "proven"
       },
       "dischargeability_probe": "p01_gordon_div_positive",
       "violation_text": "the mispriced perpetuity gordon_pv_negated prices a positive-dividend claim below zero INSIDE its validity region r > g -- an in-region defect",
@@ -1101,6 +1119,7 @@
     },
     {
       "id": "econ.inv.gordon_dP_dr_negative_grad.v1",
+      "anchor_model": "gordon",
       "kind_applies_to": [
         "econ.perpetuity_pv"
       ],
@@ -1111,10 +1130,9 @@
       },
       "binding": {
         "mechanism": "grad",
-        "references_output_fn": "equivalent-form",
+        "references_output_fn": "direct",
         "goal_pattern": null,
-        "contracts": [],
-        "equivalent_form_citation": "docs/issue_drafts/grad_through_import.md"
+        "contracts": []
       },
       "preconditions": [
         {
@@ -1174,9 +1192,10 @@
       "expected_tier_per_pin": {
         "0.14.0": "fuzz_validated",
         "0.16.1": "fuzz_validated",
-        "0.17.1": "fuzz_validated"
+        "0.17.1": "fuzz_validated",
+        "0.17.4": "fuzz_validated"
       },
-      "tier_upgrade_trigger": "docs/issue_drafts/grad_smt_lowering.md",
+      "tier_upgrade_trigger": "Dated semantic deferral: retain the concrete f32 AD lane at fuzz_validated until a bit-precise floating-point proof tier exists (review 2027-01-30; docs/models/growth.md E4)",
       "dischargeability_probe": "p05_grad_fuzz",
       "violation_text": "the AD sensitivity dP/dr comes out non-negative in the convergence region, contradicting the proven decreasing-in-r fact",
       "fuzz_domain_note": "guards intersect the prover fuzz box [-10,10]^n with ~3% acceptance (cnote.dischargeability p05/p11)",
@@ -1196,8 +1215,8 @@
       "note": "honest amber; fuzz-validated library invariants, gated separately, name-linted, never colliding with a properties/ green"
     }
   },
-  "eval_import_boundary": "prove resolves module imports so proven properties reach the real exported functions; eval does not resolve standalone-file imports (chelis#423), and grad does not lower through a cross-module import call (docs/issue_drafts/grad_through_import.md), so the sampled AD lane inlines the shipped single-expression body. Neither boundary blocks the proof surface.",
-  "dependency_edges_boundary": "the prover's summary dependency_edges lists only same-file (local) def references, not cross-module imports (docs/issue_drafts/dependency_edges_imports.md); economoist properties import their output fns from src/, so the producer gate verifies anti-vacuity from the prover-emitted goal string (which carries the imported output fn) plus the corrupt-flip control, not from dependency_edges.",
+  "eval_import_boundary": "prove resolves module imports so proven and sampled properties reach the real exported functions; eval still does not resolve standalone-file imports (chelis#423). The sampled AD lane directly differentiates the imported gordon_pv export (economoist#13). The published 0.17.4 compatibility asset passes the complete real-package gate.",
+  "dependency_edges_boundary": "At the published 0.17.4 pin, every invariant names an exact anchor_model and the producer gate requires chelis#922's complete linker-owned dependency_graph to bind its satisfying control to that model's output_fn. Violating controls must bind to the same anchor, except an explicit defective_model control must bind to that defective model's output_fn. anchor_model is proof provenance, not a change to kind-scoped consumer applicability. An unavailable graph, missing edge, or edge to another exported model fails closed. Historical 0.17.1 output lacked that graph and used the compiler-emitted goal plus corrupt-flip compatibility oracle (docs/issue_drafts/dependency_edges_imports.md).",
   "run": {
     "build": "chelis reef build",
     "contract_gate": "python3 scripts/contract_gate.py",

@@ -1,6 +1,7 @@
 # Draft: prove --json dependency_edges omits cross-module import references
 
-Not yet filed upstream (draft; cite this path until a chelis#NNN is assigned).
+Historical draft, superseded by chelis#922's linker-owned dependency graph in
+Chelis 0.17.2. Retained to document the legacy flat-field limitation.
 
 **Summary.** The `prove --json` summary record carries a `dependency_edges` array
 (`{property, references}`) intended to list the functions a property's goal
@@ -28,16 +29,14 @@ def gpv(d: f32, r: f32, g: f32) -> f32 = (d / (r - g))
 The same property importing `gpv` from another module proves but reports
 `references: []`.
 
-**Workaround (in use).** The producer gate (`scripts/prove_gate.py`) verifies
-anti-vacuity from the prover-emitted `goal` string, which DOES carry the mangled
-imported reference (e.g. `pkg__economoist__Economoist__Growth__gordon_pv(d, r,
-g)`), PLUS the corrupt-flip control (the violating twin must break with a
-counterexample). Goal-string reference + corrupt-flip is a stronger anti-vacuity
-guarantee than dependency_edges alone.
+**Historical workaround (no longer active).** Before Chelis 0.17.2, the
+producer gate verified anti-vacuity from the prover-emitted `goal` string plus
+the corrupt-flip control. At current pins it instead requires chelis#922's
+complete linker-owned `dependency_graph` and an exact declaration-to-declaration
+edge; the goal fallback is restricted to pre-0.17.2 compatibility.
 
-**Ask.** Populate `dependency_edges[].references` with cross-module import calls,
-so consumers can compute anti-vacuity from the structured field rather than
-parsing the goal string.
+**Resolution.** chelis#922 added the structured linker-owned dependency graph,
+which supersedes `dependency_edges[].references` for this purpose.
 
-**Filing condition.** dependency_edges still omits import references at the next
-chelis release.
+**Archive condition.** Keep this draft only as historical rationale while
+pre-0.17.2 compatibility remains documented.

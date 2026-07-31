@@ -1,6 +1,6 @@
 # Draft: grad does not lower through a cross-module import call
 
-Not yet filed upstream (draft; cite this path until a chelis#NNN is assigned).
+Resolved by economoist#13 at the pinned Chelis 0.17.1 release.
 
 **Summary.** `grad(fn (...) -> imported_fn(...), wrt=...)` inside a `@property`
 goal does not make progress when `imported_fn` is a function imported from another
@@ -36,4 +36,9 @@ same goal with `gordon_pv(dd, rr, gg)` replaced by the inline body
 `unsupported`/`error` promptly instead of hanging, so a downstream AD invariant
 can reference the exported function directly (or fail fast and cite it).
 
-**Filing condition.** grad-through-import still hangs at the next chelis release.
+**Resolution.** A 0.17.1 two-module re-probe returned promptly with a fuzz
+verdict and a compiler-emitted goal containing the imported function. The
+sampled Gordon property now imports and differentiates
+`Economoist.Growth.gordon_pv` directly. Its satisfying and corrupt sign twin
+use that direct binding. Package-scale latency remains separately tracked by
+chelis#924; scalar-grad SMT remains separately tracked by chelis#923.

@@ -62,9 +62,12 @@ example `d = 1, r = 1, g = 0`), which proves the guards are jointly satisfiable
 and the corresponding green is not vacuous. In the prove summary the three
 witnesses report `status: failed, proof_tier: smt`; that refutation is the
 intended outcome, not a failure of the model. Because every goal now calls
-`gordon_pv`, the prover-emitted goal string carries the mangled export
-reference, which the producer gate cross-checks for anti-vacuity
-(`dependency_edges` does not survive the module-import boundary; see
+`gordon_pv`, Chelis 0.17.2+ reports a linker-owned `dependency_graph` edge from
+the exact property declaration to the exact `Economoist.Growth.gordon_pv`
+function declaration. The producer gate requires that compiler-reported edge
+and fails closed on missing or same-name decoy declarations. Goal-string
+inspection is retained only for older compiler pins; the legacy flat
+`dependency_edges` limitation is historical (see
 `issue_drafts/dependency_edges_imports.md`).
 
 ### Prove summary
@@ -180,16 +183,17 @@ shipped expression and not of a separate restatement.
 The AD sensitivity ships as an honest amber, NOT a proven green. It lives in the
 sampled lane (`sampled/growth_sensitivity.ch`, module prefix
 `Economoist.Sampled`, property `gordon_dP_dr_negative_grad`) at tier
-`fuzz_validated`, kept out of the pure-SMT-green `properties/` boundary. Two
-upstream gaps force this: a `grad` goal does not lower to the SMT tier -- it only
-fuzz-validates (`issue_drafts/grad_smt_lowering.md`) -- and `grad` does not lower
-through a cross-module import call (it hangs), so the sampled property inlines
-`gordon_pv`'s shipped single-expression body `(d / (r - g))` rather than
-referencing the export directly (`issue_drafts/grad_through_import.md`). The
-oracle harness pins the inline body against `gordon_pv`'s numeric goldens so the
-equivalent form cannot drift from the export. When `grad` goals lower to SMT this
-amber is re-probed and its expected tier bumps to `proven` -- a de-narrowing
-event, not a rewrite.
+`fuzz_validated`, kept out of the pure-SMT-green `properties/` boundary because
+this lane exercises the compiler's concrete `f32` AD transform. Chelis#923's
+supported scalar-gradient SMT lowering ships in 0.17.2 and passes the published
+0.17.4 re-probe, but that real-arithmetic theorem does not certify
+floating-point execution. The real
+comparative-static fact is already the unqualified two-point SMT green
+`gordon_decreasing_in_r`; this sampled property is its deliberately separate
+`f32` execution check. It now differentiates the imported `gordon_pv` export
+directly. The former inline-expression and copy-out workarounds are retired by
+economoist#13; chelis#924's package-context fix passes with the published
+0.17.4 compatibility asset.
 
 At the concrete point `D = 2, r = 0.1, g = 0.05` the denominator is `r - g =
 0.05`, so the analytic values are `P = 2 / 0.05 = 40`, `dP/dr = -D/(r-g)^2 =
@@ -202,7 +206,8 @@ chelis eval '(fn (d: f32, r: f32, g: f32) -> (d / (r - g)))(2.0, 0.1, 0.05)'
 # 40
 ```
 
-Gradient with respect to `r` (the body is the identical `gordon_pv` expression):
+Gradient with respect to `r` (the sampled invariant differentiates the imported
+`gordon_pv` export directly; this standalone expression shows the same value):
 
 ```
 chelis eval 'grad(fn (d: f32, r: f32, g: f32) -> (d / (r - g)), wrt=r)(2.0, 0.1, 0.05)'
@@ -226,7 +231,6 @@ shortfall from the exact `800` is the floating-point residue, which is precisely
 the reals-vs-floats boundary above: the proven fact is the real-arithmetic sign,
 and the `f32` AD value confirms that sign at a point without being itself a proof.
 
-The lambda body `(d / (r - g))` written inline is the exact body of
-`def gordon_pv` in `src/growth.ch`. The inline form is used for the demo because
-`eval --file` loads the whole package context; the inline expression keeps the
-demo self-contained while still differentiating the identical Gordon expression.
+The inline expression in these one-line eval examples keeps the command
+self-contained. It is not the verification binding: the shipped sampled
+property imports and differentiates `Economoist.Growth.gordon_pv` directly.
