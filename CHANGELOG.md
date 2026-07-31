@@ -13,7 +13,7 @@ All notable changes to the Economoist shell are recorded here. The package
   has publisher SHA-256
   `65f5949a540a547aacbee9845b3d40d2a02d1b28e3c8d608fc7af140fafd6ccf`;
   the installed binary has SHA-256
-  `e1952d3b015bc8216ef51e6b71af5126eb9e5cfbd1197fa85ffdf658d566b2c2`.
+  `9728e7824cd5d8aba26daf5189f95b90c98f9636b8aa0b6ca2fe9cc286c44801`.
 - Retire the stale eval-import narrowing (chelis#423). The official 0.17.5
   binary resolves an ad hoc `eval --file` snippet through the current Reef
   package, so numeric and defective-model controls now import and execute the
