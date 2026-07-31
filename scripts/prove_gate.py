@@ -464,38 +464,41 @@ def _safe_precond(pc: dict, env: dict[str, Fraction]) -> bool:
         return False
 
 
-def output_fn_body(fn: str) -> tuple[list[str], str] | None:
-    """Parse `def fn(params) -> ret = body` from src/; return (param_names, body)."""
-    for ch in sorted((REPO_ROOT / "src").glob("*.ch")):
-        m = re.search(rf'^\s*def\s+{re.escape(fn)}\s*\(([^)]*)\)\s*->\s*[^=]+=\s*(.+)$',
-                      ch.read_text(), re.M)
-        if m:
-            params = [p.split(":")[0].strip() for p in m.group(1).split(",") if p.strip()]
-            return params, m.group(2).strip()
-    return None
-
-
-def f32_reexec_positive_break(binary: str, fn: str, cx: dict) -> tuple[bool, str]:
-    """Evaluate the shipped output_fn body at the witness in f32 and confirm the
-    positivity break (value <= 0.0). Substitutes each param with cast(value, f32)
-    into the exported single-expression body (eval does not resolve the import, so
-    the inline body is used -- textually the shipped def)."""
-    parsed = output_fn_body(fn)
-    if parsed is None:
-        return False, f"could not parse body of {fn} from src/"
-    params, body = parsed
-    expr = body
-    for p in params:
+def f32_reexec_positive_break(binary: str, model: dict, cx: dict) -> tuple[bool, str]:
+    """Import and evaluate the shipped output function at an f32 witness."""
+    fn = model["output_fn"]
+    args: list[str] = []
+    for param in model.get("params", []):
+        p = param["name"]
         if p not in cx:
             return False, f"witness has no value for parameter {p}"
-        expr = re.sub(rf'\b{re.escape(p)}\b', f"cast({float(_val(str(cx[p])))!r}, f32)", expr)
-    proc = subprocess.run([binary, "eval", "--json", expr], capture_output=True, text=True)
-    if proc.returncode != 0:
-        return False, f"eval failed: {proc.stderr.strip()[:120]}"
+        args.append(f"cast({float(_val(str(cx[p])))!r}, f32)")
+    source = f'import {model["module"]} ({fn})\n\nbreak_value = {fn}({", ".join(args)})\n'
+    path: Path | None = None
     try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ch", prefix="economoist_break_", dir=REPO_ROOT,
+            encoding="utf-8", delete=False,
+        ) as handle:
+            handle.write(source)
+            path = Path(handle.name)
+        formatted = subprocess.run(
+            [binary, "fmt", "--inplace", str(path)], capture_output=True, text=True,
+        )
+        if formatted.returncode != 0:
+            return False, f"could not format f32 re-execution probe: {formatted.stderr.strip()[:120]}"
+        proc = subprocess.run(
+            [binary, "eval", "--file", str(path), "--json"], cwd=REPO_ROOT,
+            capture_output=True, text=True,
+        )
+        if proc.returncode != 0:
+            return False, f"eval --file failed: {proc.stderr.strip()[:120]}"
         value = float(json.loads(proc.stdout)["roots"][0]["value"]["value"])
     except Exception as exc:  # noqa: BLE001
         return False, f"could not parse eval output ({exc})"
+    finally:
+        if path is not None:
+            path.unlink(missing_ok=True)
     if value <= 0.0:
         return True, f"f32 value {value:.6g} <= 0 confirms the in-region positivity break"
     return False, f"f32 re-execution gave {value:.6g} > 0 -- break did NOT reproduce in-domain"
@@ -612,7 +615,7 @@ def gate_manifest(binary: str, manifest: dict, records: dict[str, dict],
                 failures.append(f"{iid}: in-region-defect witness {cx} does NOT satisfy preconditions {unmet}")
             model = next((m for m in manifest["models"] if m["id"] == defective), None)
             if model:
-                ok, why = f32_reexec_positive_break(binary, model["output_fn"], cx)
+                ok, why = f32_reexec_positive_break(binary, model, cx)
                 if not ok:
                     failures.append(f"{iid}: {why}")
         else:

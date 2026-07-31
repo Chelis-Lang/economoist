@@ -2,11 +2,10 @@
 """Numerical oracle harness for Economoist (E6), stdlib only.
 
 Two validation layers, kept distinct from the prover:
-  1. The shell's displayed single-expression operators are evaluated through
-     `chelis eval` and compared against recorded analytic-mirror goldens within a
-     precision-derived tolerance. The eval expression is the identical body the
-     module ships (single-expression discipline), with the local fmax helper
-     inlined as the if/then/else it is defined as.
+  1. The shell's exported operators are imported and evaluated through
+     `chelis eval --file`, then compared against recorded analytic-mirror goldens
+     within a precision-derived tolerance. The release compiler resolves the
+     actual Reef package graph; the harness never reconstructs a model body.
   2. The executable test suite under tests/ is run through `chelis test --json`,
      which exercises the real exported functions; it must report zero failures.
 
@@ -28,6 +27,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -58,18 +58,9 @@ def f32(x: float) -> str:
     return f"cast({x!r}, f32)"
 
 
-# Displayed single-expression bodies, identical to the shipped module sources
-# (Economoist.Markov.next_mass, Economoist.Growth.gordon_pv,
-# Economoist.Bellman.bellman_state0 with fmax inlined as its if/then/else).
-NEXT_MASS = ("(fn (p: f32, q: f32, ta: f32, tb: f32) -> ((p * ta) + (q * tb)))", ("p", "q", "ta", "tb"))
-GORDON = ("(fn (d: f32, r: f32, g: f32) -> (d / (r - g)))", ("d", "r", "g"))
-_A0 = "(r0 + (g * ((p00 * v0) + (p01 * v1))))"
-_A1 = "(r1 + (g * ((p10 * v0) + (p11 * v1))))"
-BELLMAN = (
-    f"(fn (v0: f32, v1: f32, r0: f32, p00: f32, p01: f32, r1: f32, p10: f32, p11: f32, g: f32) -> "
-    f"(if ({_A0} >= {_A1}) then {_A0} else {_A1}))",
-    ("v0", "v1", "r0", "p00", "p01", "r1", "p10", "p11", "g"),
-)
+NEXT_MASS = ("Economoist.Markov", "next_mass")
+GORDON = ("Economoist.Growth", "gordon_pv")
+BELLMAN = ("Economoist.Bellman", "bellman_state0")
 
 
 def mirror_next_mass(p, q, ta, tb):
@@ -103,13 +94,38 @@ def tol_for(expected: float) -> float:
     return max(1e-5 * abs(expected), 1e-5)
 
 
-def eval_value(binary: str, lam: str, args: tuple) -> float:
-    expr = lam[0] + "(" + ", ".join(f32(a) for a in args) + ")"
-    proc = subprocess.run([binary, "eval", "--json", expr], capture_output=True, text=True)
-    if proc.returncode != 0:
-        raise RuntimeError(f"eval failed: {proc.stderr.strip()}")
-    data = json.loads(proc.stdout)
-    return float(data["roots"][0]["value"]["value"])
+def eval_imported_root(binary: str, module: str, names: tuple[str, ...], expr: str):
+    """Evaluate one binding against the real package graph through eval --file."""
+    source = f"import {module} ({', '.join(names)})\n\nbench = {expr}\n"
+    path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ch", prefix="economoist_oracle_", dir=REPO_ROOT,
+            encoding="utf-8", delete=False,
+        ) as handle:
+            handle.write(source)
+            path = Path(handle.name)
+        formatted = subprocess.run(
+            [binary, "fmt", "--inplace", str(path)], capture_output=True, text=True,
+        )
+        if formatted.returncode != 0:
+            raise RuntimeError(f"generated eval probe did not format: {formatted.stderr.strip()}")
+        proc = subprocess.run(
+            [binary, "eval", "--file", str(path), "--json"],
+            cwd=REPO_ROOT, capture_output=True, text=True,
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(f"eval --file failed: {proc.stderr.strip()}")
+        return json.loads(proc.stdout)["roots"][0]["value"]["value"]
+    finally:
+        if path is not None:
+            path.unlink(missing_ok=True)
+
+
+def eval_value(binary: str, model: tuple[str, str], args: tuple) -> float:
+    module, function = model
+    expr = function + "(" + ", ".join(f32(a) for a in args) + ")"
+    return float(eval_imported_root(binary, module, (function,), expr))
 
 
 def run_tests(binary: str) -> tuple[int, int]:
@@ -156,14 +172,13 @@ def main() -> int:
     # differentiates the same displayed gordon_pv body, at D=2, r=0.1, g=0.05;
     # the analytic derivative is -/+ D/(r-g)^2 = -/+ 800.
     for wrt, want_negative, approx in (("r", True, -800.0), ("g", False, 800.0)):
-        expr = (f"grad(fn (d: f32, r: f32, g: f32) -> (d / (r - g)), wrt={wrt})"
+        expr = (f"grad(fn (d: f32, r: f32, g: f32) -> gordon_pv(d, r, g), wrt={wrt})"
                 f"({f32(2.0)}, {f32(0.1)}, {f32(0.05)})")
-        proc = subprocess.run([binary, "eval", "--json", expr], capture_output=True, text=True)
         try:
-            value = json.loads(proc.stdout)["roots"][0]["value"]["value"]
+            value = eval_imported_root(binary, "Economoist.Growth", ("gordon_pv",), expr)
             data = value["data"][0] if isinstance(value, dict) else float(value)
         except Exception as exc:  # noqa: BLE001
-            failures.append(f"grad dP/d{wrt}: could not parse eval output ({exc}): {proc.stderr.strip()}")
+            failures.append(f"grad dP/d{wrt}: could not evaluate imported model ({exc})")
             continue
         sign_ok = (data < 0.0) if want_negative else (data > 0.0)
         if sign_ok and abs(data - approx) <= 1.0:

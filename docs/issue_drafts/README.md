@@ -9,7 +9,7 @@ at narrowing sites and in `UPSTREAM_BUGS.md`.
 | Draft | Filing condition | Status |
 |---|---|---|
 | `smt_in_release_tarball.md` | RESOLVED: SMT ships in the released tarball as of chelis v0.11.0 (verified at 0.14.0, 2026-07-10). | Filed as chelis#422 on 2026-06-20; archived in `UPSTREAM_BUGS.md`. |
-| `eval_side_import_resolution.md` | Confirm eval still does not resolve standalone-file imports when a C Note template needs it. | Filed as chelis#423 on 2026-06-20. |
+| `eval_side_import_resolution.md` | RESOLVED in the published 0.17.5 release: an ad hoc eval file imports and executes the real Economoist export. | Filed as chelis#423 on 2026-06-20; archived in `UPSTREAM_BUGS.md`. |
 | `scalar_max_abs_f32.md` | RESOLVED in the published 0.17.4 release: real-Reef scalar `max` and `min` probes compile and pass; `abs` was already fixed. | Filed as chelis#424 on 2026-06-20; archived in `UPSTREAM_BUGS.md`. |
 | `nested_fmax_goal_site.md` | CANDIDATE-FIXED at chelis 0.14.0: the n=3 per-output-state contraction lowers and proves (p15 + per-surface). | Filed as chelis#425 on 2026-06-20; archived in `UPSTREAM_BUGS.md`. |
 | `twocall_ite_subtraction_unsound.md` | RESOLVED at chelis 0.10.0, re-verified at 0.14.0 (p04). | Filed as chelis#426 on 2026-06-20; archived in `UPSTREAM_BUGS.md`. |
