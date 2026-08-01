@@ -41,7 +41,7 @@ None.
 
 ## Archived
 
-- **Eval-side package import resolution works in Chelis 0.17.5 (chelis#423).**
+- **Eval-side package import resolution works in Chelis 0.18.1 (chelis#423).**
   Re-probed with the official release binary using an ad hoc file outside `src/`
   that imports `Economoist.Growth.gordon_pv`; `chelis eval --file` resolves the
   current Reef package and returns `40.0`. The numeric oracle and defective-model

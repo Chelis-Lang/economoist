@@ -2,7 +2,7 @@
 
 Filed upstream as chelis#423 on 2026-06-20.
 
-**Status: RESOLVED in the published Chelis 0.17.5 release.** An ad hoc
+**Status: RESOLVED in the published Chelis 0.18.1 release.** An ad hoc
 `eval --file` snippet outside `src/` resolves the current Reef package, imports
 `Economoist.Growth.gordon_pv`, and evaluates it to `40.0`. Economoist's numeric
 oracle and defective-model witness check now execute exports directly.
