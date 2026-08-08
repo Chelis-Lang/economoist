@@ -128,6 +128,30 @@ def eval_value(binary: str, model: tuple[str, str], args: tuple) -> float:
     return float(eval_imported_root(binary, module, (function,), expr))
 
 
+def scalar_eval_value(value) -> float:
+    """Read a scalar from both released evaluator JSON encodings.
+
+    Chelis 0.18 emitted scalar roots directly.  The 0.18.4 release can
+    represent the same scalar as a rank-zero tensor envelope:
+    ``{"type":"tensor","value":{"shape":[],"data":{"values":[x]}}}``.
+    The oracle is intentionally tolerant of that transport change while still
+    rejecting non-scalar shapes and malformed payloads.
+    """
+    if isinstance(value, (int, float)):
+        return float(value)
+    if not isinstance(value, dict):
+        raise ValueError(f"expected scalar evaluator value, got {value!r}")
+    if "value" in value:
+        return scalar_eval_value(value["value"])
+    if value.get("shape") == []:
+        data = value.get("data")
+        if isinstance(data, dict) and isinstance(data.get("values"), list) and len(data["values"]) == 1:
+            return float(data["values"][0])
+        if isinstance(data, list) and len(data) == 1:
+            return float(data[0])
+    raise ValueError(f"expected rank-zero evaluator value, got {value!r}")
+
+
 def run_tests(binary: str) -> tuple[int, int]:
     proc = subprocess.run([binary, "test", "tests/", "--json"], cwd=REPO_ROOT, capture_output=True, text=True)
     passed = failed = 0
@@ -176,7 +200,7 @@ def main() -> int:
                 f"({f32(2.0)}, {f32(0.1)}, {f32(0.05)})")
         try:
             value = eval_imported_root(binary, "Economoist.Growth", ("gordon_pv",), expr)
-            data = value["data"][0] if isinstance(value, dict) else float(value)
+            data = scalar_eval_value(value)
         except Exception as exc:  # noqa: BLE001
             failures.append(f"grad dP/d{wrt}: could not evaluate imported model ({exc})")
             continue

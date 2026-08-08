@@ -1,4 +1,4 @@
-<!-- BEGIN CHELIS MANAGED BLOCK: chelis-surface-header chelis@0.18.1 (sha256:28011bed9ccb5778) -->
+<!-- BEGIN CHELIS MANAGED BLOCK: chelis-surface-header chelis@0.18.4 (sha256:28011bed9ccb5778) -->
 This file is a domain-scoped view of the canonical Chelis capability surface,
 generated for the pinned toolchain. Each capability row is marked `@pin` (usable
 at the current pin) or `@upstream` (lands at the next bump). **Read it before
@@ -14,23 +14,23 @@ What the Chelis language and the bundled chelis-std actually provide to the
 economic-models domain this shell touches. Read this before designing around a
 suspected language gap.
 
-> **Pinned release:** chelis 0.18.1 (chelis-std 0.4.0, bundled; tag source
-> `c8db387d06d538ce8039ac37645a43def48373c9`) · **Latest published upstream:**
-> 0.18.1 ·
+> **Pinned release:** chelis 0.18.4 (chelis-std 0.4.0, bundled; tag source
+> `c0138c828bf2c42e1c8941e824f16616bd974fd5`) · **Latest published upstream:**
+> 0.18.4 ·
 > **Last refreshed:** 2026-08-01
 >
 > **Release identity:** official
-> `chelis-v0.18.1-linux-x86_64-glibc2.31.tar.gz`, publisher SHA-256
-> `88a1a53b47b7168e4df614e66a6d9313176174b1dc3a25a43db5f73a3ee8f0cd`.
+> `chelis-v0.18.4-linux-x86_64-glibc2.31.tar.gz`, publisher SHA-256
+> `c31b59a830ca232fa4e0a454e1314810026b5ec4f2b1a6e54d024eb049f65902`.
 
-Rows are marked `@pin` (present in the published 0.18.1 pin) or `@upstream`
+Rows are marked `@pin` (present in the published 0.18.4 pin) or `@upstream`
 (expected after it).
 
 ## Proof surface (the spine of this shell)
 
 | Capability | Status | Notes |
 |---|---|---|
-| SMT prove tier (cvc5, QF_NRA over the reals) | `@pin` | `chelis prove --json --tier smt-only`. SMT ships in the released chelis binary as of v0.11.0 (chelis#422 resolved, archived in `UPSTREAM_BUGS.md`); no from-source build. The official 0.18.1 compatibility asset is the gate binary for this release. |
+| SMT prove tier (cvc5, QF_NRA over the reals) | `@pin` | `chelis prove --json --tier smt-only`. SMT ships in the released chelis binary as of v0.11.0 (chelis#422 resolved, archived in `UPSTREAM_BUGS.md`); no from-source build. The official 0.18.4 compatibility asset is the gate binary for this release. |
 | Green markers | `@pin` | `status:"passed"`, `proof_tier:"smt"`, `samples:0`, `arith_model:"real"`, `composite_verdict:"proven_modulo_real_arithmetic"` (chelis 0.9.0; the prover is honest that it proved the goal over the reals, not the f32 rounding behaviour, which is exactly this shell's boundary). The older plain `"proven"` token is also accepted by the gate. |
 | Reals, not floats | `@pin` | A green is a real-arithmetic fact (`arith_model:"real"`), not a statement about `f32` evaluation. Stated per model. |
 | Per-property non-vacuity | `@pin` | A guarded property carries a `preconditions` assumption whose non-vacuity cvc5 establishes (a guard-satisfying model). The gate also ships explicit `*_guards_satisfiable` witnesses that refute. |
@@ -52,7 +52,7 @@ Rows are marked `@pin` (present in the published 0.18.1 pin) or `@upstream`
 | `@opaque` types with `@invariant` | `@pin` | Field access stays inside the module; values held by consumers only through producers. |
 | `cast`, `f32` literals | `@pin` | Test and eval bodies use builtin-call forms freely; only prove goals require operator form. |
 | `grad` in `eval` (AD) | `@pin` | E4 comparative statics: the derivative of the displayed `gordon_pv` expression. Single-expression discipline. See the AD row below for mode and lane rules. |
-| eval-side package import resolution | `@pin` | `eval --file` resolves imports against the current Reef package even for an ad hoc snippet outside `src/`. Re-probed on the official 0.18.1 binary by importing and evaluating `Economoist.Growth.gordon_pv`; the numeric oracle now calls exported models directly. See archived chelis#423. |
+| eval-side package import resolution | `@pin` | `eval --file` resolves imports against the current Reef package even for an ad hoc snippet outside `src/`. Re-probed on the official 0.18.4 binary by importing and evaluating `Economoist.Growth.gordon_pv`; the numeric oracle now calls exported models directly. See archived chelis#423. |
 | `Std.Test` (`assert_close`) | `@pin` | The executable numeric suite under `tests/`. |
 | Transcendentals (`exp`, `log`, normal CDF) | n/a | Not used. Every economic goal is transcendental-free by construction; if one appears, the model is written wrong. |
 

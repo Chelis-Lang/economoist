@@ -186,14 +186,14 @@ sampled lane (`sampled/growth_sensitivity.ch`, module prefix
 `fuzz_validated`, kept out of the pure-SMT-green `properties/` boundary because
 this lane exercises the compiler's concrete `f32` AD transform. Chelis#923's
 supported scalar-gradient SMT lowering ships in 0.17.2 and passes the published
-0.18.1 re-probe, but that real-arithmetic theorem does not certify
+0.18.4 re-probe, but that real-arithmetic theorem does not certify
 floating-point execution. The real
 comparative-static fact is already the unqualified two-point SMT green
 `gordon_decreasing_in_r`; this sampled property is its deliberately separate
 `f32` execution check. It now differentiates the imported `gordon_pv` export
 directly. The former inline-expression and copy-out workarounds are retired by
 economoist#13; chelis#924's package-context fix remains on the published
-0.18.1 compatibility surface.
+0.18.4 compatibility surface.
 
 At the concrete point `D = 2, r = 0.1, g = 0.05` the denominator is `r - g =
 0.05`, so the analytic values are `P = 2 / 0.05 = 40`, `dP/dr = -D/(r-g)^2 =

@@ -23,10 +23,10 @@ import Economoist.Growth (gordon_pv)
 -- (cnote.dischargeability p05/p11). Run at --tier fuzz-only --samples 500 --seed 0.
 -- dP/dr < 0: the AD derivative of the Gordon body wrt r is negative throughout
 -- the convergence region r > g. Fuzz-validated (amber).
-@property gordon_dP_dr_negative_grad forall(d: f32, r: f32, g: f32) where (d > 0.5), (d < 9.5), (g > 0.0), (g < 4.0), (r > g), (r < 9.5):
+@property gordon_dP_dr_negative_grad forall(d: f32, r: f32, g: f32) where d > 0.5, d < 9.5, g > 0.0, g < 4.0, r > g, r < 9.5:
   (grad(fn (dd: f32, rr: f32, gg: f32) -> gordon_pv(dd, rr, gg), wrt=rr)(d, r, g) < 0.0)
 -- Corrupted twin: asserts the AD derivative is positive, which is false in the
 -- convergence region; fuzz returns an in-box counterexample. It flips only the
 -- sign, so a wrong sign is the sole difference from the green above.
-@property gordon_dP_dr_negative_grad_wrong forall(d: f32, r: f32, g: f32) where (d > 0.5), (d < 9.5), (g > 0.0), (g < 4.0), (r > g), (r < 9.5):
+@property gordon_dP_dr_negative_grad_wrong forall(d: f32, r: f32, g: f32) where d > 0.5, d < 9.5, g > 0.0, g < 4.0, r > g, r < 9.5:
   (grad(fn (dd: f32, rr: f32, gg: f32) -> gordon_pv(dd, rr, gg), wrt=rr)(d, r, g) > 0.0)
