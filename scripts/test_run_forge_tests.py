@@ -18,6 +18,11 @@ SPEC.loader.exec_module(FORGE)
 
 
 class ForgeManifestTests(unittest.TestCase):
+    def test_generated_properties_use_current_surf_guard_form(self) -> None:
+        self.assertNotIn("where (", FORGE.PROPS)
+        self.assertIn("where x > 0.0:", FORGE.PROPS)
+        self.assertIn("where x > 1.0:", FORGE.PROPS)
+
     def test_manifest_pin_comes_from_resolved_binary(self) -> None:
         version = subprocess.CompletedProcess(
             args=["candidate-chelis", "--version"],

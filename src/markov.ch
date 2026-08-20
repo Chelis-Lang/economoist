@@ -30,7 +30,7 @@ type Dist2 =
 -- Construct a distribution from masses already on the simplex. The producer
 -- obligation discharges at SMT: under the guard the pair is nonnegative and sums
 -- to one, so the constructed value satisfies the invariant.
-def make_dist(p0: f32, p1: f32) -> Option[Dist2] = if ((((p0 >= 0.0) && (p1 >= 0.0)) && ((p0 + p1) >= (1.0 - eps()))) && ((p0 + p1) <= (1.0 + eps()))) then Some(Dist2 { p0: p0, p1: p1 }) else None
+def make_dist(p0: f32, p1: f32) -> Option[Dist2] = if ((((p0 >= 0.0) && (p1 >= 0.0)) && ((p0 + p1) >= (1.0 - eps()))) && ((p0 + p1) <= (1.0 + eps()))) then Some(Dist2 { p0, p1 }) else None
 -- One Markov step. The input distribution is an opaque Dist2, so its simplex
 -- invariant is the assumed precondition; the transition rows (t00, t01) and
 -- (t10, t11) are guarded row-stochastic. The producer obligation proves the
@@ -52,7 +52,7 @@ type Dist3 =
 -- Construct a 3-simplex distribution from masses already on the simplex. The
 -- producer obligation discharges at SMT: under the guard the triple is
 -- nonnegative and sums to one, so the constructed value satisfies the invariant.
-def make_dist3(p0: f32, p1: f32, p2: f32) -> Option[Dist3] = if (((((p0 >= 0.0) && (p1 >= 0.0)) && (p2 >= 0.0)) && (((p0 + p1) + p2) >= (1.0 - eps()))) && (((p0 + p1) + p2) <= (1.0 + eps()))) then Some(Dist3 { p0: p0, p1: p1, p2: p2 }) else None
+def make_dist3(p0: f32, p1: f32, p2: f32) -> Option[Dist3] = if (((((p0 >= 0.0) && (p1 >= 0.0)) && (p2 >= 0.0)) && (((p0 + p1) + p2) >= (1.0 - eps()))) && (((p0 + p1) + p2) <= (1.0 + eps()))) then Some(Dist3 { p0, p1, p2 }) else None
 -- One Markov step at n = 3. The input distribution is an opaque Dist3, so its
 -- simplex invariant is the assumed precondition; the transition rows
 -- (t00, t01, t02), (t10, t11, t12), and (t20, t21, t22) are guarded

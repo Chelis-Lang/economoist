@@ -50,11 +50,11 @@ def ff(x: f32) -> f32 = (x * x)
 PROPS = '''\
 module Forge.Properties.Forge
 import Forge.Model (ff)
-@property forge_canceling forall(x: f32) where (x > 0.0):
+@property forge_canceling forall(x: f32) where x > 0.0:
   ((ff(x) - ff(x)) < 1.0)
-@property forge_reflexive forall(x: f32) where (x > 0.0):
+@property forge_reflexive forall(x: f32) where x > 0.0:
   (ff(x) == ff(x))
-@property honest_positive forall(x: f32) where (x > 1.0):
+@property honest_positive forall(x: f32) where x > 1.0:
   (ff(x) > 0.0)
 '''
 
