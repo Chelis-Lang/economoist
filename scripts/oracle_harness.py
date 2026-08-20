@@ -128,6 +128,25 @@ def eval_value(binary: str, model: tuple[str, str], args: tuple) -> float:
     return float(eval_imported_root(binary, module, (function,), expr))
 
 
+def scalar_value(value: object) -> float:
+    """Decode a scalar from legacy or typed-tensor compiler JSON."""
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return float(value)
+    if not isinstance(value, dict) or value.get("shape") != []:
+        raise ValueError(f"expected scalar compiler value, got {value!r}")
+    data = value.get("data")
+    if isinstance(data, dict):
+        data = data.get("values")
+    if (
+        isinstance(data, list)
+        and len(data) == 1
+        and isinstance(data[0], (int, float))
+        and not isinstance(data[0], bool)
+    ):
+        return float(data[0])
+    raise ValueError(f"expected scalar compiler value, got {value!r}")
+
+
 def run_tests(binary: str) -> tuple[int, int]:
     proc = subprocess.run([binary, "test", "tests/", "--json"], cwd=REPO_ROOT, capture_output=True, text=True)
     passed = failed = 0
@@ -176,7 +195,7 @@ def main() -> int:
                 f"({f32(2.0)}, {f32(0.1)}, {f32(0.05)})")
         try:
             value = eval_imported_root(binary, "Economoist.Growth", ("gordon_pv",), expr)
-            data = value["data"][0] if isinstance(value, dict) else float(value)
+            data = scalar_value(value)
         except Exception as exc:  # noqa: BLE001
             failures.append(f"grad dP/d{wrt}: could not evaluate imported model ({exc})")
             continue
