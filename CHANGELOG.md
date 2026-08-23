@@ -5,6 +5,25 @@ All notable changes to the Economoist shell are recorded here. The package
 
 ## [Unreleased]
 
+- Prepare Economoist 0.2.10 for Chelis 0.18.5. The compiler and workflow pins,
+  package identity, lockfile, and C Note characterization manifest move
+  together; all ten invariant tiers remain explicit at the new pin.
+- The v0.18.5 source tag resolves to
+  `6602f01719f55b8d4c7f52ee70e7c7b58f136107`. The official glibc release
+  asset has publisher SHA-256
+  `6b9b944ccd96b0053fc071de0ecfbb9e80e02a07a6a176e87056267ae8e0c26a`.
+- Re-verify the complete package, import, proof, anti-vacuity, and numeric
+  oracle surfaces with the official 0.18.5 release binary. The honest boundary
+  remains nine real-arithmetic properties expected `proven` and one concrete
+  `f32` Gordon sensitivity expected `fuzz_validated`.
+- None of the three Chelis 0.18.5 breaking changes reaches this shell. It
+  declares no polymorphic recursion, writes no integer literal in a bare type
+  position, and every operand of a `>` comparison in `src/`, `properties/`,
+  `demos/`, and `sampled/` is a pure `f32` expression, so the new
+  left-to-right operand evaluation order is unobservable here.
+
+## [0.2.9] - 2026-08-20
+
 - Prepare Economoist 0.2.9 for Chelis 0.18.4. The compiler and workflow pins,
   package identity, lockfile, and C Note characterization manifest move
   together; all ten invariant tiers remain explicit at the new pin.
