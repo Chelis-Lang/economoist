@@ -15,7 +15,7 @@ adapter classifies a pass as FIX-detected and a changed diagnostic as DRIFTED.
 
 | Probe | Purpose | Pinned diagnostic |
 |---|---|---|
-| `adapter/file_level_diagnostic.ch` | Chelis#967 regression sentinel for the native blocked adapter; not a currently blocked language capability. | `precision mismatch: expected f32, got bool` |
+| `adapter/file_level_diagnostic.ch` | Chelis#967 regression sentinel for the native blocked adapter; not a currently blocked language capability. | ``type variable bounded by dtype family `Float` (the active float dtypes) cannot be instantiated at `bool` `` |
 
 A probe must be canonically formatted: the native worker enforces the same
 compiler and style contracts as an ordinary test file.

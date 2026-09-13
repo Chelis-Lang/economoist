@@ -1,3 +1,3 @@
-precision mismatch: expected f32, got bool
+type variable bounded by dtype family `Float` (the active float dtypes) cannot be instantiated at `bool`
 chelis#967 regression sentinel: the native blocked adapter must preserve a bare file-level diagnostic.
 This is an adapter contract sentinel, not a currently blocked language capability.

@@ -26,6 +26,7 @@ import math
 import os
 import re
 import subprocess
+import struct
 import sys
 import tempfile
 from pathlib import Path
@@ -125,17 +126,28 @@ def eval_imported_root(binary: str, module: str, names: tuple[str, ...], expr: s
 def eval_value(binary: str, model: tuple[str, str], args: tuple) -> float:
     module, function = model
     expr = function + "(" + ", ".join(f32(a) for a in args) + ")"
-    return float(eval_imported_root(binary, module, (function,), expr))
+    return scalar_value(eval_imported_root(binary, module, (function,), expr))
 
 
 def scalar_value(value: object) -> float:
     """Decode a scalar from legacy or typed-tensor compiler JSON."""
+    if isinstance(value, dict) and "bits" in value:
+        dtype, bits = value.get("dtype"), value["bits"]
+        width = {"f32": 8, "f64": 16}.get(dtype)
+        if width is None or not isinstance(bits, str) or not re.fullmatch(rf"[0-9a-fA-F]{{{width}}}", bits):
+            raise ValueError(f"invalid exact scalar compiler value: {value!r}")
+        return struct.unpack("!f" if dtype == "f32" else "!d", bytes.fromhex(bits))[0]
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         return float(value)
     if not isinstance(value, dict) or value.get("shape") != []:
         raise ValueError(f"expected scalar compiler value, got {value!r}")
     data = value.get("data")
     if isinstance(data, dict):
+        if "bits" in data:
+            bits = data["bits"]
+            if not isinstance(bits, list) or len(bits) != 1:
+                raise ValueError(f"expected one scalar element, got {value!r}")
+            return scalar_value({"dtype": data.get("dtype"), "bits": bits[0]})
         data = data.get("values")
     if (
         isinstance(data, list)
