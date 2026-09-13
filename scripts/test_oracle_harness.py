@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import importlib.util
+import math
 import unittest
 from pathlib import Path
 
@@ -16,6 +17,20 @@ SPEC.loader.exec_module(ORACLE)
 
 
 class ScalarValueTests(unittest.TestCase):
+    def test_exact_float_carriers_preserve_value_and_negative_zero(self) -> None:
+        self.assertEqual(ORACLE.scalar_value({"dtype": "f32", "bits": "42200000"}), 40.0)
+        self.assertEqual(ORACLE.scalar_value({"dtype": "f64", "bits": "4044000000000000"}), 40.0)
+        zero = ORACLE.scalar_value({"dtype": "f32", "bits": "80000000"})
+        self.assertEqual(math.copysign(1.0, zero), -1.0)
+        self.assertEqual(ORACLE.scalar_value({"shape": [], "data": {"dtype": "f32", "bits": ["c4480000"]}}), -800.0)
+
+    def test_malformed_exact_carriers_fail_closed(self) -> None:
+        for value in [{"dtype": "f32", "bits": "0000000000000000"},
+                      {"dtype": "bool", "bits": "00000000"},
+                      {"dtype": "f32", "bits": "not bits"}]:
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                ORACLE.scalar_value(value)
+
     def test_decodes_current_typed_tensor_scalar(self) -> None:
         value = {"shape": [], "data": {"dtype": "f32", "values": [-800.0]}}
         self.assertEqual(ORACLE.scalar_value(value), -800.0)

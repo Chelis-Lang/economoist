@@ -13,6 +13,11 @@ listed in that README for manual re-probe.
 Suspected chelis issues are cited as `chelis#NNN` or as a parked draft under
 `issue_drafts/`, never by a prose name.
 
+Current validation: the published Chelis 0.18.7 compatibility binary passed the
+complete ten-stage local gate on 2026-09-13. The diagnostic and exact-eval-carrier
+migrations are recorded in [the release migration note](chelis-0.18.7-migration.md).
+The nine proven and one sampled expected tiers remain unchanged.
+
 ## Actively blocking
 
 None. Every economic property in this shell discharges as an unqualified SMT
@@ -36,7 +41,9 @@ None.
 
 - **Large concrete state-space verification.** Scaling concrete verification past
   the small fixed dimension SMT can handle is the Beacon roadmap (bound
-  propagation and abstract interpretation). Re-probe trigger: Beacon availability.
+  propagation and abstract interpretation). The 0.18.7 re-probe of the imported Gordon properties returns structured
+  unsupported because the NN lane requires named rank-zero tensor[f64] inputs.
+  Re-probe trigger: a published bound lane that can consume these economic models.
   Parked rationale: `docs/issue_drafts/large_state_space_beacon.md`.
 
 ## Archived

@@ -1,4 +1,3 @@
-precision mismatch: expected f32, got bool
-Type checker rejects a bool passed where an f32 is required (assert_close
-arguments). The substring above is the stable part of the chelis 0.8.0
-diagnostic "compile: precision mismatch: expected f32, got bool".
+type variable bounded by dtype family `Float` (the active float dtypes) cannot be instantiated at `bool`
+Chelis 0.18.7 rejects a bool passed to the active-float assert_close family.
+The file has no test declaration, preserving the file-level diagnostic oracle.

@@ -52,6 +52,11 @@ import tempfile
 from fractions import Fraction
 from pathlib import Path
 
+try:
+    from .oracle_harness import scalar_value
+except ImportError:
+    from oracle_harness import scalar_value
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = REPO_ROOT / "docs" / "cnote-import-surface.json"
 
@@ -493,7 +498,7 @@ def f32_reexec_positive_break(binary: str, model: dict, cx: dict) -> tuple[bool,
         )
         if proc.returncode != 0:
             return False, f"eval --file failed: {proc.stderr.strip()[:120]}"
-        value = float(json.loads(proc.stdout)["roots"][0]["value"]["value"])
+        value = scalar_value(json.loads(proc.stdout)["roots"][0]["value"]["value"])
     except Exception as exc:  # noqa: BLE001
         return False, f"could not parse eval output ({exc})"
     finally:

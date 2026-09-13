@@ -3,7 +3,20 @@
 All notable changes to the Economoist shell are recorded here. The package
 `version` tracks its own line (not the chelis compiler pin).
 
-## [Unreleased]
+## [0.2.11] - 2026-09-13
+
+- Adopt the published Chelis 0.18.7 release and regenerate compiler-bound
+  artifacts for the C Note dependency release wave.
+- Refresh the bare file-level diagnostic sidecars for the active-float dtype
+  check. Decode exact f32/f64 scalar and rank-zero tensor eval carriers in the
+  witness and numerical gates, preserving signed zero and rejecting malformed
+  bit widths. This repairs economoist#22 without changing economic models.
+- The complete ten-stage local gate passes on the released compatibility
+  binary, including SMT controls, anti-vacuity forges and numerical oracles.
+  All nine proven and one sampled invariant expectations remain explicit.
+  See `docs/chelis-0.18.7-migration.md` for identity and receipts.
+
+## [0.2.10] - 2026-08-23
 
 - Prepare Economoist 0.2.10 for Chelis 0.18.5. The compiler and workflow pins,
   package identity, lockfile, and C Note characterization manifest move
