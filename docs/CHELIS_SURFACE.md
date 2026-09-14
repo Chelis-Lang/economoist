@@ -14,23 +14,23 @@ What the Chelis language and the bundled chelis-std actually provide to the
 economic-models domain this shell touches. Read this before designing around a
 suspected language gap.
 
-> **Pinned release:** chelis 0.18.7 (chelis-std 0.4.0, bundled; tag source
-> `4109f8fdd1eef764ef91bb6d138401b351a2e1db`) · **Latest published upstream:**
-> 0.18.7 ·
-> **Last refreshed:** 2026-09-13
+> **Pinned release:** chelis 0.18.9 (chelis-std 0.4.0, bundled; tag source
+> `abff07b47eadc8d2be633e3a7d21220089befb6f`) · **Latest published upstream:**
+> 0.18.9 ·
+> **Last refreshed:** 2026-09-14
 >
 > **Release identity:** official
-> `chelis-v0.18.7-linux-x86_64-glibc2.31.tar.gz`, publisher SHA-256
-> `bbaabf8e2d1517262f0e94d1574af455d4adb68d422929312d109857030db11c`.
+> `chelis-v0.18.9-linux-x86_64-glibc2.31.tar.gz`, publisher SHA-256
+> `9aed0afbfc93a96a6804b4c82664869d74815bd27ca824dfeab02088b00ddb63`.
 
-Rows are marked `@pin` (present in the published 0.18.7 pin) or `@upstream`
+Rows are marked `@pin` (present in the published 0.18.9 pin) or `@upstream`
 (expected after it).
 
 ## Proof surface (the spine of this shell)
 
 | Capability | Status | Notes |
 |---|---|---|
-| SMT prove tier (cvc5, QF_NRA over the reals) | `@pin` | `chelis prove --json --tier smt-only`. SMT ships in the released chelis binary as of v0.11.0 (chelis#422 resolved, archived in `UPSTREAM_BUGS.md`); no from-source build. The official 0.18.7 compatibility asset is the gate binary for this release. |
+| SMT prove tier (cvc5, QF_NRA over the reals) | `@pin` | `chelis prove --json --tier smt-only`. SMT ships in the released chelis binary as of v0.11.0 (chelis#422 resolved, archived in `UPSTREAM_BUGS.md`); no from-source build. The official 0.18.9 compatibility asset is the gate binary for this release. |
 | Green markers | `@pin` | `status:"passed"`, `proof_tier:"smt"`, `samples:0`, `arith_model:"real"`, `composite_verdict:"proven_modulo_real_arithmetic"` (chelis 0.9.0; the prover is honest that it proved the goal over the reals, not the f32 rounding behaviour, which is exactly this shell's boundary). The older plain `"proven"` token is also accepted by the gate. |
 | Reals, not floats | `@pin` | A green is a real-arithmetic fact (`arith_model:"real"`), not a statement about `f32` evaluation. Stated per model. |
 | Per-property non-vacuity | `@pin` | A guarded property carries a `preconditions` assumption whose non-vacuity cvc5 establishes (a guard-satisfying model). The gate also ships explicit `*_guards_satisfiable` witnesses that refute. |
@@ -52,7 +52,7 @@ Rows are marked `@pin` (present in the published 0.18.7 pin) or `@upstream`
 | `@opaque` types with `@invariant` | `@pin` | Field access stays inside the module; values held by consumers only through producers. |
 | `cast`, `f32` literals | `@pin` | Test and eval bodies use builtin-call forms freely; only prove goals require operator form. |
 | `grad` in `eval` (AD) | `@pin` | E4 comparative statics: the derivative of the displayed `gordon_pv` expression. Single-expression discipline. See the AD row below for mode and lane rules. |
-| eval-side package import resolution | `@pin` | `eval --file` resolves imports against the current Reef package even for an ad hoc snippet outside `src/`. Re-probed on the official 0.18.7 binary by importing and evaluating `Economoist.Growth.gordon_pv`; the numeric oracle now calls exported models directly. See archived chelis#423. |
+| eval-side package import resolution | `@pin` | `eval --file` resolves imports against the current Reef package even for an ad hoc snippet outside `src/`. Re-probed on the official 0.18.9 binary by importing and evaluating `Economoist.Growth.gordon_pv`; the numeric oracle now calls exported models directly. See archived chelis#423. |
 | `Std.Test` (`assert_close`) | `@pin` | The executable numeric suite under `tests/`. |
 | Transcendentals (`exp`, `log`, normal CDF) | n/a | Not used. Every economic goal is transcendental-free by construction; if one appears, the model is written wrong. |
 
@@ -94,8 +94,9 @@ file and section are the authoritative upstream source.
 | The chelis-std module surface used (scalar builtins, reductions) | `docs/book/src/stdlib.md` | `## Standard library modules` |
 | The downstream shell-repo contract this shell follows | `spec/design/shell_repo_contract.md` | `## 3. Capability surface doc -- docs/CHELIS_SURFACE.md (MUST)` |
 
-The 0.18.7 migration and recorded release gates are summarized in
-[the migration record](chelis-0.18.7-migration.md). Exact scalar and rank-zero
+The 0.18.9 migration and recorded release gates are summarized in
+[the migration record](chelis-0.18.9-migration.md); the 0.18.7 record is
+[kept alongside it](chelis-0.18.7-migration.md). Exact scalar and rank-zero
 tensor eval values are decoded from their dtype-tagged bits. The imported
 Gordon properties remain unsupported by `--tier beacon-only`; this release
 does not promote any economic property to the NN bound lane.
