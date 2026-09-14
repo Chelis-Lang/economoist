@@ -497,7 +497,8 @@
         "0.17.1": "proven",
         "0.17.4": "proven",
         "0.18.5": "proven",
-        "0.18.7": "proven"
+        "0.18.7": "proven",
+        "0.18.9": "proven"
       },
       "dischargeability_probe": "p01_gordon_div_positive",
       "violation_text": "the model prices a positive-dividend perpetuity at or below zero inside its convergence region r > g",
@@ -553,7 +554,8 @@
         "0.17.1": "proven",
         "0.17.4": "proven",
         "0.18.5": "proven",
-        "0.18.7": "proven"
+        "0.18.7": "proven",
+        "0.18.9": "proven"
       },
       "dischargeability_probe": "p01_gordon_div_positive",
       "violation_text": "the conservative model prices a positive-dividend perpetuity at or below zero once the inputs leave the convergence region r > g (which its strict domain r > g + 0.01 is contained in); the margin is a domain-of-use choice, not the positivity hypothesis",
@@ -617,7 +619,8 @@
         "0.17.1": "proven",
         "0.17.4": "proven",
         "0.18.5": "proven",
-        "0.18.7": "proven"
+        "0.18.7": "proven",
+        "0.18.9": "proven"
       },
       "dischargeability_probe": "p02_gordon_two_point_r",
       "violation_text": "raising the required return does not strictly lower the present value",
@@ -680,7 +683,8 @@
         "0.17.1": "proven",
         "0.17.4": "proven",
         "0.18.5": "proven",
-        "0.18.7": "proven"
+        "0.18.7": "proven",
+        "0.18.9": "proven"
       },
       "dischargeability_probe": "p13_economoist_published_properties",
       "violation_text": "a non-stochastic transition row lets total probability mass drift off one",
@@ -750,7 +754,8 @@
         "0.17.1": "proven",
         "0.17.4": "proven",
         "0.18.5": "proven",
-        "0.18.7": "proven"
+        "0.18.7": "proven",
+        "0.18.9": "proven"
       },
       "dischargeability_probe": "p13_economoist_published_properties",
       "violation_text": "a non-stochastic transition row lets total probability mass drift off one (n=3)",
@@ -862,7 +867,8 @@
         "0.17.1": "proven",
         "0.17.4": "proven",
         "0.18.5": "proven",
-        "0.18.7": "proven"
+        "0.18.7": "proven",
+        "0.18.9": "proven"
       },
       "dischargeability_probe": "p04_ite_two_call",
       "violation_text": "one Bellman step is not monotone in the continuation value when domination v <= w is dropped (chelis#426 regression guard)",
@@ -960,7 +966,8 @@
         "0.17.1": "proven",
         "0.17.4": "proven",
         "0.18.5": "proven",
-        "0.18.7": "proven"
+        "0.18.7": "proven",
+        "0.18.9": "proven"
       },
       "dischargeability_probe": "p04_ite_two_call",
       "violation_text": "dropping row-stochasticity lets the discounted expectation amplify the value gap past the g-contraction bound",
@@ -1072,7 +1079,8 @@
         "0.17.1": "proven",
         "0.17.4": "proven",
         "0.18.5": "proven",
-        "0.18.7": "proven"
+        "0.18.7": "proven",
+        "0.18.9": "proven"
       },
       "dischargeability_probe": "p15_nested_fmax3",
       "violation_text": "dropping row-stochasticity breaks the de-narrowed n=3 per-state contraction bound",
@@ -1128,7 +1136,8 @@
         "0.17.1": "proven",
         "0.17.4": "proven",
         "0.18.5": "proven",
-        "0.18.7": "proven"
+        "0.18.7": "proven",
+        "0.18.9": "proven"
       },
       "dischargeability_probe": "p01_gordon_div_positive",
       "violation_text": "the mispriced perpetuity gordon_pv_negated prices a positive-dividend claim below zero INSIDE its validity region r > g -- an in-region defect",
@@ -1213,7 +1222,8 @@
         "0.17.1": "fuzz_validated",
         "0.17.4": "fuzz_validated",
         "0.18.5": "fuzz_validated",
-        "0.18.7": "fuzz_validated"
+        "0.18.7": "fuzz_validated",
+        "0.18.9": "fuzz_validated"
       },
       "tier_upgrade_trigger": "Dated semantic deferral: retain the concrete f32 AD lane at fuzz_validated until a bit-precise floating-point proof tier exists (review 2027-01-30; docs/models/growth.md E4)",
       "dischargeability_probe": "p05_grad_fuzz",
