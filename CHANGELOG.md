@@ -3,6 +3,18 @@
 All notable changes to the Economoist shell are recorded here. The package
 `version` tracks its own line (not the chelis compiler pin).
 
+## [0.2.12] - 2026-09-14
+
+- Rebuild Economoist for the published Chelis 0.18.9 release as part of the
+  2026-09-14 dependency release wave. There is no functional change: no model
+  body, precondition, numeric golden or expected tier moves.
+- Chelis 0.18.9 supersedes the unpublished 0.18.8 tag; this shell never
+  pinned 0.18.8 and moves directly from 0.18.7 to 0.18.9.
+- The compiler and workflow pins, package identity, and C Note
+  characterization manifest move together. All nine proven and one sampled
+  invariant expectations remain explicit at the new pin.
+  See `docs/chelis-0.18.9-migration.md` for identity and receipts.
+
 ## [0.2.11] - 2026-09-13
 
 - Adopt the published Chelis 0.18.7 release and regenerate compiler-bound
