@@ -3,6 +3,21 @@
 All notable changes to the Economoist shell are recorded here. The package
 `version` tracks its own line (not the chelis compiler pin).
 
+## [0.2.13] - 2026-09-15
+
+- Rebuild Economoist for the published Chelis 0.18.10 release as part of the
+  2026-09-15 dependency release wave. There is no functional change: no model
+  body, precondition, numeric golden or expected tier moves.
+- Chelis 0.18.10 is a corrective release over 0.18.9: it fixes the two 0.18.9
+  regressions (chelis#2059 interpreter evaluation performance, chelis#2068
+  native-C airy/ownership). Economoist never carried a perf or suite-timeout
+  bandaid for those regressions, so none is reverted and none is needed at
+  this pin.
+- The compiler and workflow pins, package identity, regenerated lockfile, and
+  C Note characterization manifest move together. All nine proven and one
+  sampled invariant expectations remain explicit at the new pin.
+  See `docs/chelis-0.18.10-migration.md` for identity and receipts.
+
 ## [0.2.12] - 2026-09-14
 
 - Rebuild Economoist for the published Chelis 0.18.9 release as part of the

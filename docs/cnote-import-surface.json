@@ -2,8 +2,8 @@
   "schema_id": "chelis-shell.invariant-surface",
   "schema_version": "1.0",
   "pkg": "economoist",
-  "pkg_version": "0.2.12",
-  "chelis_pin": "0.18.9",
+  "pkg_version": "0.2.13",
+  "chelis_pin": "0.18.10",
   "purpose": "Economoist's canon model + invariant surface for C Note. Every proven-tier invariant here is a genuine unqualified SMT green that CALLS the shipped operator (not a guard restatement); the one fuzz_validated invariant is an honest amber in the sampled lane, carrying a tier_upgrade_trigger. C Note vendors this file and the byte-identical release asset economoist-<pkg_version>.invariants.json. See docs/contracts/characterization_contract_v1.md (schema chelis-shell.invariant-surface/1.0).",
   "models": [
     {
@@ -498,7 +498,8 @@
         "0.17.4": "proven",
         "0.18.5": "proven",
         "0.18.7": "proven",
-        "0.18.9": "proven"
+        "0.18.9": "proven",
+        "0.18.10": "proven"
       },
       "dischargeability_probe": "p01_gordon_div_positive",
       "violation_text": "the model prices a positive-dividend perpetuity at or below zero inside its convergence region r > g",
@@ -555,7 +556,8 @@
         "0.17.4": "proven",
         "0.18.5": "proven",
         "0.18.7": "proven",
-        "0.18.9": "proven"
+        "0.18.9": "proven",
+        "0.18.10": "proven"
       },
       "dischargeability_probe": "p01_gordon_div_positive",
       "violation_text": "the conservative model prices a positive-dividend perpetuity at or below zero once the inputs leave the convergence region r > g (which its strict domain r > g + 0.01 is contained in); the margin is a domain-of-use choice, not the positivity hypothesis",
@@ -620,7 +622,8 @@
         "0.17.4": "proven",
         "0.18.5": "proven",
         "0.18.7": "proven",
-        "0.18.9": "proven"
+        "0.18.9": "proven",
+        "0.18.10": "proven"
       },
       "dischargeability_probe": "p02_gordon_two_point_r",
       "violation_text": "raising the required return does not strictly lower the present value",
@@ -684,7 +687,8 @@
         "0.17.4": "proven",
         "0.18.5": "proven",
         "0.18.7": "proven",
-        "0.18.9": "proven"
+        "0.18.9": "proven",
+        "0.18.10": "proven"
       },
       "dischargeability_probe": "p13_economoist_published_properties",
       "violation_text": "a non-stochastic transition row lets total probability mass drift off one",
@@ -755,7 +759,8 @@
         "0.17.4": "proven",
         "0.18.5": "proven",
         "0.18.7": "proven",
-        "0.18.9": "proven"
+        "0.18.9": "proven",
+        "0.18.10": "proven"
       },
       "dischargeability_probe": "p13_economoist_published_properties",
       "violation_text": "a non-stochastic transition row lets total probability mass drift off one (n=3)",
@@ -868,7 +873,8 @@
         "0.17.4": "proven",
         "0.18.5": "proven",
         "0.18.7": "proven",
-        "0.18.9": "proven"
+        "0.18.9": "proven",
+        "0.18.10": "proven"
       },
       "dischargeability_probe": "p04_ite_two_call",
       "violation_text": "one Bellman step is not monotone in the continuation value when domination v <= w is dropped (chelis#426 regression guard)",
@@ -967,7 +973,8 @@
         "0.17.4": "proven",
         "0.18.5": "proven",
         "0.18.7": "proven",
-        "0.18.9": "proven"
+        "0.18.9": "proven",
+        "0.18.10": "proven"
       },
       "dischargeability_probe": "p04_ite_two_call",
       "violation_text": "dropping row-stochasticity lets the discounted expectation amplify the value gap past the g-contraction bound",
@@ -1080,7 +1087,8 @@
         "0.17.4": "proven",
         "0.18.5": "proven",
         "0.18.7": "proven",
-        "0.18.9": "proven"
+        "0.18.9": "proven",
+        "0.18.10": "proven"
       },
       "dischargeability_probe": "p15_nested_fmax3",
       "violation_text": "dropping row-stochasticity breaks the de-narrowed n=3 per-state contraction bound",
@@ -1137,7 +1145,8 @@
         "0.17.4": "proven",
         "0.18.5": "proven",
         "0.18.7": "proven",
-        "0.18.9": "proven"
+        "0.18.9": "proven",
+        "0.18.10": "proven"
       },
       "dischargeability_probe": "p01_gordon_div_positive",
       "violation_text": "the mispriced perpetuity gordon_pv_negated prices a positive-dividend claim below zero INSIDE its validity region r > g -- an in-region defect",
@@ -1223,7 +1232,8 @@
         "0.17.4": "fuzz_validated",
         "0.18.5": "fuzz_validated",
         "0.18.7": "fuzz_validated",
-        "0.18.9": "fuzz_validated"
+        "0.18.9": "fuzz_validated",
+        "0.18.10": "fuzz_validated"
       },
       "tier_upgrade_trigger": "Dated semantic deferral: retain the concrete f32 AD lane at fuzz_validated until a bit-precise floating-point proof tier exists (review 2027-01-30; docs/models/growth.md E4)",
       "dischargeability_probe": "p05_grad_fuzz",
@@ -1245,8 +1255,8 @@
       "note": "honest amber; fuzz-validated library invariants, gated separately, name-linted, never colliding with a properties/ green"
     }
   },
-  "eval_import_boundary": "prove resolves module imports so proven and sampled properties reach the real exported functions. At the published 0.18.9 pin, eval --file also resolves ad hoc snippets against the current Reef package; the numeric oracle and defective-model re-execution import the shipped exports directly (chelis#423 archived). The sampled AD lane directly differentiates the imported gordon_pv export (economoist#13).",
-  "dependency_edges_boundary": "At the published 0.18.9 pin, every invariant names an exact anchor_model and the producer gate requires chelis#922's complete linker-owned dependency_graph to bind its satisfying control to that model's output_fn. Violating controls must bind to the same anchor, except an explicit defective_model control must bind to that defective model's output_fn. anchor_model is proof provenance, not a change to kind-scoped consumer applicability. An unavailable graph, missing edge, or edge to another exported model fails closed. Historical 0.17.1 output lacked that graph and used the compiler-emitted goal plus corrupt-flip compatibility oracle (docs/issue_drafts/dependency_edges_imports.md).",
+  "eval_import_boundary": "prove resolves module imports so proven and sampled properties reach the real exported functions. At the published 0.18.10 pin, eval --file also resolves ad hoc snippets against the current Reef package; the numeric oracle and defective-model re-execution import the shipped exports directly (chelis#423 archived). The sampled AD lane directly differentiates the imported gordon_pv export (economoist#13).",
+  "dependency_edges_boundary": "At the published 0.18.10 pin, every invariant names an exact anchor_model and the producer gate requires chelis#922's complete linker-owned dependency_graph to bind its satisfying control to that model's output_fn. Violating controls must bind to the same anchor, except an explicit defective_model control must bind to that defective model's output_fn. anchor_model is proof provenance, not a change to kind-scoped consumer applicability. An unavailable graph, missing edge, or edge to another exported model fails closed. Historical 0.17.1 output lacked that graph and used the compiler-emitted goal plus corrupt-flip compatibility oracle (docs/issue_drafts/dependency_edges_imports.md).",
   "run": {
     "build": "chelis reef build",
     "contract_gate": "python3 scripts/contract_gate.py",
