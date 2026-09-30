@@ -13,9 +13,9 @@ listed in that README for manual re-probe.
 Suspected chelis issues are cited as `chelis#NNN` or as a parked draft under
 `issue_drafts/`, never by a prose name.
 
-Current validation: the published Chelis 0.18.7 compatibility binary passed the
-complete ten-stage local gate on 2026-09-13. The diagnostic and exact-eval-carrier
-migrations are recorded in [the release migration note](chelis-0.18.7-migration.md).
+Current validation: the local Chelis 0.18.12 candidate passed the complete
+ten-stage gate on 2026-09-30. The official release-binary gate is pending;
+[the migration record](chelis-0.18.12-migration.md) separates these receipts.
 The nine proven and one sampled expected tiers remain unchanged.
 
 ## Actively blocking
