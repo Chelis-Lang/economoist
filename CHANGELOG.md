@@ -3,6 +3,13 @@
 All notable changes to the Economoist shell are recorded here. The package
 `version` tracks its own line (not the chelis compiler pin).
 
+## [Unreleased]
+
+### Security
+
+- Add a pinned Git-history secret scan to pull-request and push checks, with
+  contract tests.
+
 ## [0.2.13] - 2026-09-15
 
 - Rebuild Economoist for the published Chelis 0.18.10 release as part of the
