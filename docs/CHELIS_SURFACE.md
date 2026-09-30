@@ -1,4 +1,4 @@
-<!-- BEGIN CHELIS MANAGED BLOCK: chelis-surface-header chelis@0.18.10 (sha256:28011bed9ccb5778) -->
+<!-- BEGIN CHELIS MANAGED BLOCK: chelis-surface-header chelis@0.18.12 (sha256:28011bed9ccb5778) -->
 This file is a domain-scoped view of the canonical Chelis capability surface,
 generated for the pinned toolchain. Each capability row is marked `@pin` (usable
 at the current pin) or `@upstream` (lands at the next bump). **Read it before
@@ -14,23 +14,21 @@ What the Chelis language and the bundled chelis-std actually provide to the
 economic-models domain this shell touches. Read this before designing around a
 suspected language gap.
 
-> **Pinned release:** chelis 0.18.10 (chelis-std 0.4.0, bundled; tag source
-> `b9095ccf2c0b76859aa447c6febe699fd287f1d2`) · **Latest published upstream:**
-> 0.18.10 ·
-> **Last refreshed:** 2026-09-15
+> **Pinned release:** chelis 0.18.12 (chelis-std 0.4.0, bundled;
+> tag commit `c81d8188de6ebad032c1bb1c0a427eb0408feee3`) ·
+> **Latest published upstream:** 0.18.12 ·
+> **Last refreshed:** 2026-09-30
 >
-> **Release identity:** official
-> `chelis-v0.18.10-linux-x86_64-glibc2.31.tar.gz`, publisher SHA-256
-> `0843697e0a7783e383df0347ae431ae56f62b5a5ae34a7aa72ac37ee91df1e0b`.
+> **Release identity:** the sidecar-verified Darwin arm64 release binary passed
+> the complete local gate; see the migration record for its hashes.
 
-Rows are marked `@pin` (present in the published 0.18.10 pin) or `@upstream`
-(expected after it).
+Rows are marked `@pin` (verified at 0.18.12) or `@upstream` (expected after it).
 
 ## Proof surface (the spine of this shell)
 
 | Capability | Status | Notes |
 |---|---|---|
-| SMT prove tier (cvc5, QF_NRA over the reals) | `@pin` | `chelis prove --json --tier smt-only`. SMT ships in the released chelis binary as of v0.11.0 (chelis#422 resolved, archived in `UPSTREAM_BUGS.md`); no from-source build. The official 0.18.10 compatibility asset is the gate binary for this release. |
+| SMT prove tier (cvc5, QF_NRA over the reals) | `@pin` | `chelis prove --json --tier smt-only`. SMT ships in the released chelis binary as of v0.11.0 (chelis#422 resolved, archived in `UPSTREAM_BUGS.md`); no from-source build. The official 0.18.12 asset passed the full gate. |
 | Green markers | `@pin` | `status:"passed"`, `proof_tier:"smt"`, `samples:0`, `arith_model:"real"`, `composite_verdict:"proven_modulo_real_arithmetic"` (chelis 0.9.0; the prover is honest that it proved the goal over the reals, not the f32 rounding behaviour, which is exactly this shell's boundary). The older plain `"proven"` token is also accepted by the gate. |
 | Reals, not floats | `@pin` | A green is a real-arithmetic fact (`arith_model:"real"`), not a statement about `f32` evaluation. Stated per model. |
 | Per-property non-vacuity | `@pin` | A guarded property carries a `preconditions` assumption whose non-vacuity cvc5 establishes (a guard-satisfying model). The gate also ships explicit `*_guards_satisfiable` witnesses that refute. |
@@ -94,9 +92,10 @@ file and section are the authoritative upstream source.
 | The chelis-std module surface used (scalar builtins, reductions) | `docs/book/src/stdlib.md` | `## Standard library modules` |
 | The downstream shell-repo contract this shell follows | `spec/design/shell_repo_contract.md` | `## 3. Capability surface doc -- docs/CHELIS_SURFACE.md (MUST)` |
 
-The 0.18.10 migration and recorded release gates are summarized in
-[the migration record](chelis-0.18.10-migration.md); the 0.18.9 record is
-[kept alongside it](chelis-0.18.9-migration.md). Exact scalar and rank-zero
-tensor eval values are decoded from their dtype-tagged bits. The imported
-Gordon properties remain unsupported by `--tier beacon-only`; this release
-does not promote any economic property to the NN bound lane.
+The published 0.18.12 release and its local gate are summarized in
+[the migration record](chelis-0.18.12-migration.md); the published 0.18.10
+record is [kept alongside it](chelis-0.18.10-migration.md). Exact scalar and rank-zero
+tensor eval values are decoded from their dtype-tagged bits. On the official
+0.18.12 binary, the imported Gordon properties return eight structured
+`unsupported` records under `--tier beacon-only`; this release does not
+promote any economic property to the NN bound lane.

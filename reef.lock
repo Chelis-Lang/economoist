@@ -1,15 +1,17 @@
+schema = "1"
+
 [package]
 name = "economoist"
-version = "0.2.13"
+version = "0.2.14"
 
 [[dependencies]]
 name = "chelis-std"
 version = "0.4.0"
-compiler = "=0.18.10"
-archive_sha256 = "20f8c777c858c6e9306378086ea01111a6e3adaea5be0aec13ae541feff3944a"
-shell_sha256 = "5f1a4ea28c0e5ec2d92bae456a2bd6cab181e5027f36a5b4112960e542d39e7d"
+compiler = "=0.18.12"
+archive_sha256 = "59cb08f67e4ca0b139b87336414fd050a1d3c082ceeeae9ce15b2318d45ad913"
+shell_sha256 = "f780fab3dfdf545a1e35821e30ad7e020a81cead75951b6a67754e6d7c9cb9d9"
 
 [dependencies.source]
 kind = "bundled"
-compiler_version = "0.18.10"
+compiler_version = "0.18.12"
 

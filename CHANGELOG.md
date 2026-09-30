@@ -10,6 +10,14 @@ All notable changes to the Economoist shell are recorded here. The package
 - Add a pinned Git-history secret scan to pull-request and push checks, with
   contract tests.
 
+## [0.2.14] - 2026-09-30
+
+- Rebuild Economoist for the published Chelis 0.18.12 release. Repin the compiler, workflows,
+  bundled standard-library lock, and C Note invariant expectations together.
+- Keep the nine real-arithmetic proof expectations and one sampled AD
+  expectation explicit. The complete local gate passed on the published
+  0.18.12 compiler asset.
+
 ## [0.2.13] - 2026-09-15
 
 - Rebuild Economoist for the published Chelis 0.18.10 release as part of the

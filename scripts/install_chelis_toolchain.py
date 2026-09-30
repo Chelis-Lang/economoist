@@ -4,6 +4,7 @@
 import argparse
 import hashlib
 import os
+import platform
 import re
 import shutil
 import subprocess
@@ -65,7 +66,14 @@ def find_reef_toml() -> Path:
 
 
 def release_asset_name(version: str) -> str:
-    return f"chelis-v{version}-linux-x86_64-glibc2.31.tar.gz"
+    target = (platform.system(), platform.machine())
+    platforms = {
+        ("Linux", "x86_64"): "linux-x86_64-glibc2.31",
+        ("Darwin", "arm64"): "darwin-arm64",
+    }
+    if target not in platforms:
+        sys.exit(f"error: unsupported release platform {target[0]}/{target[1]}")
+    return f"chelis-v{version}-{platforms[target]}.tar.gz"
 
 
 def sha256_file(path: Path) -> str:
@@ -115,7 +123,7 @@ def replace_install(staged: Path, dest: Path) -> None:
         shutil.rmtree(backup)
 
 
-def install(version: str, set_default: bool) -> None:
+def install(version: str, set_default: bool, install_launcher: bool = True) -> None:
     dest = INSTALL_BASE / version
     asset = release_asset_name(version)
     print(f"Downloading official chelis v{version} release asset {asset}...")
@@ -174,11 +182,11 @@ def install(version: str, set_default: bool) -> None:
         replace_install(staged, dest)
     print(f"Installed verified chelis {version} release to {dest}")
 
-    # Write launcher
-    LAUNCHER_PATH.parent.mkdir(parents=True, exist_ok=True)
-    LAUNCHER_PATH.write_text(LAUNCHER_SCRIPT)
-    LAUNCHER_PATH.chmod(0o755)
-    print(f"Launcher written to {LAUNCHER_PATH}")
+    if install_launcher:
+        LAUNCHER_PATH.parent.mkdir(parents=True, exist_ok=True)
+        LAUNCHER_PATH.write_text(LAUNCHER_SCRIPT)
+        LAUNCHER_PATH.chmod(0o755)
+        print(f"Launcher written to {LAUNCHER_PATH}")
 
     if set_default:
         (INSTALL_BASE / "default").write_text(version)
@@ -191,11 +199,13 @@ def main() -> None:
     )
     parser.add_argument("--set-default", action="store_true",
                         help="Set this version as the machine default")
+    parser.add_argument("--skip-launcher", action="store_true",
+                        help="Leave the existing chelis launcher untouched")
     parser.add_argument("--version", help="Override version (default: read from reef.toml)")
     args = parser.parse_args()
 
     version = args.version or read_version_from_reef(find_reef_toml())
-    install(version, args.set_default)
+    install(version, args.set_default, install_launcher=not args.skip_launcher)
 
 
 if __name__ == "__main__":
