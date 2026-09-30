@@ -6,6 +6,7 @@ from __future__ import annotations
 import importlib.util
 import hashlib
 import os
+import platform
 import shutil
 import subprocess
 import tarfile
@@ -59,10 +60,32 @@ class InstallerLayoutTests(unittest.TestCase):
         )
 
     def test_linux_asset_is_compatibility_build(self) -> None:
-        self.assertEqual(
-            INSTALLER.release_asset_name("0.17.4"),
-            "chelis-v0.17.4-linux-x86_64-glibc2.31.tar.gz",
-        )
+        with (
+            mock.patch.object(platform, "system", return_value="Linux"),
+            mock.patch.object(platform, "machine", return_value="x86_64"),
+        ):
+            self.assertEqual(
+                INSTALLER.release_asset_name("0.17.4"),
+                "chelis-v0.17.4-linux-x86_64-glibc2.31.tar.gz",
+            )
+
+    def test_darwin_arm64_asset_is_native_build(self) -> None:
+        with (
+            mock.patch.object(platform, "system", return_value="Darwin"),
+            mock.patch.object(platform, "machine", return_value="arm64"),
+        ):
+            self.assertEqual(
+                INSTALLER.release_asset_name("0.18.12"),
+                "chelis-v0.18.12-darwin-arm64.tar.gz",
+            )
+
+    def test_unsupported_platform_fails_closed(self) -> None:
+        with (
+            mock.patch.object(platform, "system", return_value="Darwin"),
+            mock.patch.object(platform, "machine", return_value="x86_64"),
+            self.assertRaisesRegex(SystemExit, "unsupported release platform"),
+        ):
+            INSTALLER.release_asset_name("0.18.12")
 
     def test_sidecar_parser_requires_exact_asset_name(self) -> None:
         with tempfile.TemporaryDirectory() as raw_tmp:
@@ -90,7 +113,7 @@ class InstallerLayoutTests(unittest.TestCase):
         self, root: Path, *, version: str = "0.17.4", valid_checksum: bool = True
     ) -> tuple[Path, Path]:
         asset = INSTALLER.release_asset_name(version)
-        payload_root = root / f"chelis-v{version}-linux-x86_64-glibc2.31"
+        payload_root = root / asset.removesuffix(".tar.gz")
         binary = payload_root / "bin" / "chelis"
         binary.parent.mkdir(parents=True)
         binary.write_text(f"#!/bin/sh\necho 'chelis {version}'\n", encoding="utf-8")
@@ -110,6 +133,8 @@ class InstallerLayoutTests(unittest.TestCase):
         fixture_root: Path,
         install_base: Path,
         launcher: Path,
+        *,
+        install_launcher: bool = True,
     ) -> list[list[str]]:
         real_run = subprocess.run
         calls: list[list[str]] = []
@@ -128,8 +153,25 @@ class InstallerLayoutTests(unittest.TestCase):
             mock.patch.object(INSTALLER, "LAUNCHER_PATH", launcher),
             mock.patch.object(INSTALLER.subprocess, "run", side_effect=run),
         ):
-            INSTALLER.install("0.17.4", set_default=False)
+            INSTALLER.install(
+                "0.17.4", set_default=False, install_launcher=install_launcher
+            )
         return calls
+
+    def test_skip_launcher_preserves_existing_launcher(self) -> None:
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            tmp = Path(raw_tmp)
+            fixture = tmp / "fixture"
+            fixture.mkdir()
+            self.make_release_fixture(fixture)
+            launcher = tmp / "bin" / "chelis"
+            launcher.parent.mkdir()
+            launcher.write_text("existing launcher", encoding="utf-8")
+            self.run_fixture_install(
+                fixture, tmp / "toolchains", launcher, install_launcher=False
+            )
+            self.assertEqual(launcher.read_text(encoding="utf-8"), "existing launcher")
+            self.assertTrue((tmp / "toolchains" / "0.17.4" / ".release-sha256").exists())
 
     def test_existing_install_is_reauthenticated_and_replaced(self) -> None:
         with tempfile.TemporaryDirectory() as raw_tmp:

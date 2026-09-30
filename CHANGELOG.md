@@ -12,11 +12,11 @@ All notable changes to the Economoist shell are recorded here. The package
 
 ## [0.2.14] - 2026-09-30
 
-- Prepare Economoist for Chelis 0.18.12. Repin the compiler, workflows,
+- Rebuild Economoist for the published Chelis 0.18.12 release. Repin the compiler, workflows,
   bundled standard-library lock, and C Note invariant expectations together.
 - Keep the nine real-arithmetic proof expectations and one sampled AD
-  expectation explicit. Final acceptance requires the published 0.18.12
-  compiler asset and complete release-binary gate.
+  expectation explicit. The complete local gate passed on the published
+  0.18.12 compiler asset.
 
 ## [0.2.13] - 2026-09-15
 

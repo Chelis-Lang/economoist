@@ -14,22 +14,21 @@ What the Chelis language and the bundled chelis-std actually provide to the
 economic-models domain this shell touches. Read this before designing around a
 suspected language gap.
 
-> **Pinned candidate:** chelis 0.18.12 (chelis-std 0.4.0, bundled;
-> candidate source `8cb4946a365569ceda478f86a7c37baa3fda4082`) ·
-> **Latest published upstream:** 0.18.11 ·
+> **Pinned release:** chelis 0.18.12 (chelis-std 0.4.0, bundled;
+> tag commit `c81d8188de6ebad032c1bb1c0a427eb0408feee3`) ·
+> **Latest published upstream:** 0.18.12 ·
 > **Last refreshed:** 2026-09-30
 >
-> **Release identity:** official 0.18.12 asset pending. Capability status at
-> this pin is provisional until the published compiler passes the complete gate.
+> **Release identity:** the sidecar-verified Darwin arm64 release binary passed
+> the complete local gate; see the migration record for its hashes.
 
-Rows are marked `@pin` (present in the 0.18.12 candidate) or `@upstream`
-(expected after it). The final published-asset probe controls these labels.
+Rows are marked `@pin` (verified at 0.18.12) or `@upstream` (expected after it).
 
 ## Proof surface (the spine of this shell)
 
 | Capability | Status | Notes |
 |---|---|---|
-| SMT prove tier (cvc5, QF_NRA over the reals) | `@pin` | `chelis prove --json --tier smt-only`. SMT ships in the released chelis binary as of v0.11.0 (chelis#422 resolved, archived in `UPSTREAM_BUGS.md`); no from-source build. The official 0.18.12 asset must be the final gate binary. |
+| SMT prove tier (cvc5, QF_NRA over the reals) | `@pin` | `chelis prove --json --tier smt-only`. SMT ships in the released chelis binary as of v0.11.0 (chelis#422 resolved, archived in `UPSTREAM_BUGS.md`); no from-source build. The official 0.18.12 asset passed the full gate. |
 | Green markers | `@pin` | `status:"passed"`, `proof_tier:"smt"`, `samples:0`, `arith_model:"real"`, `composite_verdict:"proven_modulo_real_arithmetic"` (chelis 0.9.0; the prover is honest that it proved the goal over the reals, not the f32 rounding behaviour, which is exactly this shell's boundary). The older plain `"proven"` token is also accepted by the gate. |
 | Reals, not floats | `@pin` | A green is a real-arithmetic fact (`arith_model:"real"`), not a statement about `f32` evaluation. Stated per model. |
 | Per-property non-vacuity | `@pin` | A guarded property carries a `preconditions` assumption whose non-vacuity cvc5 establishes (a guard-satisfying model). The gate also ships explicit `*_guards_satisfiable` witnesses that refute. |
@@ -93,9 +92,10 @@ file and section are the authoritative upstream source.
 | The chelis-std module surface used (scalar builtins, reductions) | `docs/book/src/stdlib.md` | `## Standard library modules` |
 | The downstream shell-repo contract this shell follows | `spec/design/shell_repo_contract.md` | `## 3. Capability surface doc -- docs/CHELIS_SURFACE.md (MUST)` |
 
-The 0.18.12 candidate and its pending release gate are summarized in
+The published 0.18.12 release and its local gate are summarized in
 [the migration record](chelis-0.18.12-migration.md); the published 0.18.10
 record is [kept alongside it](chelis-0.18.10-migration.md). Exact scalar and rank-zero
-tensor eval values are decoded from their dtype-tagged bits. The imported
-Gordon properties remain unsupported by `--tier beacon-only`; this release
-does not promote any economic property to the NN bound lane.
+tensor eval values are decoded from their dtype-tagged bits. On the official
+0.18.12 binary, the imported Gordon properties return eight structured
+`unsupported` records under `--tier beacon-only`; this release does not
+promote any economic property to the NN bound lane.
