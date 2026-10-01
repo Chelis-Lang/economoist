@@ -42,6 +42,8 @@ Python-stdlib-only. Exit 0 only if every check passes.
 
 from __future__ import annotations
 
+from copy import deepcopy
+from dataclasses import dataclass
 import json
 import os
 import re
@@ -176,6 +178,101 @@ def classify_tier(r: dict) -> str:
     return "unknown"
 
 
+def _graph_text(value: object, field: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field} must be a nonempty string")
+    return value
+
+
+def _graph_span_integer(value: object, field: str) -> int:
+    if type(value) is not int or value < 0:
+        raise ValueError(f"{field} must be a nonnegative integer")
+    return value
+
+
+@dataclass(frozen=True)
+class GraphDeclaration:
+    id: str
+    name: str
+    kind: str
+    package: str
+    module: str
+    source_file: str
+    span_offset: int
+    span_len: int
+
+    @property
+    def semantic_key(self) -> tuple[str, str, str, str]:
+        return self.package, self.module, self.kind, self.name
+
+    @classmethod
+    def from_wire(cls, node: object) -> "GraphDeclaration":
+        if not isinstance(node, dict):
+            raise ValueError("declaration must be an object")
+        fields = {
+            field: _graph_text(node.get(field), f"declaration.{field}")
+            for field in ("id", "name", "kind", "package", "module")
+        }
+        source = node.get("source")
+        if not isinstance(source, dict):
+            raise ValueError("declaration.source must be an object")
+        source_file = _graph_text(source.get("file"), "declaration.source.file")
+        if (
+            source_file.startswith("/")
+            or "\\" in source_file
+            or any(part in ("", ".", "..") for part in source_file.split("/"))
+        ):
+            raise ValueError("declaration.source.file must be a package-relative path")
+        span = source.get("span")
+        if not isinstance(span, dict):
+            raise ValueError("declaration.source.span must be an object")
+        return cls(
+            **fields,
+            source_file=source_file,
+            span_offset=_graph_span_integer(
+                span.get("offset"), "declaration.source.span.offset"
+            ),
+            span_len=_graph_span_integer(span.get("len"), "declaration.source.span.len"),
+        )
+
+
+@dataclass(frozen=True)
+class ValidatedDependencyGraph:
+    by_semantic_key: dict[tuple[str, str, str, str], GraphDeclaration]
+    edges: frozenset[tuple[str, str]]
+
+    @classmethod
+    def from_wire(cls, wire: object) -> "ValidatedDependencyGraph":
+        if not isinstance(wire, dict) or wire.get("status") != "complete":
+            raise ValueError("complete compiler dependency graph is required")
+        declarations = wire.get("declarations")
+        edges = wire.get("edges")
+        if not isinstance(declarations, list) or not isinstance(edges, list):
+            raise ValueError("complete graph requires declarations/edges arrays")
+
+        by_id: dict[str, GraphDeclaration] = {}
+        by_key: dict[tuple[str, str, str, str], GraphDeclaration] = {}
+        for raw_node in declarations:
+            node = GraphDeclaration.from_wire(raw_node)
+            if node.id in by_id:
+                raise ValueError(f"duplicate declaration ID {node.id!r}")
+            if node.semantic_key in by_key:
+                raise ValueError(f"duplicate declaration identity {node.semantic_key!r}")
+            by_id[node.id] = node
+            by_key[node.semantic_key] = node
+
+        validated_edges: set[tuple[str, str]] = set()
+        for raw_edge in edges:
+            if not isinstance(raw_edge, dict):
+                raise ValueError("edge must be an object")
+            source_id = _graph_text(raw_edge.get("from"), "edge.from")
+            target_id = _graph_text(raw_edge.get("to"), "edge.to")
+            if source_id not in by_id or target_id not in by_id:
+                raise ValueError("edge endpoint lacks a declaration")
+            validated_edges.add((source_id, target_id))
+        return cls(by_semantic_key=by_key, edges=frozenset(validated_edges))
+
+
 def compiler_graph_directly_references(
     record: dict,
     *,
@@ -186,75 +283,31 @@ def compiler_graph_directly_references(
     output_module: str,
     package: str,
 ) -> tuple[bool, str]:
-    """Require the exact property-to-export edge in a complete compiler graph."""
-    graph = record.get("_dependency_graph")
-    if not isinstance(graph, dict) or graph.get("status") != "complete":
-        return False, "complete compiler dependency graph is required"
+    """Require an exact property-to-export edge after validating the whole graph."""
+    try:
+        graph = ValidatedDependencyGraph.from_wire(record.get("_dependency_graph"))
+    except ValueError as exc:
+        return False, f"invalid compiler dependency graph: {exc}"
 
-    declarations = graph.get("declarations")
-    edges = graph.get("edges")
-    if not isinstance(declarations, list) or not isinstance(edges, list):
-        return False, "complete compiler dependency graph lacks declarations/edges arrays"
-
-    def valid_id(value: object) -> bool:
-        return isinstance(value, str) and bool(value.strip())
-
-    declaration_ids: set[str] = set()
-    for node in declarations:
-        if not isinstance(node, dict) or not valid_id(node.get("id")):
-            return False, "complete compiler dependency graph has a declaration without a valid ID"
-        node_id = node["id"]
-        if node_id in declaration_ids:
-            return False, "complete compiler dependency graph has duplicate declaration IDs"
-        declaration_ids.add(node_id)
-    for edge in edges:
-        if not isinstance(edge, dict):
-            return False, "complete compiler dependency graph has a malformed edge"
-        source_id, target_id = edge.get("from"), edge.get("to")
-        if (
-            not valid_id(source_id)
-            or not valid_id(target_id)
-            or source_id not in declaration_ids
-            or target_id not in declaration_ids
-        ):
-            return False, "complete compiler dependency graph has an invalid edge endpoint"
-
-    property_ids = {
-        node.get("id")
-        for node in declarations
-        if isinstance(node, dict)
-        and node.get("kind") == "property"
-        and node.get("name") == property_name
-        and node.get("module") == property_module
-        and node.get("package") == package
-        and isinstance(node.get("source"), dict)
-        and node["source"].get("file") == property_file
-    }
-    output_ids = {
-        node.get("id")
-        for node in declarations
-        if isinstance(node, dict)
-        and node.get("kind") == "function"
-        and node.get("name") == output_fn
-        and node.get("module") == output_module
-        and node.get("package") == package
-    }
-    if not property_ids:
+    property_node = graph.by_semantic_key.get(
+        (package, property_module, "property", property_name)
+    )
+    if property_node is None or property_node.source_file != property_file:
         return (
             False,
             "compiler dependency graph has no exact property declaration for "
             f"{package}:{property_module}:{property_file}:{property_name}",
         )
-    if not output_ids:
+    output_node = graph.by_semantic_key.get(
+        (package, output_module, "function", output_fn)
+    )
+    if output_node is None:
         return (
             False,
             "compiler dependency graph has no exact model declaration for "
             f"{package}:{output_module}:{output_fn}",
         )
-    if any(
-        edge.get("from") in property_ids and edge.get("to") in output_ids
-        for edge in edges
-    ):
+    if (property_node.id, output_node.id) in graph.edges:
         return True, "linker-owned direct dependency edge present"
     return False, "compiler dependency graph has no direct property -> output-function edge"
 
@@ -691,7 +744,10 @@ def honesty_self_test() -> None:
                     "name": "sensitivity",
                     "module": "Economoist.Sampled.Growth_sensitivity",
                     "package": "economoist",
-                    "source": {"file": "sampled/growth_sensitivity.ch"},
+                    "source": {
+                        "file": "sampled/growth_sensitivity.ch",
+                        "span": {"offset": 10, "len": 80},
+                    },
                 },
                 {
                     "id": "f",
@@ -699,6 +755,10 @@ def honesty_self_test() -> None:
                     "name": "gordon_pv",
                     "module": "Economoist.Growth",
                     "package": "economoist",
+                    "source": {
+                        "file": "src/growth.ch",
+                        "span": {"offset": 20, "len": 40},
+                    },
                 },
             ],
             "edges": [{"from": "p", "to": "f"}],
@@ -714,6 +774,33 @@ def honesty_self_test() -> None:
     }
     ok, _ = compiler_graph_directly_references(graph_record, **exact)
     assert ok is True, "linker-owned direct edge was rejected"
+    graph = graph_record["_dependency_graph"]
+    duplicate_property = deepcopy(graph)
+    duplicate_property["edges"] = []
+    decoy = deepcopy(graph["declarations"][0])
+    decoy["id"] = "decl:forged-other-property"
+    decoy["source"]["span"] = {"offset": 999999, "len": 1}
+    duplicate_property["declarations"].append(decoy)
+    duplicate_property["edges"].append({"from": decoy["id"], "to": "f"})
+    assert {"from": "p", "to": "f"} not in duplicate_property["edges"]
+    ok, detail = compiler_graph_directly_references(
+        {"_dependency_graph": duplicate_property}, **exact
+    )
+    assert not ok and "duplicate declaration identity" in detail, (
+        "duplicate semantic property and decoy edge forged a direct dependency"
+    )
+    for removed_path in (("source",), ("source", "span")):
+        missing_function_source = deepcopy(graph)
+        field = missing_function_source["declarations"][1]
+        for part in removed_path[:-1]:
+            field = field[part]
+        del field[removed_path[-1]]
+        ok, detail = compiler_graph_directly_references(
+            {"_dependency_graph": missing_function_source}, **exact
+        )
+        assert not ok and "declaration.source" in detail, (
+            f"function declaration missing {removed_path} forged a binding"
+        )
     missing_identity = {
         "_dependency_graph": {
             "status": "complete",
@@ -734,9 +821,13 @@ def honesty_self_test() -> None:
     }
     ok, _ = compiler_graph_directly_references(missing_endpoints, **exact)
     assert not ok, "missing edge endpoints passed with valid declaration IDs"
-    graph_record["_dependency_graph"]["edges"] = []
-    ok, _ = compiler_graph_directly_references(graph_record, **exact)
+    no_edge = deepcopy(graph)
+    no_edge["edges"] = []
+    ok, _ = compiler_graph_directly_references({"_dependency_graph": no_edge}, **exact)
     assert ok is False, "complete graph without a direct edge did not fail closed"
+    assert ValidatedDependencyGraph.from_wire(
+        {"status": "complete", "declarations": [], "edges": []}
+    ).by_semantic_key == {}, "complete empty graph was treated as a malformed wire"
     unavailable = {
         "goal": "(gordon_pv(d, r, g) > 0.0)",
         "_dependency_graph": {"status": "unavailable"},
@@ -757,13 +848,19 @@ def honesty_self_test() -> None:
                     "name": "next_mass",
                     "module": "Economoist.Markov",
                     "package": "economoist",
+                    "source": {
+                        "file": "src/markov.ch",
+                        "span": {"offset": 5, "len": 30},
+                    },
                 },
             ],
             "edges": [{"from": "p", "to": "m"}],
         },
     }
-    ok, _ = compiler_graph_directly_references(wrong_model, **exact)
-    assert not ok, "direct binding accepted an edge to the wrong shipped model"
+    ok, detail = compiler_graph_directly_references(wrong_model, **exact)
+    assert not ok and "no direct property" in detail, (
+        "direct binding accepted an edge to the wrong shipped model"
+    )
     decoy_property = {
         "_dependency_graph": {
             "status": "complete",
@@ -774,15 +871,20 @@ def honesty_self_test() -> None:
                     "name": "sensitivity",
                     "module": "Attacker.Decoy",
                     "package": "economoist",
-                    "source": {"file": "sampled/attacker.ch"},
+                    "source": {
+                        "file": "sampled/attacker.ch",
+                        "span": {"offset": 10, "len": 80},
+                    },
                 },
                 graph_record["_dependency_graph"]["declarations"][1],
             ],
             "edges": [{"from": "p", "to": "f"}],
         }
     }
-    ok, _ = compiler_graph_directly_references(decoy_property, **exact)
-    assert not ok, "direct binding accepted a same-name property from a decoy module"
+    ok, detail = compiler_graph_directly_references(decoy_property, **exact)
+    assert not ok and "no exact property" in detail, (
+        "direct binding accepted a same-name property from a decoy module"
+    )
     decoy_function = {
         "_dependency_graph": {
             "status": "complete",
@@ -795,13 +897,71 @@ def honesty_self_test() -> None:
                     "name": "gordon_pv",
                     "module": "Attacker.Decoy",
                     "package": "economoist",
+                    "source": {
+                        "file": "src/attacker.ch",
+                        "span": {"offset": 20, "len": 40},
+                    },
                 },
             ],
             "edges": [{"from": "p", "to": "attacker"}],
         }
     }
-    ok, _ = compiler_graph_directly_references(decoy_function, **exact)
-    assert not ok, "direct binding accepted a same-name function from a decoy module"
+    ok, detail = compiler_graph_directly_references(decoy_function, **exact)
+    assert not ok and "no direct property" in detail, (
+        "direct binding accepted a same-name function from a decoy module"
+    )
+
+    # These wires retain the genuine direct edge. Every malformed declaration
+    # and edge must be rejected before that edge can serve as provenance.
+    malformed_wires: list[tuple[str, dict, str]] = []
+    duplicate_id = deepcopy(graph)
+    unrelated = deepcopy(graph["declarations"][0])
+    unrelated["name"] = "other_property"
+    duplicate_id["declarations"].append(deepcopy(unrelated))
+    malformed_wires.append(("duplicate ID", duplicate_id, "duplicate declaration ID"))
+
+    duplicate_other_key = deepcopy(graph)
+    unrelated["id"] = "other"
+    duplicate_other_key["declarations"].append(deepcopy(unrelated))
+    other_duplicate = deepcopy(unrelated)
+    other_duplicate["id"] = "other_again"
+    duplicate_other_key["declarations"].append(other_duplicate)
+    malformed_wires.append(
+        ("duplicate unrelated semantic key", duplicate_other_key, "duplicate declaration identity")
+    )
+
+    missing_unrelated_span = deepcopy(graph)
+    unrelated["id"] = "other"
+    unrelated.pop("source")
+    missing_unrelated_span["declarations"].append(unrelated)
+    malformed_wires.append(
+        ("missing unrelated source", missing_unrelated_span, "declaration.source")
+    )
+
+    invalid_name = deepcopy(graph)
+    invalid_name["declarations"][1]["name"] = None
+    malformed_wires.append(("non-string name", invalid_name, "declaration.name"))
+    invalid_file = deepcopy(graph)
+    invalid_file["declarations"][1]["source"]["file"] = "../growth.ch"
+    malformed_wires.append(("non-relative source file", invalid_file, "package-relative path"))
+    invalid_span = deepcopy(graph)
+    invalid_span["declarations"][1]["source"]["span"]["offset"] = True
+    malformed_wires.append(("boolean span offset", invalid_span, "span.offset"))
+    negative_span = deepcopy(graph)
+    negative_span["declarations"][1]["source"]["span"]["len"] = -1
+    malformed_wires.append(("negative span length", negative_span, "span.len"))
+    malformed_edge = deepcopy(graph)
+    malformed_edge["edges"].append([])
+    malformed_wires.append(("non-object edge", malformed_edge, "edge must be an object"))
+    dangling_edge = deepcopy(graph)
+    dangling_edge["edges"].append({"from": "p", "to": "missing"})
+    malformed_wires.append(("dangling endpoint", dangling_edge, "edge endpoint"))
+
+    for label, wire, reason in malformed_wires:
+        ok, detail = compiler_graph_directly_references(
+            {"_dependency_graph": wire}, **exact
+        )
+        assert not ok and reason in detail, f"{label} wire accepted or misclassified: {detail}"
 
 
 # ----------------------------------------------------------------------------
@@ -835,7 +995,7 @@ def _alt_bodies(params: list[str]) -> list[str]:
     a canceling (`F(x)-F(x)`) or reflexive (`F(x)==F(x)`) goal is disproved under
     none (it stays true, or degenerates to unsupported, for every body)."""
     p0 = params[0]
-    return [f"{p0}", f"(0.0 - {p0})", "cast(1.0, f32)"]
+    return [f"{p0}", f"(0.0 - {p0})", "1.0f32"]
 
 
 def _substitute_body(src_text: str, fn: str, new_body: str) -> str:

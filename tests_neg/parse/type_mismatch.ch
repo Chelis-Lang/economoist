@@ -6,5 +6,5 @@ import Std.Test (assert_close)
 -- check diagnostic (chelis#967).
 def negative_type_mismatch() -> unit ! { Test } = {
   bad = (1.0 >= 0.0)
-  assert_close(bad, cast(0.0, f32), cast(0.01, f32), "bool is not f32")
+  assert_close(bad, 0.0f32, 0.01f32, "bool is not f32")
 }
