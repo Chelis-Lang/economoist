@@ -111,14 +111,16 @@ validation pass, or verification of a fix that a red team reported.
 - In the proposed worktree, capture `git rev-parse HEAD`,
   `git status --porcelain=v1 --untracked-files=all`, and
   `git worktree list --porcelain`. From outside the paths being checked, run
-  `lsof -nP -a -d cwd +D <absolute-worktree-path>` and, if reusing a separate
-  target, repeat it with `<absolute-target-path>`. Inspect stdout, stderr, and
-  exit status even when `lsof` exits 1: a process row means busy; an error or
-  incomplete scan means unknown. Only exit 1 with empty stdout and stderr is
-  a usable free signal. Use `ps -p <pid> -o pid,ppid,command` to identify any
-  returned owner, never to choose which PIDs to inspect. Paste the timestamp,
-  raw scan output, and ownership conclusion into the brief. A dirty tree,
-  active owner, or uncertain scope forbids reuse.
+  `lsof -nP -a -d cwd -x f +D <absolute-worktree-path>` and, if reusing a
+  separate target, scan every open handle there with
+  `lsof -nP -x f +D <absolute-target-path>`. The `-x f` option includes
+  mounted subdirectories. Inspect stdout, stderr, and exit status even when
+  `lsof` exits 1: a process row means busy; an error or incomplete scan means
+  unknown. Only exit 1 with empty stdout and stderr is a usable free signal.
+  Use `ps -p <pid> -o pid,ppid,command` to identify any returned owner, never
+  to choose which PIDs to inspect. Paste the timestamp, raw scan output, and
+  ownership conclusion into the brief. A dirty tree, active owner, or
+  uncertain scope forbids reuse.
 - The author and reviewer hand off serially and never write or build in the
   same worktree concurrently. Restore temporary probes and repeat the HEAD,
   status, and process checks at each handoff. A clean snapshot is evidence
