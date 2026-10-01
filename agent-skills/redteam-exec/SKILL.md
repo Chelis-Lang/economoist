@@ -110,13 +110,23 @@ validation pass, or verification of a fix that a red team reported.
 
 - In the proposed worktree, capture `git rev-parse HEAD`,
   `git status --porcelain=v1 --untracked-files=all`, and
-  `git worktree list --porcelain`. From outside the paths being checked, run
-  `lsof -nP -x f +D <absolute-worktree-path>` to find cwd owners and all
-  open handles; if reusing a separate target, scan every open handle there with
-  `lsof -nP -x f +D <absolute-target-path>`. The `-x f` option includes
-  mounted subdirectories. Inspect stdout, stderr, and exit status even when
-  `lsof` exits 1: a process row means busy; an error or incomplete scan means
-  unknown. Only exit 1 with empty stdout and stderr is a usable free signal.
+  `git worktree list --porcelain`. From anywhere inside the candidate, set
+  `review_worktree="$(realpath "$(git rev-parse --show-toplevel)")"` and
+  `review_git_dir="$(realpath "$(git rev-parse --path-format=absolute --git-dir)")"`.
+  From outside those paths, scan both with `lsof -nP -x f +D <path>`:
+  the physical worktree root covers source directories and mounted children,
+  while its separate Git directory covers the linked index and lock files.
+  Use `find "$review_git_dir" -name '*.lock' -print`; any lock blocks handoff.
+  Use `git -C "$review_worktree" ls-files -s` to identify tracked symlinks
+  (mode `120000`); resolve each listed path from that root. Scan an
+  external directory with
+  `lsof -nP -x f +D <resolved-directory>` or a file with
+  `lsof -nP -- <resolved-file>`. Resolve any shared target to a physical
+  path and scan it separately with `lsof -nP -x f +D <target>`.
+  An unscanned external target forbids reuse. Inspect stdout, stderr,
+  and exit status for every scan, even when `lsof` exits 1: a process row
+  means busy; an error or incomplete scan means unknown. Only exit 1 with
+  empty stdout and stderr is a usable free signal.
   Use `ps -p <pid> -o pid,ppid,command` to identify any returned owner, never
   to choose which PIDs to inspect. Paste the timestamp, raw scan output, and
   ownership conclusion into the brief. A dirty tree, active owner, or
