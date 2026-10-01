@@ -23,7 +23,7 @@ parked gaps.
 | Capability | Status | Economoist use and limit |
 |---|---|---|
 | SMT proof with cvc5 | `@pin` | `chelis prove --json --tier smt-only` checks the scalar `properties/` goals over the reals. The gate requires `status:"passed"`, `proof_tier:"smt"`, `arith_model:"real"`, zero samples, and no contract qualifier. This says nothing about `f32` rounding. |
-| Guard and model checks | `@pin` | Each proven property calls an exported model function, has a guard-satisfiability witness, and is checked against a corrupt model substitute. The producer gate requires an exact property-to-function edge in the linker-owned `dependency_graph`. A missing or incomplete graph fails closed. |
+| Guard and model checks | `@pin` | The gate checks positive `properties/` goals for unqualified SMT results and checks their declared guard-satisfiability witnesses for refutation. The manifest's `properties/` invariants also require an exact property-to-export edge in a complete linker-owned `dependency_graph` and a verdict change under corrupt model substitution. Other `properties/` goals do not receive that substitution check. |
 | `@property forall ... where ...` | `@pin` | The written guards bound each statement. Operator-form scalar arithmetic and comparisons lower to SMT. The package does not claim tensor-valued proof goals. |
 | `@opaque` with `@invariant` | `@pin` | `Dist2` and `Dist3` producers carry checked distribution obligations. Their tolerance-bearing type invariant is distinct from the exact-sum Markov properties. |
 | Package imports in `prove` and `eval --file` | `@pin` | Properties and numeric probes reach the exported functions in the current Reef package. |

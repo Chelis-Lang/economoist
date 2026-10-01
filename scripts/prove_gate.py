@@ -196,6 +196,29 @@ def compiler_graph_directly_references(
     if not isinstance(declarations, list) or not isinstance(edges, list):
         return False, "complete compiler dependency graph lacks declarations/edges arrays"
 
+    def valid_id(value: object) -> bool:
+        return isinstance(value, str) and bool(value.strip())
+
+    declaration_ids: set[str] = set()
+    for node in declarations:
+        if not isinstance(node, dict) or not valid_id(node.get("id")):
+            return False, "complete compiler dependency graph has a declaration without a valid ID"
+        node_id = node["id"]
+        if node_id in declaration_ids:
+            return False, "complete compiler dependency graph has duplicate declaration IDs"
+        declaration_ids.add(node_id)
+    for edge in edges:
+        if not isinstance(edge, dict):
+            return False, "complete compiler dependency graph has a malformed edge"
+        source_id, target_id = edge.get("from"), edge.get("to")
+        if (
+            not valid_id(source_id)
+            or not valid_id(target_id)
+            or source_id not in declaration_ids
+            or target_id not in declaration_ids
+        ):
+            return False, "complete compiler dependency graph has an invalid edge endpoint"
+
     property_ids = {
         node.get("id")
         for node in declarations
@@ -231,7 +254,6 @@ def compiler_graph_directly_references(
     if any(
         edge.get("from") in property_ids and edge.get("to") in output_ids
         for edge in edges
-        if isinstance(edge, dict)
     ):
         return True, "linker-owned direct dependency edge present"
     return False, "compiler dependency graph has no direct property -> output-function edge"
@@ -692,6 +714,26 @@ def honesty_self_test() -> None:
     }
     ok, _ = compiler_graph_directly_references(graph_record, **exact)
     assert ok is True, "linker-owned direct edge was rejected"
+    missing_identity = {
+        "_dependency_graph": {
+            "status": "complete",
+            "declarations": [
+                {key: value for key, value in node.items() if key != "id"}
+                for node in graph_record["_dependency_graph"]["declarations"]
+            ],
+            "edges": [{}],
+        }
+    }
+    ok, _ = compiler_graph_directly_references(missing_identity, **exact)
+    assert not ok, "missing declaration IDs and edge endpoints forged a direct dependency"
+    missing_endpoints = {
+        "_dependency_graph": {
+            **graph_record["_dependency_graph"],
+            "edges": [{}],
+        }
+    }
+    ok, _ = compiler_graph_directly_references(missing_endpoints, **exact)
+    assert not ok, "missing edge endpoints passed with valid declaration IDs"
     graph_record["_dependency_graph"]["edges"] = []
     ok, _ = compiler_graph_directly_references(graph_record, **exact)
     assert ok is False, "complete graph without a direct edge did not fail closed"
