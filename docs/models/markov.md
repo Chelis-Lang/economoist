@@ -1,70 +1,22 @@
-# Markov chains (Economoist.Markov)
+# Markov transitions
 
-A finite-state Markov transition operator over a fixed small state space. A
-distribution on the simplex is a vector of nonnegative masses summing to one. A
-row-stochastic transition has nonnegative rows that each sum to one. The next
-distribution is the transition applied to the current one. The structural greens
-ship at two fixed dimensions, n equals two and n equals three, each carrying its
-own opaque distribution type (`Dist2`, `Dist3`), guarded constructor, transition
-step, and scalar mass operator.
+[`Economoist.Markov`](../../src/markov.ch) defines one transition of a distribution across two or three states. For input masses `p` and transition matrix `T`, each output mass is the sum of the input masses weighted by the corresponding column of `T`. The package provides separate `Dist2` and `Dist3` types and `advance` functions for the two sizes.
 
-## Proven (single application, SMT tier, cvc5, over the reals)
+## Checked properties
 
-Each result below is discharged at `proof_tier:"smt"` with `arith_model:"real"`,
-zero fuzz samples, and no contract assumption. The same four structural facts are
-proven at both shipped dimensions.
+The goals in [`properties/markov.ch`](../../properties/markov.ch) call the exported `next_mass` or `mass3_next` functions. Chelis checks each goal over real arithmetic.
 
-n equals two:
+| Goal | Guards | Result for one transition |
+| --- | --- | --- |
+| `markov_mass_preserved`, `markov3_mass_preserved` | Input masses sum exactly to one; every transition row sums exactly to one | Output masses sum exactly to one |
+| `markov_nonneg_preserved`, `markov3_nonneg_preserved` | Input masses and transition entries are nonnegative | Every output mass is nonnegative |
 
-- `invariant:Dist2:advance` (the producer obligation for `advance`): applying a
-  row-stochastic transition to a distribution on the simplex yields a
-  distribution on the simplex. Nonnegativity preserved and total mass preserved
-  are proven together inside the simplex invariant.
-- `invariant:Dist2:make_dist`: the guarded constructor produces a valid simplex
-  distribution.
-- `markov_mass_preserved`: the output masses sum to one, as an exact
-  real-arithmetic identity.
-- `markov_nonneg_preserved`: the output masses are nonnegative.
+The mass goals do not need a nonnegativity guard. The nonnegativity goals do not need a row-sum guard. Each goal has a separate guard-satisfiability witness that the prover is expected to refute.
 
-n equals three:
+`Dist2` and `Dist3` have a different, guarded contract: their masses are nonnegative and their sum lies within `0.0001` of one. The constructor and `advance` producer obligations check that returned distributions satisfy this invariant. `advance` requires nonnegative transition entries with rows summing exactly to one; an invalid row returns `None`. The type invariant allows a mass tolerance, whereas the separate mass-preservation goals above assume and prove exact sums.
 
-- `invariant:Dist3:advance3` (the producer obligation for `advance3`): applying a
-  row-stochastic 3x3 transition to a distribution on the 3-simplex yields a
-  distribution on the 3-simplex. Nonnegativity preserved and total mass preserved
-  are proven together inside the simplex invariant.
-- `invariant:Dist3:make_dist3`: the guarded constructor produces a valid
-  3-simplex distribution.
-- `markov3_mass_preserved`: the three output masses sum to one, as an exact
-  real-arithmetic identity (over the exported `mass3_next` operator).
-- `markov3_nonneg_preserved`: the three output masses are nonnegative.
+## Scope
 
-Each proven property carries a `*_guards_satisfiable` non-vacuity witness that is
-refuted at the SMT tier, so cvc5 exhibits a guard-satisfying model and the green
-is not vacuous.
+These checks cover one transition at two states and one at three states. They do not establish a result for arbitrary state counts. They also do not prove the existence or uniqueness of a stationary distribution, convergence of repeated transitions, or ergodicity.
 
-## Held out (not proven here)
-
-These three boundaries are stated with equal weight. A single-step green is not
-any of them.
-
-1. Limit results need induction. The existence and uniqueness of a stationary
-   distribution, convergence to stationarity, and ergodicity are limits of the
-   iterated transition. They need an inductive or fixed-point argument and are
-   out of scope for direct SMT. The single-step preservation green does not imply
-   them.
-2. The general-n (all-n) theorem is held out alongside the limit results. What
-   ships is two fixed dimensions: the structural greens are discharged separately
-   and concretely at n equals two and at n equals three, each with its own
-   obligations and properties (listed above). They are not the all-n theorem.
-   "Simplex preservation proven" means proven at each shipped fixed dimension, not
-   for every state space size; the general-n result, like convergence, is not
-   reachable by SMT at a fixed size. Adding a fourth or larger state would require
-   its own type, operator, and proofs, mirroring the n equals two and n equals
-   three pattern entry by entry.
-3. Reals, not floats. What is proven is the real-arithmetic fact
-   (`arith_model:"real"`). The exact mass identities `markov_mass_preserved` and
-   `markov3_mass_preserved` hold over the reals. The `Dist2` and `Dist3`
-   invariants each carry an f32 epsilon band on the sum because the runtime is
-   f32; that band is the runtime invariant, distinct from the exact
-   real-arithmetic identity the prover discharges. The proof is about the
-   real-arithmetic model, not f32 float behavior.
+The source uses `f32` values, but an SMT result here is about the corresponding real-arithmetic expression. It is not a guarantee that every floating-point run preserves an exact sum or stays inside the type's tolerance. The concrete cases in [`tests/markov.ch`](../../tests/markov.ch) exercise execution separately.

@@ -1,51 +1,19 @@
-# Economoist
+# Economoist model guide
 
-A Chelis shell of verified economic and dynamic-programming models. Every
-economic property is a genuine unqualified SMT green: proven at the SMT tier by
-cvc5 over the reals, with zero fuzz samples and no contract assumption. This is
-the strongest proven story in the stack, and the academic-launch surface for
-"C Proof".
+Economoist checks specific claims about three models. Each page names the guards, the result checked, and what lies outside that result. The [README](../README.md#run-from-a-source-checkout) has a source-checkout workflow.
 
 ## Models
 
-- [Markov chains](models/markov.md): a finite-state transition operator;
-  simplex preservation under one step. The structural greens ship at both fixed
-  dimensions n=2 and n=3.
-- [Bellman operator](models/bellman.md): monotonicity, boundedness, and the
-  single-application contraction of the dynamic-programming operator. The
-  structural greens ship at both fixed dimensions n=2 and n=3.
-- [Growth and present value](models/growth.md): the Gordon model's positivity
-  and monotonicity, and the AD comparative statics whose signs are proven. Growth
-  is dimension-free (scalar present value), so there is no n to fix.
+- [Markov chains](models/markov.md) — one transition at two and three states: distribution-type obligations, exact mass preservation, and nonnegative output masses under their respective guards.
+- [Bellman operator](models/bellman.md) — one update at two and three states with two actions: state-0 monotonicity and boundedness, plus a two-sided contraction bound at every shipped output state.
+- [Gordon present value](models/growth.md) — positivity and two-point comparisons for `D / (r - g)`, a stricter discount-spread variant, and a separate sampled AD check.
 
-## Business-wrong demos
+## Reading proof results
 
-[`demos/businesswrong.ch`](../demos/businesswrong.ch) ships, for each structural
-property, a corrupted twin that is refuted at the SMT tier with a decoded
-counterexample, beside its passing control: a transition whose rows do not sum to
-one, a Gordon model with growth at or above the discount, and a discount outside
-the open interval from zero to one that breaks the contraction modulus. These are
-the soundness-dependence twins, importable with stable IDs for C Note.
+`chelis prove` checks one file or package. The checked `properties/` goals and the distribution-type obligations in `src/` use SMT over the reals. In JSON output, a passing checked goal reports `status: "passed"`, `proof_tier: "smt"`, `arith_model: "real"`, and `samples: 0`. It applies under its written `where` guards. It does not establish floating-point behavior, iteration limits, or results at dimensions absent from the source.
 
-## Surfaces
+Each `properties/` file also contains `*_guards_satisfiable` witnesses. They assert `false` under the corresponding guards. A counterexample shows those guards admit an input, so a raw `chelis prove` run can exit nonzero even when the package is healthy. `demos/businesswrong.ch` likewise has selected false claims paired with passing controls. A counterexample to a false claim means the negated goal is satisfiable.
 
-- [Capability surface](CHELIS_SURFACE.md): what chelis and chelis-std provide to
-  this domain, with `@pin` and `@upstream` markers.
-- [Upstream bugs](UPSTREAM_BUGS.md): tracked gaps and their re-probe cadence.
-- [C Note import surface](cnote-import-surface.json): the frozen machine-readable
-  surface the academic Economics gallery vendors.
+`sampled/growth_sensitivity.ch` checks the sign of an AD derivative at generated inputs. It uses sampling rather than SMT proof; its `_wrong` companion is expected to fail with a counterexample. Run `.venv/bin/python scripts/prove_gate.py` from the checkout to check all these expected outcomes together. The gate prints a text verdict and exits zero only when they match.
 
-## The honesty boundaries
-
-Every model states three held-out boundaries with equal weight: limit and
-fixed-point results (convergence) need induction and are out; the structural
-greens are the small-fixed-dimension instance, not the general-n theorem; and the
-proofs are over the reals, not f32 float behavior.
-
-## Gates
-
-- `python3 scripts/prove_gate.py`: the SMT-green gate (every economic property
-  proven, witnesses and twins refute, controls pass, name and doc lints clean).
-- `python3 scripts/oracle_harness.py`: shell numerics versus recorded
-  analytic-mirror goldens, plus the executable test suite.
-- `python3 scripts/run_local_gate.py`: the full local gate.
+For concrete model values, run `chelis test tests/`. The complete local workflow is `.venv/bin/python scripts/run_local_gate.py`.
