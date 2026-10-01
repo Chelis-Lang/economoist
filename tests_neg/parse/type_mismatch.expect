@@ -1,3 +1,2 @@
 type variable bounded by dtype family `Float` (the active float dtypes) cannot be instantiated at `bool`
-Chelis 0.18.7 rejects a bool passed to the active-float assert_close family.
-The file has no test declaration, preserving the file-level diagnostic oracle.
+Passing a bool to assert_close must fail at checking. The native adapter must retain this file-level diagnostic.

@@ -1,26 +1,9 @@
 name: nightly
 
-# The scheduled real-chelis/real-SMT validation that does NOT belong on the
-# per-PR path. Per-PR CI (ci.yml) stays LEAN: the offline gates
-# (hard-rule-guard, no-ai-authorship, contract-gate) plus the `Chelis gate`
-# job's fmt + lint + reef-build compile signal + fast negative/blocked-probe
-# checks. Everything real-SMT runs here, DAILY (03:00 UTC) plus
-# workflow_dispatch:
-#
-#   - `prove` : the keystone canon self-audit (scripts/prove_gate.py, real-SMT
-#     ~5-9 min against the full properties/ + demos/ canon) plus its
-#     metamorphic anti-vacuity forge negatives (scripts/run_forge_tests.py).
-#     This is the gate an audit found running on every PR -- moved here so it
-#     no longer costs every PR ~5-9 min of real-SMT wall. It doubles as a
-#     drift detector that fires even with no economoist push, surfacing an
-#     upstream proof-tier regression at the pinned release.
-#   - the numeric oracle harness (scripts/oracle_harness.py), when present.
-#
-# SMT ships in the released tarball as of chelis v0.11.0 (chelis#422
-# resolved), so this installs the pinned toolchain via the shared composite
-# action -- no from-source cvc5 build. The chelis pin is carried as a literal
-# CHELIS_TAG/CHELIS_VERSION env pair (read by the offline pin guard) and
-# cross-checked at runtime against reef.toml, the single source of truth.
+# Daily and on-demand validation of the pinned release binary. The prove job
+# runs the SMT result gate, its corrupt-model controls, and the numeric oracle.
+# A changed proof verdict fails this job even without an Economoist push.
+# The literal CHELIS_TAG/CHELIS_VERSION pair is checked against reef.toml.
 
 on:
   schedule:
@@ -41,8 +24,7 @@ env:
   CHELIS_VERSION: 0.18.12
 
 jobs:
-  # The keystone canon self-audit against the pinned RELEASE binary -- moved
-  # off the per-PR path. Real-SMT ~5-9 min over the full properties/ + demos/
+  # Check the full properties/ and demos/ corpus with the pinned release.
   # canon. Runs DAILY (and on workflow_dispatch).
   prove:
     name: SMT prove + forge + oracle (release binary)

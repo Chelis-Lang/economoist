@@ -155,13 +155,10 @@ AST contract. `spec/02-surf-syntax.md` §0.1 is the authority.
 - Economoist is a downstream **shell repo** for the
   [Chelis](https://github.com/Chelis-Lang/chelis) language, scoped to
   verified economic and dynamic-programming models. It is the
-  academic-launch surface for "C Proof".
-- The intent is singular: every economic property this shell states is a
-  genuine, unqualified SMT green (cvc5, over the reals, zero fuzz, no
-  contract). An amber result, or one that only closes under a contract
-  qualifier, is a bug to fix, not a result to ship. The repo exists to make
-  that claim defensible to an academic reader, not to enumerate a
-  deliverables list.
+  academic surface for checked economic models.
+- Every `properties/` economic claim must pass as an unqualified SMT result
+  over the reals. The concrete `f32` AD check belongs in `sampled/` and is
+  fuzz-validated. No result is generalized beyond its guards or dimension.
 - **Domain bifurcation.** Economic content lives here. Finance and
   derivatives stay in [Shoals](https://github.com/Chelis-Lang/shoals).
   Economoist must never depend on Shoals; the two shells share scaffolding,
@@ -205,8 +202,8 @@ boundaries are mandatory:
 
 - **Single-step vs limit/convergence.** A green on a one-step contraction or
   monotonicity is not a green on the fixed point, the limit, or the
-  convergence of the iteration. The limit claim needs induction and is held
-  out. State the single-step fact as exactly that.
+  convergence of the iteration. The limit claim needs a checked fixed-point argument and is held
+  out (chelis#2829). State the single-step fact as exactly that.
 - **Fixed dimension vs general-n.** A green proven at `n = 2` or `n = 3` is
   an instance, not the universal theorem over all `n`. The general-n claim is
   held out alongside convergence. Greens are fixed-dimension instances; say so
@@ -223,13 +220,10 @@ boundaries are mandatory:
   numbers anywhere else; tooling and CI read them from `reef.toml` directly.
   The Economoist package `version` track is its own and is not aligned to the
   compiler pin.
-- **One-binary reality.** A single released `chelis` tarball drives every stage
-  -- `fmt`, `lint`, `reef build`, `eval`, and `prove`. SMT ships in the released
-  binary as of chelis v0.11.0 (chelis#422 resolved; verified at the 0.14.0 pin on
-  2026-07-10, `scripts/prove_gate.py` fully green against
-  `~/.local/share/chelis/<pin>/bin/chelis`). The tarball is consumed from the
-  private `Chelis-Lang/chelis` releases and installed side-by-side under
-  `~/.local/share/chelis/<pin>/` via `scripts/install_chelis_toolchain.py`.
+- A single released `chelis` binary drives `fmt`, `lint`, `reef build`,
+  `eval`, and `prove`. Install the `reef.toml` pin through
+  `scripts/install_chelis_toolchain.py`; the local and CI proof gates run that
+  release binary.
 - Never vendor or build the chelis compiler into this shell. Consume the released
   tarball for everything, `prove` included.
 - Compiler bumps land in **every** Chelis shell in the same change set; do
@@ -271,45 +265,38 @@ archived inventory and its per-section re-probe cadence.
 
 **Narrowing-citation rule.** Any narrowing in code or spec (a `fail(...)`
 guard on input the reference accepts, a fixed shape, a fixed dimension, a
-forward-only path) cites, **at the narrowing site**, either `chelis#NNN` or a
-parked draft under `docs/issue_drafts/`. Never a prose name: a prose-name
-citation is invisible to every mechanical audit.
+forward-only path) cites, **at the narrowing site**, the live `chelis#NNN`
+or a citeable registry sibling issue. A prose name cannot be checked by the
+citation audit.
 
 ## Characterization Contract and Canon Surface
 
 The cross-repo characterization seam is frozen at
-[`c-note/docs/contracts/characterization_contract_v1.md`](../c-note/docs/contracts/characterization_contract_v1.md)
+[C Note characterization contract](https://github.com/Chelis-Lang/c-note/blob/main/docs/contracts/characterization_contract_v1.md)
 (schema `chelis-shell.invariant-surface/1.0`). Economoist's producer
 obligations under it:
 
-- `docs/cnote-import-surface.json` -- the invariant-surface manifest (models +
-  invariants + per-pin expected tiers + controls). Published byte-identical as
-  the release asset `economoist-<ver>.invariants.json` by `release.yml`; C Note
-  vendors and freshness-gates that asset.
-- `scripts/contract_gate.py` -- fast offline consistency gate (schema/pin
-  freshness, property + control resolution, precondition/where-clause
-  cross-check, tier citations).
-- `scripts/prove_gate.py` -- the keystone: expected-tier enforcement off the
-  manifest against the pinned RELEASE binary. An achieved tier is classified
-  from `proof_tier` + assumption discharge + `qualifiers`, **never** from the
-  `composite_verdict` string; tier drift in either direction fails.
+- `docs/cnote-import-surface.json` is the invariant manifest with stable model
+  and property IDs, per-pin `expected_tier_per_pin` values, and controls. At
+  release, `release.yml` copies the then-current manifest byte-for-byte into a
+  versioned asset, which C Note vendors. A checkout edit does not update an
+  older published asset or its vendored copy. Coordinate changes to consumer
+  semantics before release.
+- `scripts/contract_gate.py` checks schema, pin, property and control
+  resolution, guards, and required citations offline.
+- `scripts/prove_gate.py` checks the manifest against the pinned release.
+  Classification uses `proof_tier`, assumption discharges, and `qualifiers`,
+  never a favorable `composite_verdict` string. A changed proof result fails.
 
-**Two-lane split (flagged divergence).** Economoist keeps the `properties/`
-tree as its pure unqualified-SMT-green boundary -- that green-only asymmetry vs
-Shoals is the shell's identity and is contractual. Weaker-tier library
-invariants (fuzz-validated AD sensitivities) live in a separate top-level
-`sampled/` dir (module prefix `Economoist.Sampled`, in `reef.toml`
-`additional_sources`), gated separately: `proof_tier == "fuzz"`, expected tier
-`fuzz_validated`, name-linted, and never colliding with a `properties/` green.
-Shoals instead hosts mixed tiers in `properties/` keyed on expected-tier; this
-per-dir split is an Economoist divergence recorded here and in the contract doc
-per the Scaffolding Drift Rule. Anti-vacuity for imported output fns is verified
-from Chelis 0.17.2 onward by the linker-owned `dependency_graph`: the gate
-requires an exact edge from the property declaration (package, module, source,
-kind, and name) to the exact exported model function. Goal-string inspection is
-only a compatibility oracle for older pins; the legacy flat `dependency_edges`
-limitation is retained as a historical record in
-`docs/issue_drafts/dependency_edges_imports.md`.
+**Proof and sampled split (Economoist-specific divergence).** `properties/`
+contains only unqualified real-arithmetic SMT results. Concrete Gordon `f32`
+AD checks live in `sampled/` (module prefix `Economoist.Sampled`), require
+`proof_tier == "fuzz"` and expected result `fuzz_validated`, and cannot be
+counted as a `properties/` proof. For an imported output function the gate
+requires an exact property-to-function declaration edge in the complete
+linker-owned `dependency_graph`; missing attribution fails closed. This
+per-directory split is Economoist's recorded divergence from mixed-result
+shells.
 
 ## Shared Local Skills
 
@@ -338,23 +325,7 @@ Install the local git hooks with:
 git config core.hooksPath ./hooks
 ```
 
-**Recorded convergence.** The SMT prove gate once required a from-source
-`--features smt` build (an Economoist-specific `smt-prove-gate` job that cached a
-`chelis-smt` binary per chelis tag). That narrowing is retired now that SMT ships
-in the released binary (chelis#422, resolved v0.11.0): the prove gate installs the
-pinned release toolchain via the shared `.github/actions/install-chelis` composite
-action, the same release-binary path the sibling shells use. The offline pin
-guard now recognizes composite-action installs (the `actions/install-chelis`
-marker in `scripts/audit_workarounds.py`); mirror that marker into the sibling
-shells' pin guards per this rule.
-
-**Lean per-PR / real-SMT nightly.** The prove gate (`scripts/prove_gate.py`)
-and its metamorphic anti-vacuity forge negatives (`scripts/run_forge_tests.py`)
-do NOT run per-PR: an audit found this job costing every PR ~5-9 min of
-real-SMT wall, the same anti-pattern the Scaffolding Drift Rule flagged in
-Shoals (shoals#32). Both now run in `.github/workflows/nightly.yml` (the
-`prove` job: daily + `workflow_dispatch`, pinned RELEASE toolchain) and in
-`scripts/run_local_gate.py` before push. Per-PR CI (`.github/workflows/ci.yml`)
-stays lean: `hard-rule-guard` + `no-ai-authorship` (offline), `contract-gate`
-(offline manifest validation), and `Chelis gate` (fmt + lint + `chelis reef
-build` compile signal + the fast negative-test/blocked-probe suites).
+The per-PR checks in `.github/workflows/ci.yml` run pin, authorship,
+manifest, formatting, lint, build, and negative/blocked suites. The full
+`scripts/run_local_gate.py` also runs the SMT proof gate, corrupt-model checks,
+and numeric oracle before each push; nightly repeats the expensive proof work.

@@ -5,6 +5,12 @@ All notable changes to the Economoist shell are recorded here. The package
 
 ## [Unreleased]
 
+### Changed
+
+- Present the checked economic models, upstream issue inventory, and demo controls
+  without migration drafts; require compiler-owned dependency attribution on the
+  pinned toolchain and keep the file-level diagnostic under negative tests.
+
 ### Security
 
 - Add a pinned Git-history secret scan to pull-request and push checks, with
@@ -31,7 +37,6 @@ All notable changes to the Economoist shell are recorded here. The package
 - The compiler and workflow pins, package identity, regenerated lockfile, and
   C Note characterization manifest move together. All nine proven and one
   sampled invariant expectations remain explicit at the new pin.
-  See `docs/chelis-0.18.10-migration.md` for identity and receipts.
 
 ## [0.2.12] - 2026-09-14
 
@@ -43,7 +48,6 @@ All notable changes to the Economoist shell are recorded here. The package
 - The compiler and workflow pins, package identity, and C Note
   characterization manifest move together. All nine proven and one sampled
   invariant expectations remain explicit at the new pin.
-  See `docs/chelis-0.18.9-migration.md` for identity and receipts.
 
 ## [0.2.11] - 2026-09-13
 
@@ -56,7 +60,6 @@ All notable changes to the Economoist shell are recorded here. The package
 - The complete ten-stage local gate passes on the released compatibility
   binary, including SMT controls, anti-vacuity forges and numerical oracles.
   All nine proven and one sampled invariant expectations remain explicit.
-  See `docs/chelis-0.18.7-migration.md` for identity and receipts.
 
 ## [0.2.10] - 2026-08-23
 

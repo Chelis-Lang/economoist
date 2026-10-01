@@ -19,27 +19,14 @@ Invokes, in order:
   9. ``scripts/run_forge_tests.py`` (metamorphic anti-vacuity forge negatives).
   10. ``scripts/oracle_harness.py`` (numeric oracle).
 
-Stages 7-10 are conditional on their script existing, so the gate is
-usable before those harnesses land. A stage whose source directory holds
-no ``.ch`` files yet is skipped with a printed notice rather than failing.
+Each stage must pass for this checkout. The blocked-probe stage skips an empty
+`tests_blocked/` directory. The binary comes from `CHELIS_BIN`, the
+`reef.toml`-pinned release install, or `chelis` on PATH, and its version must
+match the pin.
 
-The ``chelis`` binary is taken from the ``CHELIS_BIN`` environment
-variable, then the reef.toml-pinned release install
-(``~/.local/share/chelis/<pin>/bin/chelis``), then ``chelis`` on PATH.
-SMT ships in the release binary, so one binary drives every stage.
-
-Exits 0 only if every stage that ran succeeds.
-
-Per-PR CI (``.github/workflows/ci.yml``) mirrors only stages 1-3, 5, 6
-(the ``Chelis gate`` job: fmt + lint + reef build + negative tests +
-blocked probes) and stage 7 (the offline ``contract-gate`` job) -- this is
-the LEAN per-PR gate. Stages 8-9 (``scripts/prove_gate.py``, the SMT
-keystone, and its metamorphic anti-vacuity forge negatives) do NOT run
-per-PR: an audit found this pair costing every PR ~5-9 min of real-SMT
-wall, so both moved to ``.github/workflows/nightly.yml`` (the ``prove``
-job, daily + ``workflow_dispatch``, pinned RELEASE toolchain), alongside
-stage 10 (the oracle harness). This local gate still runs every stage
-before push, regardless of which CI workflow covers it.
+Per-PR CI runs formatting, lint, package build, negative/blocked suites, and
+the offline contract gate. The local gate also runs SMT and corrupt-model
+checks and the numeric oracle; nightly repeats those execution checks.
 
 Usage:
 
@@ -63,10 +50,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _resolve_bin() -> str:
-    """Resolve a chelis binary matching the reef pin, so a stale `chelis` on
-    PATH (a different version) is not used. SMT ships in the release binary
-    (chelis#422 resolved at v0.11.0), so there is no separate from-source smt
-    binary to prefer."""
+    """Resolve a chelis binary matching the reef pin."""
     for env in ("CHELIS_BIN", "CHELIS_SMT_BIN"):
         v = os.environ.get(env)
         if v and (Path(v).expanduser().is_file() or which(v)):

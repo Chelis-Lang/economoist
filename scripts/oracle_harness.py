@@ -1,19 +1,17 @@
 #!/usr/bin/env python3
-"""Numerical oracle harness for Economoist (E6), stdlib only.
+"""Numerical oracle harness for Economoist, stdlib only.
 
 Two validation layers, kept distinct from the prover:
   1. The shell's exported operators are imported and evaluated through
      `chelis eval --file`, then compared against recorded analytic-mirror goldens
-     within a precision-derived tolerance. The release compiler resolves the
-     actual Reef package graph; the harness never reconstructs a model body.
+     within a precision-derived tolerance. The compiler resolves the Reef
+     package graph and the harness evaluates the exported model function.
   2. The executable test suite under tests/ is run through `chelis test --json`,
      which exercises the real exported functions; it must report zero failures.
 
-The goldens are recorded here once and compared against, never recomputed and
-self-agreed: each analytic mirror is asserted to reproduce its recorded golden,
-and the shell's eval output is compared to the same recorded golden. QuantEcon
-is an out-of-band research cross-check, not a shipped dependency, so it is not
-imported here (this gate is stdlib only).
+Each analytic mirror and the exported function are compared with the same
+recorded golden, across two input configurations per operator. The gate uses
+only the standard library.
 
 The harness validates numbers. The structural properties are validated by the
 prover (scripts/prove_gate.py). A matching number is not a proof.
@@ -37,8 +35,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 def resolve_bin() -> str:
     """CHELIS_SMT_BIN/CHELIS_BIN override, else the reef.toml-pinned release
     install (~/.local/share/chelis/<pin>/bin/chelis, or the top-level layout),
-    else `chelis` on PATH. SMT ships in the release binary since chelis v0.11.0
-    (chelis#422 resolved); there is no separate from-source smt binary."""
+    else `chelis` on PATH. The release binary supplies every command."""
     from shutil import which
     for env in ("CHELIS_BIN", "CHELIS_SMT_BIN"):
         v = os.environ.get(env)
@@ -130,7 +127,7 @@ def eval_value(binary: str, model: tuple[str, str], args: tuple) -> float:
 
 
 def scalar_value(value: object) -> float:
-    """Decode a scalar from legacy or typed-tensor compiler JSON."""
+    """Decode a scalar or rank-zero tensor from compiler JSON."""
     if isinstance(value, dict) and "bits" in value:
         dtype, bits = value.get("dtype"), value["bits"]
         width = {"f32": 8, "f64": 16}.get(dtype)

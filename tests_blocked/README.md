@@ -1,36 +1,16 @@
-# Blocked Probes
+# Blocked probes
 
-Minimal reproducers of open upstream Chelis gaps, plus explicitly labeled
-expected-failure adapter regression sentinels. Each file is EXPECTED TO FAIL
-at the current pin and is run by `chelis test tests_blocked --expect blocked`
-(CI and pin-bump checklist). A regression sentinel locks the adapter contract;
-it is not evidence that its cited language issue remains open.
+There is no open, expressible Chelis blocker at the current pin, so this
+directory has no `.ch` probe. `scripts/run_local_gate.py` skips the empty blocked
+suite. The active issue inventory is [`docs/UPSTREAM_BUGS.md`](../docs/UPSTREAM_BUGS.md).
 
-Convention: `tests_blocked/<area>/<name>.ch` + paired `.expect` sidecar. Line 1
-of `.expect` is the diagnostic substring the failure must contain. Lines 2+
-carry the upstream issue citation and de-narrowing instructions. The native
-adapter classifies a pass as FIX-detected and a changed diagnostic as DRIFTED.
+When an open blocker has a file-level reproducer, add an isolated
+`tests_blocked/<area>/<name>.ch` and `.expect`. The sidecar's first line is the
+diagnostic measured on the pinned release; later lines give the live issue
+number and the action to take if the probe starts passing. Run
+`chelis test tests_blocked --expect blocked`. A passing probe must be promoted
+to an ordinary regression test when that adds coverage, and its blocker entry
+retired.
 
-## Probe inventory
-
-| Probe | Purpose | Pinned diagnostic |
-|---|---|---|
-| `adapter/file_level_diagnostic.ch` | Chelis#967 regression sentinel for the native blocked adapter; not a currently blocked language capability. | ``type variable bounded by dtype family `Float` (the active float dtypes) cannot be instantiated at `bool` `` |
-
-A probe must be canonically formatted: the native worker enforces the same
-compiler and style contracts as an ordinary test file.
-
-## Cannot be probed (binary-level or absence-of-syntax)
-
-Some blockers cannot be expressed as a `.ch` file that `chelis check` can
-probe. These stay on the manual re-probe list in `docs/UPSTREAM_BUGS.md`:
-
-- **SMT prove was absent from the released chelis tarball. RESOLVED (chelis
-  v0.11.0).** A binary-level feature gate that no `.ch` file `chelis check`
-  reads could exercise. SMT now ships in the released binary; verified at the
-  0.14.0 pin by `scripts/prove_gate.py` running green on the release binary.
-  Archived in `docs/UPSTREAM_BUGS.md`.
-- **Eval-side package import resolution. RESOLVED (chelis#423, v0.17.5).** This
-  could not be represented by the check-only blocked adapter. A release-binary
-  `eval --file` probe now imports and executes `Economoist.Growth.gordon_pv`;
-  the oracle harness consumes that direct path.
+The resolved file-level adapter behavior is checked by
+[`tests_neg/parse/type_mismatch.ch`](../tests_neg/parse/type_mismatch.ch).
