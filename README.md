@@ -11,12 +11,12 @@ The package pins Chelis in [`reef.toml`](reef.toml). Its checks have different m
 
 ## Run from a source checkout
 
-Install Git, `uv`, and the GitHub CLI (`gh`). Chelis releases require access to its private GitHub repository; authenticate with `gh auth login` or set `GH_TOKEN` or `GITHUB_TOKEN` using an account with access. Bootstrap [`chelisup`](https://github.com/Chelis-Lang/chelis/blob/main/docs/book/src/install.md) from the official release, then run:
+Install Git, `uv`, and the GitHub CLI (`gh`). Authenticate with `gh auth login` or set `GH_TOKEN` or `GITHUB_TOKEN` using an account with access to Chelis and Economoist. Bootstrap [`chelisup`](https://github.com/Chelis-Lang/chelis/blob/main/docs/book/src/install.md) from the official release, then run:
 
 ```sh
 gh release download --repo Chelis-Lang/chelis --pattern chelisup.sh --output - | sh
 export PATH="$HOME/.chelis/bin:$PATH"
-git clone https://github.com/Chelis-Lang/economoist.git
+gh repo clone Chelis-Lang/economoist
 cd economoist
 uv venv --python 3.11
 chelisup install "$(.venv/bin/python -c 'import tomllib; print(tomllib.load(open("reef.toml", "rb"))["package"]["compiler"].removeprefix("="))')"
