@@ -111,8 +111,8 @@ validation pass, or verification of a fix that a red team reported.
 - In the proposed worktree, capture `git rev-parse HEAD`,
   `git status --porcelain=v1 --untracked-files=all`, and
   `git worktree list --porcelain`. From outside the paths being checked, run
-  `lsof -nP -a -d cwd -x f +D <absolute-worktree-path>` and, if reusing a
-  separate target, scan every open handle there with
+  `lsof -nP -x f +D <absolute-worktree-path>` to find cwd owners and all
+  open handles; if reusing a separate target, scan every open handle there with
   `lsof -nP -x f +D <absolute-target-path>`. The `-x f` option includes
   mounted subdirectories. Inspect stdout, stderr, and exit status even when
   `lsof` exits 1: a process row means busy; an error or incomplete scan means
