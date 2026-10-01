@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""The SMT-green keystone gate: the spine of Economoist, manifest-driven.
+"""Check Economoist's manifest against the pinned compiler.
 
-Every economic property in the `properties/` tree must discharge at the SMT tier
-as a genuine unqualified green (cvc5, over the reals, zero fuzz, no contract). The
-weaker `sampled/` tree is honest amber (fuzz-validated). This gate enforces both,
-DRIVEN BY docs/cnote-import-surface.json (the characterization contract manifest,
-chelis-shell.invariant-surface/1.0), against the pinned RELEASE binary.
+Positive properties in `properties/` must prove by SMT over the reals without
+samples or contract qualifiers; their guard-satisfiability and wrong-claim
+controls must refute. The positive f32 AD check in `sampled/` is fuzz-validated
+and its wrong-sign control must refute. The gate reads
+docs/cnote-import-surface.json (chelis-shell.invariant-surface/1.0) and runs
+the pinned release binary.
 
 Per the contract, an achieved tier is classified from `proof_tier` + assumption
 discharge methods + `qualifiers`, NEVER from the `composite_verdict` string (a
@@ -13,11 +14,10 @@ verdict token may demote a result, never promote it). For each manifest invarian
 the gate checks:
 
   1. satisfying control holds, classified tier == expected_tier_per_pin[pin]
-     (drift in EITHER direction fails -- better-than-expected means "run the
-     de-narrowing motion"); assumptions' non_vacuity established; the goal
-     references the shipped output fn. From Chelis 0.17.2 onward chelis#922's
-     linker-owned `dependency_graph` is mandatory and authoritative; the
-     prover-emitted goal remains a compatibility oracle only at older pins;
+     (drift in either direction fails); assumptions' non_vacuity established;
+     the property
+     references the shipped output fn through the complete linker-owned
+     `dependency_graph`; an unavailable graph fails closed;
   2. violating control breaks with a concrete in-domain witness. For a defective
      model (in-region defect) the witness must satisfy every precondition AND the
      f32 re-execution of the shipped body at the witness must reproduce the break;
@@ -68,12 +68,10 @@ HELD_OUT = re.compile(r"held[- ]out", re.I)
 
 # ----------------------------------------------------------------------------
 # Binary resolution (env-first -> reef.toml-pinned release install -> PATH).
-# SMT ships in the release binary since chelis v0.11.0 (chelis#422 resolved).
 # ----------------------------------------------------------------------------
 def resolve_bin() -> str:
-    # Env precedence is CHELIS_BIN then CHELIS_SMT_BIN, uniform across every
-    # economoist script (the CHELIS_SMT_BIN alias survives from the pre-0.11.0
-    # two-binary era).
+    # Env precedence is CHELIS_BIN then CHELIS_SMT_BIN, uniform across the
+    # package scripts.
     for env in ("CHELIS_BIN", "CHELIS_SMT_BIN"):
         v = os.environ.get(env)
         if v and (Path(v).expanduser().is_file() or _on_path(v)):
@@ -187,17 +185,11 @@ def compiler_graph_directly_references(
     output_fn: str,
     output_module: str,
     package: str,
-) -> tuple[bool | None, str]:
-    """Check a direct model binding against chelis#922's linker-owned graph.
-
-    `None` means the current compiler did not provide a complete graph and the
-    caller must use the compatibility oracle. Once a complete graph is present,
-    missing nodes or edges fail closed rather than silently falling back to
-    source/goal reconstruction.
-    """
+) -> tuple[bool, str]:
+    """Require the exact property-to-export edge in a complete compiler graph."""
     graph = record.get("_dependency_graph")
     if not isinstance(graph, dict) or graph.get("status") != "complete":
-        return None, "compiler dependency graph unavailable at this pin"
+        return False, "complete compiler dependency graph is required"
 
     declarations = graph.get("declarations")
     edges = graph.get("edges")
@@ -243,50 +235,6 @@ def compiler_graph_directly_references(
     ):
         return True, "linker-owned direct dependency edge present"
     return False, "compiler dependency graph has no direct property -> output-function edge"
-
-
-def direct_binding_references(
-    record: dict,
-    *,
-    property_name: str,
-    property_module: str,
-    property_file: str,
-    output_fn: str,
-    output_module: str,
-    package: str,
-    pin: str,
-) -> tuple[bool, str]:
-    """Require compiler-owned attribution at pins that promise chelis#922."""
-    graph_ok, graph_detail = compiler_graph_directly_references(
-        record,
-        property_name=property_name,
-        property_module=property_module,
-        property_file=property_file,
-        output_fn=output_fn,
-        output_module=output_module,
-        package=package,
-    )
-    if graph_ok is not None:
-        return graph_ok, graph_detail
-
-    match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", pin)
-    if match is None:
-        return False, f"cannot determine dependency-graph contract for pin {pin!r}"
-    version = tuple(int(part) for part in match.groups())
-    if version >= (0, 17, 2):
-        return (
-            False,
-            f"compiler dependency graph is required at pin {pin}, but unavailable",
-        )
-
-    goal = re.sub(r"\s+", "", record.get("goal", ""))
-    if f"{output_fn}(" in goal:
-        return True, "legacy compiler-emitted goal references shipped output function"
-    return (
-        False,
-        f"satisfying control {property_name} goal references no shipped output fn "
-        "(legacy compatibility vacuity tell)",
-    )
 
 
 def assumptions_clean(r: dict) -> tuple[bool, str]:
@@ -537,13 +485,11 @@ def gate_manifest(binary: str, manifest: dict, records: dict[str, dict],
         # references a shipped output fn, assumptions clean.
         got = classify_tier(sat)
         if got != expected:
-            failures.append(f"{iid}: tier drift -- {sat_name} classified {got!r}, manifest expects {expected!r} (run the de-narrowing motion)")
+            failures.append(f"{iid}: result drift -- {sat_name} classified {got!r}, manifest expects {expected!r}; review the changed result")
         if sat.get("status") != "passed":
             failures.append(f"{iid}: satisfying control {sat_name} did not pass: {sat.get('status')}")
-        # Anti-vacuity. For `direct`, chelis#922's complete linker-owned graph is
-        # mandatory from 0.17.2 onward. Only older pins fall back to the
-        # compiler-emitted goal string; ownership is never reconstructed from
-        # source.
+        # Anti-vacuity: direct bindings require a complete linker-owned
+        # declaration graph. No source or goal-string fallback is accepted.
         # `equivalent-form` deliberately inlines a shipped body and therefore
         # requires a narrowing citation plus its corrupt-flip control.
         binding = inv.get("binding", {})
@@ -559,7 +505,7 @@ def gate_manifest(binary: str, manifest: dict, records: dict[str, dict],
                 )
                 continue
             sat_origin = sat.get("_origin", {})
-            binding_ok, binding_detail = direct_binding_references(
+            binding_ok, binding_detail = compiler_graph_directly_references(
                 sat,
                 property_name=sat_name,
                 property_module=sat_origin.get("module", ""),
@@ -567,7 +513,6 @@ def gate_manifest(binary: str, manifest: dict, records: dict[str, dict],
                 output_fn=model["output_fn"],
                 output_module=model["module"],
                 package=manifest.get("pkg", ""),
-                pin=pin,
             )
             if not binding_ok:
                 failures.append(f"{iid}: {binding_detail}")
@@ -581,7 +526,7 @@ def gate_manifest(binary: str, manifest: dict, records: dict[str, dict],
                 )
             else:
                 viol_origin = viol.get("_origin", {})
-                violating_ok, violating_detail = direct_binding_references(
+                violating_ok, violating_detail = compiler_graph_directly_references(
                     viol,
                     property_name=viol_name,
                     property_module=viol_origin.get("module", ""),
@@ -589,7 +534,6 @@ def gate_manifest(binary: str, manifest: dict, records: dict[str, dict],
                     output_fn=violating_model["output_fn"],
                     output_module=violating_model["module"],
                     package=manifest.get("pkg", ""),
-                    pin=pin,
                 )
                 if not violating_ok:
                     failures.append(
@@ -751,18 +695,14 @@ def honesty_self_test() -> None:
     graph_record["_dependency_graph"]["edges"] = []
     ok, _ = compiler_graph_directly_references(graph_record, **exact)
     assert ok is False, "complete graph without a direct edge did not fail closed"
-    ok, _ = compiler_graph_directly_references({}, **exact)
-    assert ok is None, "missing compiler graph must select the compatibility oracle"
     unavailable = {
         "goal": "(gordon_pv(d, r, g) > 0.0)",
         "_dependency_graph": {"status": "unavailable"},
     }
-    ok, _ = direct_binding_references(unavailable, **exact, pin="0.17.4")
-    assert not ok, "0.17.2+ direct binding accepted an unavailable compiler graph"
-    ok, _ = direct_binding_references(unavailable, **exact, pin="0.17.1")
-    assert ok, "pre-chelis#922 pin rejected the compiler-emitted goal oracle"
-    ok, _ = direct_binding_references(unavailable, **exact, pin="not-a-version")
-    assert not ok, "malformed pin bypassed the dependency-graph contract"
+    ok, _ = compiler_graph_directly_references(unavailable, **exact)
+    assert ok is False, "goal text promoted a record without a complete graph"
+    ok, _ = compiler_graph_directly_references({}, **exact)
+    assert ok is False, "missing compiler graph passed direct attribution"
     wrong_model = {
         "goal": "(gordon_pv(d, r, g) > 0.0)",
         "_dependency_graph": {
@@ -780,7 +720,7 @@ def honesty_self_test() -> None:
             "edges": [{"from": "p", "to": "m"}],
         },
     }
-    ok, _ = direct_binding_references(wrong_model, **exact, pin="0.17.4")
+    ok, _ = compiler_graph_directly_references(wrong_model, **exact)
     assert not ok, "direct binding accepted an edge to the wrong shipped model"
     decoy_property = {
         "_dependency_graph": {
@@ -799,7 +739,7 @@ def honesty_self_test() -> None:
             "edges": [{"from": "p", "to": "f"}],
         }
     }
-    ok, _ = direct_binding_references(decoy_property, **exact, pin="0.17.4")
+    ok, _ = compiler_graph_directly_references(decoy_property, **exact)
     assert not ok, "direct binding accepted a same-name property from a decoy module"
     decoy_function = {
         "_dependency_graph": {
@@ -818,18 +758,17 @@ def honesty_self_test() -> None:
             "edges": [{"from": "p", "to": "attacker"}],
         }
     }
-    ok, _ = direct_binding_references(decoy_function, **exact, pin="0.17.4")
+    ok, _ = compiler_graph_directly_references(decoy_function, **exact)
     assert not ok, "direct binding accepted a same-name function from a decoy module"
 
 
 # ----------------------------------------------------------------------------
 # Metamorphic anti-vacuity: a properties/ green must DEPEND on the model.
 # ----------------------------------------------------------------------------
-# The goal-string reference check ("the goal calls the output fn") is syntactic
-# and forgeable: a canceling call `F(x) - F(x) < c` or a reflexive `F(x) == F(x)`
-# references F textually but is true for ANY F, so it stays proven even against a
-# deliberately broken model body -- the exact surface a red-team defeated
-# engine-side. This check is semantic: re-prove the SAME goal with F's body
+# A dependency edge alone does not prove the goal depends on the model's
+# behavior: a canceling call `F(x) - F(x) < c` or a reflexive `F(x) == F(x)`
+# calls F but is true for ANY F, so it stays proven even against a
+# deliberately broken model body. This check is semantic: re-prove the SAME goal with F's body
 # replaced by DISTINCT alternative bodies and require the verdict to CHANGE
 # (proven -> disproved) under at least one substitution. A goal whose truth is
 # model-independent survives every substitution, so the gate rejects it.
@@ -1003,10 +942,8 @@ def main() -> int:
         add_records(all_records, recs, ch, failures)
 
     # Sampled properties run in their real package context and may import the
-    # shipped model directly. Economoist#13 established direct imported-grad
-    # execution at the 0.17.1 pin; chelis#924's prepared-context work ships in
-    # the pinned release. Copying source into a scratch package would discard
-    # exactly the linker behavior this gate must exercise.
+    # shipped model directly. Import and package-context behavior are part of
+    # this acceptance surface.
     for ch in sorted((REPO_ROOT / "sampled").glob("*.ch")):
         recs = run_prove(binary, ch, "fuzz-only", samples=500)
         gate_sampled_file(recs, ch, failures)
@@ -1024,10 +961,10 @@ def main() -> int:
         for f in failures:
             print(f"  FAIL {f}")
         return 1
-    print(f"prove_gate OK: {checked} manifest invariants match their expected tier and break with in-domain "
-          f"witnesses; {meta_checked} properties/ greens pass the metamorphic anti-vacuity check (verdict flips "
-          f"under a model substitution); every properties/ green is an unqualified SMT green; sampled/ greens are "
-          f"honest fuzz amber; witnesses/twins/controls behave; name, doc, and collision lints clean.")
+    print(f"prove_gate OK: {checked} manifest invariants match their expected results and "
+          f"violating controls refute; {meta_checked} positive properties change verdict "
+          f"under model substitution; positive properties have unqualified SMT results, "
+          f"sampled f32 AD is fuzz-validated, and source lints pass.")
     return 0
 
 

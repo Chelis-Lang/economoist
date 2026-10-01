@@ -4,7 +4,7 @@
   "pkg": "economoist",
   "pkg_version": "0.2.14",
   "chelis_pin": "0.18.12",
-  "purpose": "Economoist's canon model + invariant surface for C Note. Every proven-tier invariant here is a genuine unqualified SMT green that CALLS the shipped operator (not a guard restatement); the one fuzz_validated invariant is an honest amber in the sampled lane, carrying a tier_upgrade_trigger. C Note vendors this file and the byte-identical release asset economoist-<pkg_version>.invariants.json. See docs/contracts/characterization_contract_v1.md (schema chelis-shell.invariant-surface/1.0).",
+  "purpose": "Economoist's model and invariant surface for C Note. Every proven result is an unqualified SMT proof over the reals that calls the shipped operator; the fuzz_validated result checks sampled f32 AD and carries a tier_upgrade_trigger. At release, this file is copied byte-for-byte into economoist-<pkg_version>.invariants.json, the versioned asset C Note vendors. See C Note's characterization_contract_v1.md (schema chelis-shell.invariant-surface/1.0).",
   "models": [
     {
       "id": "gordon",
@@ -264,7 +264,7 @@
       },
       "sensitivities": [],
       "defective": false,
-      "notes": "Bellman optimality operator, 2 states x 2 actions. Transition rows p0*, p1* are guarded row-stochastic; rewards r0, r1 free. Fixed dimension n=2: general-n and value-iteration convergence are held out (need induction)."
+      "notes": "Bellman optimality operator, 2 states x 2 actions. Transition rows p0*, p1* are guarded row-stochastic; rewards r0, r1 are free. The checked goals cover one update at n=2; arbitrary state counts, a fixed point, and value-iteration convergence are outside their scope."
     },
     {
       "id": "bellman_n3",
@@ -332,7 +332,7 @@
       },
       "sensitivities": [],
       "defective": false,
-      "notes": "Bellman optimality operator, 3 states x 2 actions. The n=3 per-state sup-norm contraction now ships green (chelis#425 and chelis#426 both resolved; cnote.dischargeability p04/p15). Fixed dimension n=3: general-n and convergence held out."
+      "notes": "Bellman optimality operator, 3 states x 2 actions. The checked per-output-state contraction bounds cover one update at n=3. Arbitrary state counts, a fixed point, and value-iteration convergence are outside their scope."
     },
     {
       "id": "markov_n2",
@@ -503,7 +503,7 @@
         "0.18.12": "proven"
       },
       "dischargeability_probe": "p01_gordon_div_positive",
-      "violation_text": "the model prices a positive-dividend perpetuity at or below zero inside its convergence region r > g",
+      "violation_text": "growth above the return puts the positive-dividend closed-form value below zero, outside the stated r > g guard",
       "break_class": "out_of_region_expected"
     },
     {
@@ -562,7 +562,7 @@
         "0.18.12": "proven"
       },
       "dischargeability_probe": "p01_gordon_div_positive",
-      "violation_text": "the conservative model prices a positive-dividend perpetuity at or below zero once the inputs leave the convergence region r > g (which its strict domain r > g + 0.01 is contained in); the margin is a domain-of-use choice, not the positivity hypothesis",
+      "violation_text": "growth above the return puts the conservative closed-form value below zero, outside its stated r > g + 0.01 domain",
       "break_class": "out_of_region_expected",
       "nests_inside": "econ.inv.gordon_positive.v1"
     },
@@ -883,7 +883,7 @@
         "0.18.12": "proven"
       },
       "dischargeability_probe": "p04_ite_two_call",
-      "violation_text": "one Bellman step is not monotone in the continuation value when domination v <= w is dropped (chelis#426 regression guard)",
+      "violation_text": "one Bellman step can fail the monotonicity claim when the domination guard v <= w is dropped",
       "break_class": "out_of_region_expected"
     },
     {
@@ -1099,7 +1099,7 @@
         "0.18.12": "proven"
       },
       "dischargeability_probe": "p15_nested_fmax3",
-      "violation_text": "dropping row-stochasticity breaks the de-narrowed n=3 per-state contraction bound",
+      "violation_text": "dropping row-stochasticity can break the n=3 per-state contraction bound",
       "break_class": "out_of_region_expected"
     },
     {
@@ -1256,17 +1256,17 @@
     "properties": {
       "dir": "properties",
       "tier": "proven",
-      "note": "the unqualified SMT-green boundary; this shell's identity"
+      "note": "checked properties with unqualified SMT results over the reals"
     },
     "sampled": {
       "dir": "sampled",
       "module_prefix": "Economoist.Sampled",
       "tier": "fuzz_validated",
-      "note": "honest amber; fuzz-validated library invariants, gated separately, name-linted, never colliding with a properties/ green"
+      "note": "sampled f32 AD results, gated separately from real-arithmetic SMT properties"
     }
   },
-  "eval_import_boundary": "prove resolves module imports so proven and sampled properties reach the real exported functions. At the current pin, eval --file also resolves ad hoc snippets against the current Reef package; the numeric oracle and defective-model re-execution import the shipped exports directly (chelis#423 archived). The sampled AD lane directly differentiates the imported gordon_pv export (economoist#13).",
-  "dependency_edges_boundary": "At the current pin, every invariant names an exact anchor_model and the producer gate requires chelis#922's complete linker-owned dependency_graph to bind its satisfying control to that model's output_fn. Violating controls must bind to the same anchor, except an explicit defective_model control must bind to that defective model's output_fn. anchor_model is proof provenance, not a change to kind-scoped consumer applicability. An unavailable graph, missing edge, or edge to another exported model fails closed. Historical 0.17.1 output lacked that graph and used the compiler-emitted goal plus corrupt-flip compatibility oracle (docs/issue_drafts/dependency_edges_imports.md).",
+  "eval_import_boundary": "prove resolves module imports so proven and sampled properties reach the exported functions. eval --file resolves ad hoc snippets against the current Reef package; the numeric oracle and defective-model re-execution import the shipped exports directly. The sampled AD lane differentiates the imported gordon_pv export (economoist#13).",
+  "dependency_edges_boundary": "Every invariant names an exact anchor_model. The producer gate requires a complete linker-owned dependency_graph with a direct edge from each satisfying control to that model's output_fn. Violating controls must bind to the same anchor, except an explicit defective_model control must bind to that defective model's output_fn. anchor_model identifies proof provenance without changing kind-scoped consumer applicability. An unavailable graph, missing edge, or edge to another exported model fails closed. The flat dependency_edges field does not establish cross-module ownership (chelis#922).",
   "run": {
     "build": "chelis reef build",
     "contract_gate": "python3 scripts/contract_gate.py",

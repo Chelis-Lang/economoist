@@ -1,49 +1,18 @@
 module Economoist.Bellman
 export (bellman_state0, bellman_state1, bellman_state0_n3, bellman_state1_n3, bellman_state2_n3, fmax, fmax3, fabs)
--- Economoist.Bellman: the Bellman optimality operator T of a fixed small dynamic
--- program, one exported scalar def per output value-vector component. Two
--- instances ship: 2 states x 2 actions (bellman_state0, bellman_state1) and 3
--- states x 2 actions (bellman_state0_n3, bellman_state1_n3, bellman_state2_n3).
--- All the per-output-state forms are identical term by term; they differ only in
--- which output state's rewards and transition rows they carry.
+-- One Bellman update at two or three states, with two actions per output
+-- state. Each exported bellman_state* function returns the larger of its
+-- actions' immediate reward plus discounted continuation value. The helpers
+-- fmax, fmax3, and fabs are stable exported scalar functions used by the
+-- checked Bellman goals; their if/then/else bodies make the selected maximum
+-- and absolute value explicit.
 --
--- One application of T at output state s is the max over the two actions of the
--- immediate reward plus the discounted expected continuation value, where the
--- continuation expectation is taken under the chosen action's transition row out
--- of state s. Action a contributes (r_a + g * (p_a0 * v0 + p_a1 * v1 + ...)); T
--- picks the larger. (Tv)_s is the operator at output state s.
---
--- PROVEN here (single application of T, SMT, transcendental-free, over the
--- reals): structural facts of one Bellman step, proven at BOTH shipped
--- dimensions, 2 states x 2 actions and 3 states x 2 actions ---
---   bellman_monotone / bellman3_monotone     : T is monotone in the
---                          continuation value function.
---   bellman_bounded / bellman3_bounded         : one step is sup-norm bounded
---                          by rmax + g * b.
---   bellman_contraction_state0/_state1 (n=2)   : each output value-vector
---                          component (Tv)_s is a g-contraction in the sup norm
---                          (two-sided; upper and lower side each proven). The
---                          FULL sup-norm contraction over the output vector is
---                          the max of these per-component facts (see
---                          docs/models/bellman.md).
--- The property goals call these exported operators directly. In chelis 0.8.0 a
--- goal that subtracted or compared two calls of the same if/then/else-bodied def
--- collapsed the pair to a constant and could false-prove a bound (chelis#426).
--- That soundness bug was fixed in 0.10.0 and remains guarded by the corrupt
--- control pair in demos/businesswrong.ch; no inline reconstruction remains.
--- HELD OUT (see docs/models/bellman.md): value-iteration convergence
---   v_{k+1} = T v_k -> v*, existence and uniqueness of the fixed point (the
---   Banach argument), which need induction; the general all-n-state, all-m-
---   action theorem (the greens cover the two fixed instances n=2 and n=3 at
---   m=2, not the all-n,m result); and any f32 float claim (the green is real
---   arithmetic).
--- Scalar binary max, scalar ternary max, and scalar absolute value, as
--- if/then/else over operator comparisons. Scalar max/min/abs now bind at the
--- 0.17.5 pin (chelis#424 resolved), but fmax/fabs remain stable exported shell
--- helpers and preserve the audited ITE-shaped SMT goals. fmax3 is the
--- three-state sup norm's max as one ITE-bodied def because a nested
--- fmax(a, fmax(b, c)) once hit a lowering gap (chelis#425); the stable
--- three-state spelling remains explicit rather than nested.
+-- The properties call these exports directly. Monotonicity and boundedness
+-- are checked at output state 0; upper and lower contraction bounds are
+-- checked at every shipped output state. They concern one application, at a
+-- fixed dimension, over the reals. Iteration limits, a fixed point, arbitrary
+-- state counts, and f32 rounding are outside those proofs; see
+-- docs/models/bellman.md.
 def fmax(a: f32, b: f32) -> f32 = if (a >= b) then a else b
 def fmax3(a: f32, b: f32, c: f32) -> f32 = if (a >= b) then if (a >= c) then a else c else if (b >= c) then b else c
 def fabs(x: f32) -> f32 = if (x >= 0.0) then x else (0.0 - x)

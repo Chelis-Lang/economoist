@@ -1,47 +1,28 @@
 module Economoist.Growth
 export (gordon_pv, gordon_pv_strict, gordon_pv_negated)
--- Economoist.Growth: the Gordon growth model present value of a perpetuity whose
--- cash flow grows at a constant rate. With next-period dividend D, required
--- return r, and growth rate g (all under the convergence condition r > g), the
--- present value of the growing perpetuity is the closed form P = D / (r - g).
+-- Gordon closed-form value P = D / (r - g), with next-period dividend D,
+-- required return r, and growth rate g. Under D > 0 and r > g the value is
+-- positive. The checked two-point comparisons show it increases with D
+-- and decreases with r under their written guards. These are real-arithmetic
+-- facts about the exported expression, not f32 guarantees or proofs that a
+-- dividend series converges. For the usual nonnegative-growth, positive-return
+-- series, 0 <= g < r supplies a convergent economic rate domain; the general
+-- real-rate series also needs r != -1 and |(1+g)/(1+r)| < 1. See
+-- docs/models/growth.md.
 --
--- This is a closed-form algebraic value in three scalars (D, r, g). There is no
--- state dimension and no iteration: the geometric series has already been summed
--- to its closed form, so the fixed-dimension (general-n) caveat that applies to
--- the Markov and Bellman instances is NOT APPLICABLE here. The two caveats that
--- do apply are the convergence-class condition (the closed form is the limit of
--- the discounted sum only when r > g; the guards carry exactly that) and the
--- reals-vs-floats boundary (the proven facts are real arithmetic, not f32).
---
--- PROVEN here (SMT, transcendental-free, over the reals; see
--- docs/models/growth.md), stated by CALLING gordon_pv in division form so each
--- green is a fact about the shipped operator, not a restatement of its guards
--- (verified at chelis 0.14.0; cnote.dischargeability p01/p02/p03):
---   gordon_positive        : under D > 0 and r > g the value gordon_pv > 0.
---   gordon_increasing_in_d : two-call, gordon_pv is increasing in the dividend D.
---   gordon_decreasing_in_r : two-call, gordon_pv is decreasing in the return r.
--- The derivative-SIGN comparative statics dP/dr and dP/dg are NOT shipped as
--- polynomial greens any more: written on the guards they only restated them
--- (vacuous). The decreasing/increasing two-call greens above carry the same
--- economic content over the reals, and the AD sensitivity dP/dr < 0 ships as an
--- honest fuzz-validated amber in sampled/growth_sensitivity.ch.
--- HELD OUT: these are facts about the closed-form expression itself, not about
---   the convergence of the underlying discounted sum to that closed form (a
---   limit result, which needs the geometric-series argument and is held out).
---   No f32 float claim is made: the green is real arithmetic.
--- gordon_pv_negated below is a DEFECTIVE reference model, not a proven fact.
+-- gordon_pv_strict uses the same formula with a stated r > g + 0.01 domain.
+-- gordon_pv_negated is an intentionally defective model whose false
+-- positivity claim must refute inside the valid region.
 def gordon_pv(d: f32, r: f32, g: f32) -> f32 = (d / (r - g))
 -- The conservative (margin-of-safety) Gordon variant. Numerically identical to
 -- gordon_pv -- the present value of the same growing perpetuity -- but it is the
 -- model a cautious analyst uses when the discount spread r - g must clear a
 -- safety margin before the valuation is trusted. Its documented domain of use is
 -- the strict region r > g + 0.01 (the spread clears a one-point margin), which is
--- a proper subset of gordon_pv's convergence region r > g. Shipping it as its own
--- export lets the characterization surface state the proof-backed org
--- implication: the strict model's proven positivity region nests inside the
--- standard model's, so anything sound under gordon_pv_strict is sound under
--- gordon_pv. Same closed form, tighter stated domain; not a separate economics
--- claim. See docs/models/growth.md.
+-- a proper subset of the closed form's positive-denominator region r > g.
+-- The strict model's checked positivity region nests inside the standard
+-- model's checked positivity region. Both exports use the same formula;
+-- the tighter spread is a domain-of-use choice. See docs/models/growth.md.
 def gordon_pv_strict(d: f32, r: f32, g: f32) -> f32 = (d / (r - g))
 -- A DEFECTIVE reference model: a mispriced perpetuity that returns the negative
 -- of the correct Gordon present value. It is a first-class model in the manifest
