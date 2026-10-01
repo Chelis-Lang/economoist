@@ -112,11 +112,14 @@ validation pass, or verification of a fix that a red team reported.
   `git status --porcelain=v1 --untracked-files=all`, and
   `git worktree list --porcelain`. From anywhere inside the candidate, set
   `review_worktree="$(realpath "$(git rev-parse --show-toplevel)")"` and
-  `review_git_dir="$(realpath "$(git rev-parse --path-format=absolute --git-dir)")"`.
-  From outside those paths, scan both with `lsof -nP -x f +D <path>`:
+  `review_git_dir="$(realpath "$(git rev-parse --path-format=absolute --git-dir)")"`,
+  and `review_git_common_dir="$(realpath "$(git rev-parse --path-format=absolute --git-common-dir)")"`.
+  From outside those paths, scan all three with `lsof -nP -x f +D <path>`:
   the physical worktree root covers source directories and mounted children,
-  while its separate Git directory covers the linked index and lock files.
-  Use `find "$review_git_dir" -name '*.lock' -print`; any lock blocks handoff.
+  its separate Git directory covers the linked index, and the common Git
+  directory covers shared branch refs and locks. Use
+  `find "$review_git_dir" -name '*.lock' -print` and
+  `find "$review_git_common_dir" -name '*.lock' -print`; any lock blocks handoff.
   Use `git -C "$review_worktree" ls-files -s` to identify tracked symlinks
   (mode `120000`); resolve each listed path from that root. Scan an
   external directory with
