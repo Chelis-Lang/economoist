@@ -13,10 +13,22 @@ The goals in [`properties/markov.ch`](../../properties/markov.ch) call the expor
 
 The mass goals do not need a nonnegativity guard. The nonnegativity goals do not need a row-sum guard. Each goal has a separate guard-satisfiability witness that the prover is expected to refute.
 
-`Dist2` and `Dist3` have a different, guarded contract: their masses are nonnegative and their sum lies within `0.0001` of one. The constructor and `advance` producer obligations check that returned distributions satisfy this invariant. `advance` requires nonnegative transition entries with rows summing exactly to one; an invalid row returns `None`. The type invariant allows a mass tolerance, whereas the separate mass-preservation goals above assume and prove exact sums.
+`Dist2` and `Dist3` have a different, guarded contract: their masses are nonnegative and their sum lies within `0.0001` of one. The constructor and `advance` producer obligations check that returned distributions satisfy this invariant. The type invariant allows a mass tolerance, whereas the separate mass-preservation goals above assume and prove exact sums.
+
+## What `advance` admits
+
+`advance` and `advance3` admit a transition when all three of these hold, and return `None` otherwise:
+
+1. every transition entry is nonnegative;
+2. every row sum lies within `0.0001` of one — the same `eps()` band the distribution invariant carries, not exact equality;
+3. the masses the step computes sum to within `0.0001` of one.
+
+Condition 3 is what keeps the producer obligation discharging, and it is not redundant. Banding the row sums on their own breaks the obligation: a distribution summing to `1 + eps` under rows summing to `1 + eps` gives an output summing to `(1 + eps)²`, which is outside the band, and the prover returns an SMT counterexample. Checking the masses the step actually computes closes that gap by construction. It also means a returned `Dist2` or `Dist3` has had its invariant checked in `f32`, not only proved over the reals.
+
+Two consequences are worth stating plainly. The rows condition 2 newly admits are **guarded, not proved**: `markov_mass_preserved` still assumes exact row sums, so it says nothing about a banded row, and the safety of those rows rests on condition 3 holding at run time. And tolerance compounds, so a caller chaining `advance` can accumulate drift until condition 3 fails. Such a chain stops with `None` rather than carrying a distribution outside its own band, but whether a given matrix is admitted then depends on the history of the chain and not only on the matrix.
 
 ## Scope
 
 These checks cover one transition at two states and one at three states. They do not establish a result for arbitrary state counts. They also do not prove the existence or uniqueness of a stationary distribution, convergence of repeated transitions, or ergodicity.
 
-The source uses `f32` values, but an SMT result here is about the corresponding real-arithmetic expression. It is not a guarantee that every floating-point run preserves an exact sum or stays inside the type's tolerance. The concrete cases in [`tests/markov.ch`](../../tests/markov.ch) exercise execution separately.
+The source uses `f32` values, but an SMT result here is about the corresponding real-arithmetic expression. It is not a guarantee that every floating-point run preserves an exact sum. Staying inside the type's tolerance is a separate, run-time matter: `make_dist`, `make_dist3`, `advance` and `advance3` each check the band in `f32` before returning a value, which is why they return `Option`. The concrete cases in [`tests/markov.ch`](../../tests/markov.ch) exercise execution separately, including the transitions the guard refuses.

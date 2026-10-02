@@ -5,6 +5,26 @@ All notable changes to the Economoist shell are recorded here. The package
 
 ## [Unreleased]
 
+### Fixed
+
+- `advance` and `advance3` no longer require transition rows to sum to exactly
+  `1.0`. A row is admitted when its entries are nonnegative and its sum lies
+  within `eps()` of one — the same band the `Dist2`/`Dist3` invariant carries —
+  and when the masses the step computes also land inside that band. The exact
+  guard refused row-stochastic matrices that sum to one in decimal but not in
+  binary `f32`: on rows drawn uniformly on the simplex, written to 4 dp and
+  summed left-associated as the shipped code does, it refused 5.35% of three-state
+  row sets, 9.57% at n=4 and 19.94% at n=7 (200k trials each; n=2 was
+  unaffected). Under the band those rates are 0.00%. (economoist#34)
+
+- The computed-mass band is what keeps the producer obligations discharging;
+  banding only the row sums fails `invariant:Dist2:advance` and
+  `invariant:Dist3:advance3` with SMT counterexamples, because a distribution
+  and rows each at `1 + eps` put the output at `(1 + eps)²`. The rows the band
+  newly admits are guarded at run time rather than covered by
+  `markov_mass_preserved`, which still assumes exact row sums; see
+  `docs/models/markov.md`.
+
 ### Changed
 
 - Present the checked economic models, upstream issue inventory, and demo controls
