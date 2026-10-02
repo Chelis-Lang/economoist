@@ -51,6 +51,16 @@ def triple_admitted(a: f32, b: f32, c: f32) -> bool =
   }
     | None => false
   }
+-- The two-state step over the matrix whose every row is (a, b), applied to a
+-- starting distribution whose own mass sum is start rather than one.
+def drifted_pair_admitted(start: f32, a: f32, b: f32) -> bool =
+  match make_dist(start, 0.0) with {
+    | Some(d) => match advance(d, a, b, a, b) with {
+    | Some(_) => true
+    | None => false
+  }
+    | None => false
+  }
 -- The three-state step over the matrix whose every row is (a, b, c), applied
 -- to a starting distribution whose own mass sum is start rather than one.
 def drifted_admitted(start: f32, a: f32, b: f32, c: f32) -> bool =
@@ -61,7 +71,7 @@ def drifted_admitted(start: f32, a: f32, b: f32, c: f32) -> bool =
   }
     | None => false
   }
--- chelis#34 regression. 0.1773 + 0.6378 + 0.1849 is exactly one in decimal and
+-- economoist#34 regression. 0.1773 + 0.6378 + 0.1849 is exactly one in decimal and
 -- every entry is nonnegative, so the matrix is row-stochastic; left-associated
 -- in f32 the row sums to 0.99999994. The exact == 1.0 guard this replaces
 -- refused it.
@@ -93,3 +103,14 @@ def test_advance3_rejects_compounded_drift() -> unit ! { Test } = assert_false(d
 -- admitted, so the rejection above is the compounded drift and not the
 -- starting distribution on its own.
 def test_advance3_admits_drifted_start_on_exact_row() -> unit ! { Test } = assert_true(drifted_admitted(0.99992f32, 1.0f32, 0.0f32, 0.0f32), "advance3 admits a drifted start under an exact row")
+-- The n = 2 band edge, which the exact guard refused. advance is named in this
+-- change's scope and its admission side needs its own cover: with only the
+-- n = 3 tests, reverting advance's two row-sum legs to == 1.0 left both the
+-- suite and the prover green.
+def test_advance_admits_row_inside_band() -> unit ! { Test } = assert_true(pair_admitted(1.00005f32, 0.0f32), "advance admits a row sum inside the eps band")
+-- Its refused counterpart, one step further out.
+def test_advance_rejects_row_outside_band() -> unit ! { Test } = assert_false(pair_admitted(1.0002f32, 0.0f32), "advance rejects a row sum outside the eps band")
+-- The n = 2 instances of the compounded-drift pair: the start and the row each
+-- sit inside the band, their product does not, and the step refuses.
+def test_advance_rejects_compounded_drift() -> unit ! { Test } = assert_false(drifted_pair_admitted(0.99992f32, 0.99992f32, 0.0f32), "advance rejects a step whose computed masses leave the band")
+def test_advance_admits_drifted_start_on_exact_row() -> unit ! { Test } = assert_true(drifted_pair_admitted(0.99992f32, 1.0f32, 0.0f32), "advance admits a drifted start under an exact row")
