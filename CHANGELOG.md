@@ -5,6 +5,48 @@ All notable changes to the Economoist shell are recorded here. The package
 
 ## [Unreleased]
 
+### Fixed
+
+- `advance` and `advance3` no longer require transition rows to sum to exactly
+  `1.0`. A row is admitted when its entries are nonnegative and its sum lies
+  within `eps()` of one — the same band the `Dist2`/`Dist3` invariant carries —
+  and when the masses the step computes also land inside that band. The exact
+  guard refused row-stochastic matrices that sum to one in decimal but not in
+  binary `f32`: on rows drawn uniformly on the simplex, written to 4 dp and
+  written to 4 dp with the last entry absorbing the residual so the row sums to
+  exactly one in decimal, and summed left-associated as the shipped code does,
+  it refused 5.2% of individual three-state rows and, because `advance3`
+  refuses the matrix if any row fails, 14.9% of three-state matrices. Under the
+  band both are 0.00%. Two-state rows and matrices were refused at 0.00% under
+  either guard, though `advance` is still behaviourally changed: it now admits a
+  row summing to 1.00005, which the exact guard refused. (economoist#34)
+
+- Those figures describe one population. Without the renormalization step the
+  4 dp residual can itself reach or exceed `eps()`, and the band then reduces
+  the per-row rejection rate rather than eliminating it: 28.96% to 0.11% at
+  n=3. All of that 0.11% residual sits exactly on the tolerance edge — every
+  refused row has a decimal sum of exactly 0.9999, whose `f32` sum falls one
+  ulp below the `f32` band endpoint — so none of it is a genuinely
+  out-of-tolerance matrix. The issue reports 4.5% at n=3 under a methodology it
+  does not fully state; it is the renormalized per-row population, and the
+  figures agree.
+
+- The rate grows with the state count. That bears on the generalization
+  economoist#32 asks for and not on anything shipped here, since this module
+  exports `advance` and `advance3` only: there is no `advance4` or `advance7`.
+  For the record, on un-renormalized rows the exact guard refused 39.87% at n=4
+  and 59.08% at n=7 against the band's 0.50% and 5.37%. Every figure in these
+  notes is a simulated draw that sizes the hazard; none observes it on a matrix
+  a caller actually passed.
+
+- The computed-mass band is what keeps the producer obligations discharging;
+  banding only the row sums fails `invariant:Dist2:advance` and
+  `invariant:Dist3:advance3` with SMT counterexamples, because a distribution
+  and rows each at `1 + eps` put the output at `(1 + eps)²`. The rows the band
+  newly admits are guarded at run time rather than covered by
+  `markov_mass_preserved`, which still assumes exact row sums; see
+  `docs/models/markov.md`.
+
 ### Changed
 
 - Present the checked economic models, upstream issue inventory, and demo controls
