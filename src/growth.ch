@@ -1,5 +1,5 @@
 module Economoist.Growth
-export (gordon_pv, gordon_pv_strict, gordon_pv_negated)
+export (gordon_pv, gordon_pv_strict, gordon_pv_negated, gordon_pv_checked, gordon_pv_strict_checked)
 -- Gordon closed-form value P = D / (r - g), with next-period dividend D,
 -- required return r, and growth rate g. Under D > 0 and r > g the value is
 -- positive. The checked two-point comparisons show it increases with D
@@ -35,3 +35,40 @@ def gordon_pv_strict(d: f32, r: f32, g: f32) -> f32 = (d / (r - g))
 -- of corrupting the model). It is NOT a claim about economics; it is a deliberate
 -- defect the gallery must characterize as broken.
 def gordon_pv_negated(d: f32, r: f32, g: f32) -> f32 = (0.0 - (d / (r - g)))
+-- The domain-checked entry points. gordon_pv above evaluates the closed form
+-- unconditionally, so a caller who passes r <= g gets a plausible-looking wrong
+-- answer rather than a signal: at r < g the sign flips (gordon_pv(1, 0.03, 0.08)
+-- is -20.000002) and at r = g the denominator is zero (gordon_pv(1, 0.05, 0.05)
+-- is inf). Neither traps, because Chelis f32 division does not. These variants
+-- enforce the domain each raw export documents and return None outside it,
+-- which is the signalling convention Economoist.Markov.make_dist already uses.
+--
+-- The raw exports stay total on purpose, and the reason is mechanical rather
+-- than stylistic: grad rejects an Option result ("grad requires a scalar
+-- floating output, got Option f32"), and sampled/growth_sensitivity.ch
+-- differentiates the imported gordon_pv with respect to r. The SMT goals in
+-- properties/growth.ch and the characterization gallery in
+-- demos/businesswrong.ch also compare the raw value against 0.0 over the reals,
+-- and docs/cnote-import-surface.json publishes gordon_pv to the C Note import
+-- under a frozen schema. So the guard is added beside the closed form, not
+-- inside it. A caller who has already established its rate domain keeps the
+-- total function; a caller taking r and g from data should use these.
+--
+-- Each guard is written in its POSITIVE form, and that is load-bearing rather
+-- than a style choice. `if (r > g) then Some(...) else None` returns None when r
+-- is NaN, because every ordering comparison against NaN is false, so the guard
+-- fails closed. The negated spelling `if (r <= g) then None else Some(...)`
+-- states the same domain and returns Some for a NaN rate. Do not "simplify" to
+-- it; tests/growth.ch pins the NaN case.
+--
+-- gordon_pv_checked enforces r > g, the positive-denominator region that
+-- gordon_positive is proven over. gordon_pv_strict_checked enforces
+-- r > g + 0.01, the margin-of-safety domain of use that gordon_pv_strict
+-- documents and gordon_strict_positive is proven over, so it rejects a spread
+-- that is positive but inside the one-point margin. Both return the same
+-- closed form as their raw counterpart inside the domain. There is no checked
+-- counterpart to gordon_pv_negated: that export is a deliberately defective
+-- reference model for the gallery, and a domain guard on it would assert a
+-- correctness it is built not to have.
+def gordon_pv_checked(d: f32, r: f32, g: f32) -> Option[f32] = if (r > g) then Some((d / (r - g))) else None
+def gordon_pv_strict_checked(d: f32, r: f32, g: f32) -> Option[f32] = if (r > (g + 0.01)) then Some((d / (r - g))) else None
