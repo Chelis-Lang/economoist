@@ -5,6 +5,27 @@ to this file so Claude-style and Codex-style entry points do not drift.
 
 ## Repo Identity
 
+- Economoist is a downstream **shell repo** for the
+  [Chelis](https://github.com/Chelis-Lang/chelis) language, scoped to
+  verified economic and dynamic-programming models. It is the
+  academic surface for checked economic models.
+- Every `properties/` economic claim must pass as an unqualified SMT result
+  over the reals. The concrete `f32` AD check belongs in `sampled/` and is
+  fuzz-validated. No result is generalized beyond its guards or dimension.
+- **Domain bifurcation.** Economic content lives here. Finance and
+  derivatives stay in [Shoals](https://github.com/Chelis-Lang/shoals).
+  Economoist must never depend on Shoals; the two shells share scaffolding,
+  not modules.
+- **Upstream of truth** is `Chelis-Lang/chelis`. The Chelis monorepo's
+  `AGENTS.md` is inherited through the managed block, with the exact-heading
+  exclusions declared below for compiler-only and monorepo-only procedures. The
+  downstream shell contract applies in full. The machine-local
+  environment sections of the monorepo `AGENTS.md` (workstation runbooks,
+  first-exec notes, workstation-specific measurements) bind only where the
+  named environment actually exists. Make changes to the inherited contract
+  and shared skill source in the Chelis compiler repo, then run the pinned
+  `chelis reef conform sync` here.
+
 <!-- BEGIN CHELIS MANAGED BLOCK: agents-inheritance chelis@0.18.13 (sha256:20908ee18f40f7f3) -->
 # Chelis Agent Contract
 
@@ -162,28 +183,7 @@ AST contract. `spec/02-surf-syntax.md` §0.1 is the authority.
 <!-- ## The Chelis-Lang Repositories -->
 <!-- shell-local:exclude:end -->
 
-- Economoist is a downstream **shell repo** for the
-  [Chelis](https://github.com/Chelis-Lang/chelis) language, scoped to
-  verified economic and dynamic-programming models. It is the
-  academic surface for checked economic models.
-- Every `properties/` economic claim must pass as an unqualified SMT result
-  over the reals. The concrete `f32` AD check belongs in `sampled/` and is
-  fuzz-validated. No result is generalized beyond its guards or dimension.
-- **Domain bifurcation.** Economic content lives here. Finance and
-  derivatives stay in [Shoals](https://github.com/Chelis-Lang/shoals).
-  Economoist must never depend on Shoals; the two shells share scaffolding,
-  not modules.
-- **Upstream of truth** is `Chelis-Lang/chelis`. The Chelis monorepo's
-  `AGENTS.md` is inherited through the managed block, with the exact-heading
-  exclusions above for compiler-only and monorepo-only procedures. The
-  downstream shell contract applies in full. The machine-local
-  environment sections of the monorepo `AGENTS.md` (workstation runbooks,
-  first-exec notes, workstation-specific measurements) bind only where the
-  named environment actually exists. Make changes to the inherited contract
-  and shared skill source in the Chelis compiler repo, then run the pinned
-  `chelis reef conform sync` here.
-
-### Economoist Red Team Rounds
+## Economoist Red Team Rounds
 
 Use [`redteam-exec`](agent-skills/redteam-exec/SKILL.md) for every PR before
 merge, including documentation changes. Start with a fresh local reviewer on
@@ -193,7 +193,7 @@ caps, finding scope, and brief content. For each handoff, record the worktree
 HEAD and full status, worktree list, and process ownership as specified by the
 shell-local skill block. A dirty or busy worktree is unavailable for reuse.
 
-### Economoist Worktrees
+## Economoist Worktrees
 
 - Treat the primary checkout as read-only developer state. Create a dedicated
   worktree for each task and create its Python 3.11 environment with
@@ -204,7 +204,7 @@ shell-local skill block. A dirty or busy worktree is unavailable for reuse.
   process ownership and preserve anything uncertain. Then use
   `git worktree remove <path>` for that worktree; branch removal is separate.
 
-### Honesty boundaries
+## Honesty Boundaries
 
 Every module's docs state, per property, where the green stops. The proven
 fact is never silently generalized past what the SMT call established. Three
