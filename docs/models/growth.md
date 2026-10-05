@@ -1,6 +1,6 @@
 # Gordon present value
 
-[`Economoist.Growth`](../../src/growth.ch) exports `gordon_pv(d, r, g) = d / (r - g)`, with `d` the next-period dividend, `r` the required return, and `g` the dividend growth rate. The properties guard `r > g`, so the denominator is positive. The function itself evaluates the expression; its callers must supply an appropriate rate domain.
+[`Economoist.Growth`](../../src/growth.ch) exports `gordon_pv(d, r, g) = d / (r - g)`, with `d` the next-period dividend, `r` the required return, and `g` the dividend growth rate. The properties guard `r > g`, so the denominator is positive. The function itself evaluates the expression; its callers must supply an appropriate rate domain. The checked entry points below test one rate inequality and narrow that obligation; they do not discharge it.
 
 ## Checked properties
 
@@ -16,6 +16,46 @@ The goals in [`properties/growth.ch`](../../properties/growth.ch) call the expor
 `gordon_pv_strict` evaluates the **same formula** as `gordon_pv`. Its wider discount spread is a documented domain-of-use choice, not a second valuation equation or a requirement for positivity throughout `r > g`. Each checked property has a separate witness whose expected counterexample establishes that its guards are satisfiable.
 
 `gordon_decreasing_in_r` is a two-point comparison. There is no SMT goal here for an automatic-differentiation result or for sensitivity to `g`.
+
+## Domain-checked entry points
+
+`gordon_pv` and `gordon_pv_strict` are **total**: they evaluate the closed form for any rates, and Chelis `f32` division does not trap. Outside the documented domain the result is wrong rather than absent:
+
+| call | result |
+| --- | --- |
+| `gordon_pv(1, 0.08, 0.03)` — in domain | `20.000002` |
+| `gordon_pv(1, 0.03, 0.08)` — `r < g` | `-20.000002` |
+| `gordon_pv(1, 0.05, 0.05)` — `r = g` | `inf` |
+| `gordon_pv_strict(1, 0.03, 0.08)` — `r < g` | `-20.000002` |
+
+`gordon_pv_checked` and `gordon_pv_strict_checked` return `Option[f32]`, and `None` when the **one rate inequality** each tests fails — the signalling convention [`Economoist.Markov`](../../src/markov.ch)'s `make_dist` already uses:
+
+| export | rate condition enforced | rate condition of the matching property |
+| --- | --- | --- |
+| `gordon_pv_checked` | `r > g` | `gordon_positive` (`d > 0`, `r > g`) |
+| `gordon_pv_strict_checked` | `r > g + 0.01` | `gordon_strict_positive` (`d > 0`, `r > g + 0.01`) |
+
+When the inequality holds, each returns the same value as its raw counterpart. `r = 0.055`, `g = 0.05` separates the two: `gordon_pv_checked` admits it and returns `200.0000457763672`, while `gordon_pv_strict_checked` refuses, because the `0.005` spread does not clear the one-point margin.
+
+**What `Some` does and does not mean.** These guards test the rates only. They are **not** the hypothesis of the positivity properties, which additionally require `d > 0`, so `Some(v)` does **not** imply `v > 0`: `gordon_pv_checked(-1, 0.08, 0.03)` returns `Some(-20.000002)`, the same number the table above shows as the out-of-domain answer. Nor does the guard bound the magnitude of the quotient — `gordon_pv_checked(1, 1.4e-45, 0)` returns `Some(inf)`, and the strict margin does not prevent it either (`gordon_pv_strict_checked(3.0e38, 0.02, 0)` is `Some(inf)`). The `NaN` refusal is a property of the two rate arguments: a `NaN` `r` or `NaN` `g` gives `None`, while `gordon_pv_checked(NaN, 0.08, 0.03)` returns `Some(NaN)`.
+
+And the inequality is **weaker than the documented economic rate domain**, which is narrower than `r > g` on the rates alone — see [Closed form and convergence](#closed-form-and-convergence) below, and the `0 < r < 1`, `g ≥ 0` bounds the [model catalog](../cnote-import-surface.json) publishes. Measured inputs the guard admits and that domain excludes:
+
+| call | measured | outside |
+| --- | --- | --- |
+| `gordon_pv_checked(1, 2.0, 1.5)` | `Some(2.0)` | published `r < 1` |
+| `gordon_pv_checked(1, 0.08, -0.5)` | `Some(1.7241380)` | published `g ≥ 0` |
+| `gordon_pv_checked(1, -2.0, -3.0)` | `Some(1.0)` | `\|(1+g)/(1+r)\| = 2`, a divergent series |
+
+A caller that needs `d > 0`, a finite result, a non-`NaN` dividend, or the convergent economic domain must still establish it. economoist#38 asked for the rate condition; widening these guards is a separate change.
+
+**Why the raw exports stay total.** The reason is mechanical, not stylistic. `grad` rejects an `Option` result — `grad requires a scalar floating output, got Option f32` — and the [sampled derivative check](#sampled-derivative-check) differentiates the imported `gordon_pv` with respect to `r`. The SMT goals above and the `demos/businesswrong.ch` gallery compare the raw value against `0.0` over the reals, and the [model catalog](../cnote-import-surface.json) publishes `gordon_pv` under a frozen schema. So the guard is added beside the closed form rather than inside it. A caller that has already established its rate domain keeps the total function; a caller taking `r` and `g` from data should use the checked export and still check what the inequality does not cover.
+
+There is no checked counterpart to `gordon_pv_negated`: that export is a deliberately defective reference model for the gallery, and a domain guard would assert a correctness it is built not to have.
+
+**The guards are written in their positive form, and that is load-bearing.** `if (r > g) then Some(...) else None` returns `None` when `r` is `NaN`, because every ordering comparison against `NaN` is false, so the guard fails closed. The negated spelling `if (r <= g) then None else Some(...)` states the same domain and returns `Some` for a `NaN` rate. `test_gordon_pv_checked_rejects_nan_rate` and `test_gordon_pv_checked_rejects_nan_growth` in [`tests/growth.ch`](../../tests/growth.ch) pin it: negating the guard fails those two tests and nothing else — the `r < g` and `r = g` tests keep passing, so the NaN tests are what hold the spelling.
+
+No SMT goal covers the checked exports. `properties/` states real-arithmetic facts about scalar expressions and no property in this package quantifies over an `Option`; the checked domains are covered by the concrete tests instead.
 
 ## Closed form and convergence
 

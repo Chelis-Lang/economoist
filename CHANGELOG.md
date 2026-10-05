@@ -5,6 +5,43 @@ All notable changes to the Economoist shell are recorded here. The package
 
 ## [Unreleased]
 
+### Added
+
+- `gordon_pv_checked` and `gordon_pv_strict_checked` (src/growth.ch) — the
+  domain-checked Gordon entry points, returning `Option[f32]` and `None` when
+  the **one rate inequality** each tests fails (`r > g` and `r > g + 0.01`
+  respectively). They test that inequality and nothing else: they are not the
+  hypothesis of the positivity properties, which also require `d > 0`, so
+  `Some(v)` does not imply `v > 0`; they do not bound the quotient's magnitude;
+  and they are weaker than the documented economic rate domain, admitting
+  `r` above the published `r < 1` bound and divergent rate pairs. `Economoist.Growth` documented an `r > g`
+  domain and enforced nothing, so a caller passing `r <= g` received a
+  plausible-looking wrong answer rather than a signal: measured at the pin
+  through the built package, `gordon_pv(1, 0.03, 0.08)` is `-20.000002` and
+  `gordon_pv(1, 0.05, 0.05)` is `inf`, and `gordon_pv_strict` fails
+  identically. The sibling `Economoist.Markov.make_dist` already guarded and
+  returned `Option`; this brings Growth to the same convention (economoist#38).
+
+  **The raw exports are unchanged and stay total**, for a mechanical reason
+  rather than a stylistic one: `grad` rejects an `Option` result (`grad
+  requires a scalar floating output, got Option f32`) and
+  `sampled/growth_sensitivity.ch` differentiates the imported `gordon_pv` with
+  respect to `r`, so an `Option` signature would take the AD lane out at the
+  pin. The SMT goals and the `demos/businesswrong.ch` characterization gallery
+  also compare the raw value against `0.0`, and
+  `docs/cnote-import-surface.json` publishes `gordon_pv` under a frozen
+  schema. The published C Note import surface is untouched; the new exports
+  are not part of it.
+
+  Each guard is written in its positive form, which is load-bearing:
+  `if (r > g) then Some(...) else None` returns `None` for a `NaN` rate
+  because every ordering comparison against `NaN` is false, so it fails
+  closed, where the negated spelling states the same domain and returns
+  `Some`. Eight tests cover the checked exports, every positive case with its
+  negative twin; negating the guard fails the two NaN tests
+  (`test_gordon_pv_checked_rejects_nan_rate`,
+  `test_gordon_pv_checked_rejects_nan_growth`) and nothing else.
+
 ### Fixed
 
 - `advance` and `advance3` no longer require transition rows to sum to exactly

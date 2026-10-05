@@ -1,5 +1,5 @@
 module Economoist.Growth
-export (gordon_pv, gordon_pv_strict, gordon_pv_negated)
+export (gordon_pv, gordon_pv_strict, gordon_pv_negated, gordon_pv_checked, gordon_pv_strict_checked)
 -- Gordon closed-form value P = D / (r - g), with next-period dividend D,
 -- required return r, and growth rate g. Under D > 0 and r > g the value is
 -- positive. The checked two-point comparisons show it increases with D
@@ -35,3 +35,62 @@ def gordon_pv_strict(d: f32, r: f32, g: f32) -> f32 = (d / (r - g))
 -- of corrupting the model). It is NOT a claim about economics; it is a deliberate
 -- defect the gallery must characterize as broken.
 def gordon_pv_negated(d: f32, r: f32, g: f32) -> f32 = (0.0 - (d / (r - g)))
+-- The domain-checked entry points. gordon_pv above evaluates the closed form
+-- unconditionally, so a caller who passes r <= g gets a plausible-looking wrong
+-- answer rather than a signal: at r < g the sign flips (gordon_pv(1, 0.03, 0.08)
+-- is -20.000002) and at r = g the denominator is zero (gordon_pv(1, 0.05, 0.05)
+-- is inf). Neither traps, because Chelis f32 division does not. These variants
+-- test the ONE RATE INEQUALITY each raw export states -- r > g, and
+-- r > g + 0.01 for the strict variant -- and return None when it fails, which
+-- is the signalling convention Economoist.Markov.make_dist already uses. They
+-- do not test the documented domain, which is narrower than that inequality on
+-- both the dividend and the rates; see the paragraph below.
+--
+-- The raw exports stay total on purpose, and the reason is mechanical rather
+-- than stylistic: grad rejects an Option result ("grad requires a scalar
+-- floating output, got Option f32"), and sampled/growth_sensitivity.ch
+-- differentiates the imported gordon_pv with respect to r. The SMT goals in
+-- properties/growth.ch and the characterization gallery in
+-- demos/businesswrong.ch also compare the raw value against 0.0 over the reals,
+-- and docs/cnote-import-surface.json publishes gordon_pv to the C Note import
+-- under a frozen schema. So the guard is added beside the closed form, not
+-- inside it. A caller who has already established its rate domain keeps the
+-- total function; a caller taking r and g from data should use these.
+--
+-- Each guard is written in its POSITIVE form, and that is load-bearing rather
+-- than a style choice. `if (r > g) then Some(...) else None` returns None when r
+-- is NaN, because every ordering comparison against NaN is false, so the guard
+-- fails closed. The negated spelling `if (r <= g) then None else Some(...)`
+-- states the same domain and returns Some for a NaN rate. Do not "simplify" to
+-- it; tests/growth.ch pins both NaN cases, and negating the guard fails those
+-- two tests and nothing else.
+--
+-- These guards test ONE INEQUALITY, not a domain. Four things follow, each
+-- measured. They are not the hypothesis of the positivity properties, which
+-- also require d > 0, so Some(v) does not imply v > 0:
+-- gordon_pv_checked(-1, 0.08, 0.03) is Some(-20.000002). They do not bound the
+-- quotient's magnitude: gordon_pv_checked(1, 1.4e-45, 0) is Some(inf). And they
+-- are weaker than the documented economic rate domain, which this module's own
+-- header puts at 0 <= g < r with r != -1 and |(1+g)/(1+r)| < 1, and which the
+-- manifest bounds at 0 < r < 1 and g >= 0: gordon_pv_checked(1, 2.0, 1.5) is
+-- Some(2.0) with r above the published bound, and
+-- gordon_pv_checked(1, -2.0, -3.0) is Some(1.0) on a divergent series. The NaN
+-- refusal covers r and g but not d, where gordon_pv_checked(NaN, 0.08, 0.03) is
+-- Some(NaN). economoist#38 asked for the
+-- rate domain; widening these to the dividend is a separate change, and
+-- tests/growth.ch records each of these as asserted behaviour rather than
+-- leaving a reader to assume otherwise.
+--
+-- gordon_pv_checked enforces r > g, the positive-denominator rate region that
+-- gordon_positive is proven over under its own d > 0.
+-- gordon_pv_strict_checked enforces
+-- r > g + 0.01, the margin-of-safety domain of use that gordon_pv_strict
+-- documents and the rate half of what gordon_strict_positive is proven over,
+-- which carries its own d > 0 exactly as gordon_positive does, so it rejects a
+-- spread that is positive but inside the one-point margin. Both return the same
+-- closed form as their raw counterpart when their inequality holds. There is no checked
+-- counterpart to gordon_pv_negated: that export is a deliberately defective
+-- reference model for the gallery, and a domain guard on it would assert a
+-- correctness it is built not to have.
+def gordon_pv_checked(d: f32, r: f32, g: f32) -> Option[f32] = if (r > g) then Some((d / (r - g))) else None
+def gordon_pv_strict_checked(d: f32, r: f32, g: f32) -> Option[f32] = if (r > (g + 0.01)) then Some((d / (r - g))) else None
