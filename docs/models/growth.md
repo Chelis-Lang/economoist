@@ -28,14 +28,16 @@ The goals in [`properties/growth.ch`](../../properties/growth.ch) call the expor
 | `gordon_pv(1, 0.05, 0.05)` — `r = g` | `inf` |
 | `gordon_pv_strict(1, 0.03, 0.08)` — `r < g` | `-20.000002` |
 
-`gordon_pv_checked` and `gordon_pv_strict_checked` return `Option[f32]`, `None` outside the domain each raw export documents — the signalling convention [`Economoist.Markov`](../../src/markov.ch)'s `make_dist` already uses:
+`gordon_pv_checked` and `gordon_pv_strict_checked` return `Option[f32]`, `None` outside the **rate** domain each raw export documents — the signalling convention [`Economoist.Markov`](../../src/markov.ch)'s `make_dist` already uses:
 
-| export | domain enforced | proven over the same region by |
+| export | rate condition enforced | rate condition of the matching property |
 | --- | --- | --- |
-| `gordon_pv_checked` | `r > g` | `gordon_positive` |
-| `gordon_pv_strict_checked` | `r > g + 0.01` | `gordon_strict_positive` |
+| `gordon_pv_checked` | `r > g` | `gordon_positive` (`d > 0`, `r > g`) |
+| `gordon_pv_strict_checked` | `r > g + 0.01` | `gordon_strict_positive` (`d > 0`, `r > g + 0.01`) |
 
-Inside the domain each returns the same value as its raw counterpart. `r = 0.055`, `g = 0.05` separates the two: `gordon_pv_checked` accepts it and returns `200`, while `gordon_pv_strict_checked` refuses, because the `0.005` spread does not clear the one-point margin.
+Inside the rate domain each returns the same value as its raw counterpart. `r = 0.055`, `g = 0.05` separates the two: `gordon_pv_checked` admits it and returns `200.0000457763672`, while `gordon_pv_strict_checked` refuses, because the `0.005` spread does not clear the one-point margin.
+
+**What `Some` does and does not mean.** These guards test the rates only. They are **not** the hypothesis of the positivity properties, which additionally require `d > 0`, so `Some(v)` does **not** imply `v > 0`: `gordon_pv_checked(-1, 0.08, 0.03)` returns `Some(-20.000002)`, the same number the table above shows as the out-of-domain answer. Nor does the guard bound the magnitude of the quotient — `gordon_pv_checked(1, 1.4e-45, 0)` returns `Some(inf)`, and the strict margin does not prevent it either (`gordon_pv_strict_checked(3.0e38, 0.02, 0)` is `Some(inf)`). And the `NaN` refusal is a property of the two rate arguments: a `NaN` `r` or `NaN` `g` gives `None`, while `gordon_pv_checked(NaN, 0.08, 0.03)` returns `Some(NaN)`. A caller that needs `d > 0`, a finite result, or a non-`NaN` dividend must still establish it. economoist#38 asked for the rate domain; widening these guards is a separate change.
 
 **Why the raw exports stay total.** The reason is mechanical, not stylistic. `grad` rejects an `Option` result — `grad requires a scalar floating output, got Option f32` — and the [sampled derivative check](#sampled-derivative-check) differentiates the imported `gordon_pv` with respect to `r`. The SMT goals above and the `demos/businesswrong.ch` gallery compare the raw value against `0.0` over the reals, and the [model catalog](../cnote-import-surface.json) publishes `gordon_pv` under a frozen schema. So the guard is added beside the closed form rather than inside it. A caller that has already established its rate domain keeps the total function; a caller taking `r` and `g` from data should use the checked export.
 

@@ -61,8 +61,19 @@ def gordon_pv_negated(d: f32, r: f32, g: f32) -> f32 = (0.0 - (d / (r - g)))
 -- states the same domain and returns Some for a NaN rate. Do not "simplify" to
 -- it; tests/growth.ch pins the NaN case.
 --
--- gordon_pv_checked enforces r > g, the positive-denominator region that
--- gordon_positive is proven over. gordon_pv_strict_checked enforces
+-- These guards test the RATES ONLY. They are not the hypothesis of the
+-- positivity properties, which also require d > 0, so Some(v) does not imply
+-- v > 0: gordon_pv_checked(-1, 0.08, 0.03) is Some(-20.000002). They also do
+-- not bound the quotient's magnitude -- gordon_pv_checked(1, 1.4e-45, 0) is
+-- Some(inf) -- and the NaN refusal covers r and g but not d, where
+-- gordon_pv_checked(NaN, 0.08, 0.03) is Some(NaN). economoist#38 asked for the
+-- rate domain; widening these to the dividend is a separate change, and
+-- tests/growth.ch records each of these as asserted behaviour rather than
+-- leaving a reader to assume otherwise.
+--
+-- gordon_pv_checked enforces r > g, the positive-denominator rate region that
+-- gordon_positive is proven over under its own d > 0.
+-- gordon_pv_strict_checked enforces
 -- r > g + 0.01, the margin-of-safety domain of use that gordon_pv_strict
 -- documents and gordon_strict_positive is proven over, so it rejects a spread
 -- that is positive but inside the one-point margin. Both return the same

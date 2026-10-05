@@ -9,8 +9,11 @@ All notable changes to the Economoist shell are recorded here. The package
 
 - `gordon_pv_checked` and `gordon_pv_strict_checked` (src/growth.ch) — the
   domain-checked Gordon entry points, returning `Option[f32]` and `None`
-  outside the domain their raw counterpart documents (`r > g` and
-  `r > g + 0.01` respectively). `Economoist.Growth` documented an `r > g`
+  outside the **rate** domain their raw counterpart documents (`r > g` and
+  `r > g + 0.01` respectively). They test the rates only: they are not the
+  hypothesis of the positivity properties, which also require `d > 0`, so
+  `Some(v)` does not imply `v > 0`, and they do not bound the quotient's
+  magnitude. `Economoist.Growth` documented an `r > g`
   domain and enforced nothing, so a caller passing `r <= g` received a
   plausible-looking wrong answer rather than a signal: measured at the pin
   through the built package, `gordon_pv(1, 0.03, 0.08)` is `-20.000002` and
