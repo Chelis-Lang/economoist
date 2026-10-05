@@ -40,8 +40,11 @@ def gordon_pv_negated(d: f32, r: f32, g: f32) -> f32 = (0.0 - (d / (r - g)))
 -- answer rather than a signal: at r < g the sign flips (gordon_pv(1, 0.03, 0.08)
 -- is -20.000002) and at r = g the denominator is zero (gordon_pv(1, 0.05, 0.05)
 -- is inf). Neither traps, because Chelis f32 division does not. These variants
--- enforce the domain each raw export documents and return None outside it,
--- which is the signalling convention Economoist.Markov.make_dist already uses.
+-- test the ONE RATE INEQUALITY each raw export states -- r > g, and
+-- r > g + 0.01 for the strict variant -- and return None when it fails, which
+-- is the signalling convention Economoist.Markov.make_dist already uses. They
+-- do not test the documented domain, which is narrower than that inequality on
+-- both the dividend and the rates; see the paragraph below.
 --
 -- The raw exports stay total on purpose, and the reason is mechanical rather
 -- than stylistic: grad rejects an Option result ("grad requires a scalar
@@ -59,14 +62,21 @@ def gordon_pv_negated(d: f32, r: f32, g: f32) -> f32 = (0.0 - (d / (r - g)))
 -- is NaN, because every ordering comparison against NaN is false, so the guard
 -- fails closed. The negated spelling `if (r <= g) then None else Some(...)`
 -- states the same domain and returns Some for a NaN rate. Do not "simplify" to
--- it; tests/growth.ch pins the NaN case.
+-- it; tests/growth.ch pins both NaN cases, and negating the guard fails those
+-- two tests and nothing else.
 --
--- These guards test the RATES ONLY. They are not the hypothesis of the
--- positivity properties, which also require d > 0, so Some(v) does not imply
--- v > 0: gordon_pv_checked(-1, 0.08, 0.03) is Some(-20.000002). They also do
--- not bound the quotient's magnitude -- gordon_pv_checked(1, 1.4e-45, 0) is
--- Some(inf) -- and the NaN refusal covers r and g but not d, where
--- gordon_pv_checked(NaN, 0.08, 0.03) is Some(NaN). economoist#38 asked for the
+-- These guards test ONE INEQUALITY, not a domain. Three things follow, each
+-- measured. They are not the hypothesis of the positivity properties, which
+-- also require d > 0, so Some(v) does not imply v > 0:
+-- gordon_pv_checked(-1, 0.08, 0.03) is Some(-20.000002). They do not bound the
+-- quotient's magnitude: gordon_pv_checked(1, 1.4e-45, 0) is Some(inf). And they
+-- are weaker than the documented economic rate domain, which this module's own
+-- header puts at 0 <= g < r with r != -1 and |(1+g)/(1+r)| < 1, and which the
+-- manifest bounds at 0 < r < 1 and g >= 0: gordon_pv_checked(1, 2.0, 1.5) is
+-- Some(2.0) with r above the published bound, and
+-- gordon_pv_checked(1, -2.0, -3.0) is Some(1.0) on a divergent series. The NaN
+-- refusal covers r and g but not d, where gordon_pv_checked(NaN, 0.08, 0.03) is
+-- Some(NaN). economoist#38 asked for the
 -- rate domain; widening these to the dividend is a separate change, and
 -- tests/growth.ch records each of these as asserted behaviour rather than
 -- leaving a reader to assume otherwise.

@@ -8,12 +8,13 @@ All notable changes to the Economoist shell are recorded here. The package
 ### Added
 
 - `gordon_pv_checked` and `gordon_pv_strict_checked` (src/growth.ch) — the
-  domain-checked Gordon entry points, returning `Option[f32]` and `None`
-  outside the **rate** domain their raw counterpart documents (`r > g` and
-  `r > g + 0.01` respectively). They test the rates only: they are not the
+  domain-checked Gordon entry points, returning `Option[f32]` and `None` when
+  the **one rate inequality** each tests fails (`r > g` and `r > g + 0.01`
+  respectively). They test that inequality and nothing else: they are not the
   hypothesis of the positivity properties, which also require `d > 0`, so
-  `Some(v)` does not imply `v > 0`, and they do not bound the quotient's
-  magnitude. `Economoist.Growth` documented an `r > g`
+  `Some(v)` does not imply `v > 0`; they do not bound the quotient's magnitude;
+  and they are weaker than the documented economic rate domain, admitting
+  `r` above the published `r < 1` bound and divergent rate pairs. `Economoist.Growth` documented an `r > g`
   domain and enforced nothing, so a caller passing `r <= g` received a
   plausible-looking wrong answer rather than a signal: measured at the pin
   through the built package, `gordon_pv(1, 0.03, 0.08)` is `-20.000002` and
@@ -36,9 +37,10 @@ All notable changes to the Economoist shell are recorded here. The package
   `if (r > g) then Some(...) else None` returns `None` for a `NaN` rate
   because every ordering comparison against `NaN` is false, so it fails
   closed, where the negated spelling states the same domain and returns
-  `Some`. Six tests cover it, every positive case with its negative twin;
-  negating the guard fails `test_gordon_pv_checked_rejects_nan_rate` and no
-  other test.
+  `Some`. Eight tests cover the checked exports, every positive case with its
+  negative twin; negating the guard fails the two NaN tests
+  (`test_gordon_pv_checked_rejects_nan_rate`,
+  `test_gordon_pv_checked_rejects_nan_growth`) and nothing else.
 
 ### Fixed
 

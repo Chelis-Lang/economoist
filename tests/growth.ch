@@ -102,5 +102,5 @@ def test_gordon_pv_strict_checked_rejects_inside_margin() -> unit ! { Test } = {
   }
   refused = assert_false(strict_checked_admitted(1.0f32, 0.055f32, 0.05f32), "a positive spread inside the one-point margin is refused by the strict guard")
   composed = assert_true(checked_admitted(1.0f32, 0.055f32, 0.05f32), "the same input is admitted by the r > g guard, so the two domains are genuinely different")
-  assert_close(accepted, 200.0000457763672f32, 0.001f32, "and the r > g guard returns the exact closed form there")
+  assert_close(accepted, 200.0000457763672f32, 0.00001f32, "and the r > g guard returns the exact closed form there; the tolerance is below the 4.6e-5 gap to 200.0, so this pins the value rather than its magnitude")
 }
