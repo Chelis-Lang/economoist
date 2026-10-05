@@ -20,8 +20,8 @@ concurrency:
 # (scripts/audit_workarounds.py --pins-only) reads without running the workflow.
 # The reef.toml derivation below stays as a runtime cross-check.
 env:
-  CHELIS_TAG: v0.18.12
-  CHELIS_VERSION: 0.18.12
+  CHELIS_TAG: v0.18.13
+  CHELIS_VERSION: 0.18.13
 
 jobs:
   # Check the full properties/ and demos/ corpus with the pinned release.

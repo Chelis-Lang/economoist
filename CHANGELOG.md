@@ -95,6 +95,15 @@ All notable changes to the Economoist shell are recorded here. The package
 - Add a pinned Git-history secret scan to pull-request and push checks, with
   contract tests.
 
+## [0.2.15] - 2026-10-05
+
+- Rebuild Economoist with the published Chelis 0.18.13 compiler and its
+  bundled `chelis-std` archive. Repin the workflows and refresh the C Note
+  invariant manifest for the new package release.
+- The official release binary passed the ten-stage local gate. All nine
+  real-arithmetic SMT expectations and the sampled AD expectation retain their
+  tiers. The Beacon-only Gordon probe remains unsupported for scalar inputs.
+
 ## [0.2.14] - 2026-09-30
 
 - Rebuild Economoist for the published Chelis 0.18.12 release. Repin the compiler, workflows,
