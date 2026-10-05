@@ -7,9 +7,9 @@ An expressible open blocker also gets an isolated `.ch` and `.expect` in
 on the pinned Chelis release.
 
 Re-probe cadence: check **Actively blocking** at every compiler release;
-**Tracking** when an issue changes; **Parked** when its prerequisite ships or
-a model needs it; **Archived** if a regression control fails or a new symptom
-appears. The commands below run from the Economoist checkout against the
+**Tracking** when its stated prerequisite ships or an issue changes;
+**Archived** if a regression control fails or a new symptom appears. The
+commands below run from the Economoist checkout against the
 [`reef.toml`](../reef.toml) pin unless stated otherwise.
 
 ## Actively blocking
@@ -17,10 +17,6 @@ appears. The commands below run from the Economoist checkout against the
 (none yet)
 
 ## Tracking
-
-(none yet)
-
-## Parked
 
 - **Fixed-point and convergence proofs — chelis#2829.** The two- and
   three-state Bellman properties check a single update, including both sides
@@ -38,10 +34,10 @@ appears. The commands below run from the Economoist checkout against the
   claiming it.
 
 - **Larger state-space bounds — chelis#2830.** This package proves fixed two-
-  and three-state instances with SMT. The pinned command
+  and three-state instances with SMT. At the 0.18.13 pin,
   `chelis prove properties/growth.ch --tier beacon-only --json` reports
-  `unsupported` for the scalar Gordon inputs because this path requires
-  distinct named rank-zero `tensor[f64]` parameters; it does not establish
+  eight `unsupported` results for the scalar Gordon inputs because this path
+  requires distinct named rank-zero `tensor[f64]` parameters; it does not establish
   large economic-state bounds. Beacon's shape-semantic tensor handling is
   tracked in beacon#52; the Chelis reporting and dispatch need is chelis#2830.
   Current response: retain the fixed-dimension claims

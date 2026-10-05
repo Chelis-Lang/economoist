@@ -5,7 +5,28 @@ to this file so Claude-style and Codex-style entry points do not drift.
 
 ## Repo Identity
 
-<!-- BEGIN CHELIS MANAGED BLOCK: agents-inheritance chelis@0.18.12 (sha256:7a29d33c9cfe7d57) -->
+- Economoist is a downstream **shell repo** for the
+  [Chelis](https://github.com/Chelis-Lang/chelis) language, scoped to
+  verified economic and dynamic-programming models. It is the
+  academic surface for checked economic models.
+- Every `properties/` economic claim must pass as an unqualified SMT result
+  over the reals. The concrete `f32` AD check belongs in `sampled/` and is
+  fuzz-validated. No result is generalized beyond its guards or dimension.
+- **Domain bifurcation.** Economic content lives here. Finance and
+  derivatives stay in [Shoals](https://github.com/Chelis-Lang/shoals).
+  Economoist must never depend on Shoals; the two shells share scaffolding,
+  not modules.
+- **Upstream of truth** is `Chelis-Lang/chelis`. The Chelis monorepo's
+  `AGENTS.md` is inherited through the managed block, with the exact-heading
+  exclusions declared below for compiler-only and monorepo-only procedures. The
+  downstream shell contract applies in full. The machine-local
+  environment sections of the monorepo `AGENTS.md` (workstation runbooks,
+  first-exec notes, workstation-specific measurements) bind only where the
+  named environment actually exists. Make changes to the inherited contract
+  and shared skill source in the Chelis compiler repo, then run the pinned
+  `chelis reef conform sync` here.
+
+<!-- BEGIN CHELIS MANAGED BLOCK: agents-inheritance chelis@0.18.13 (sha256:20908ee18f40f7f3) -->
 # Chelis Agent Contract
 
 Keep this file concise and relevant to every agent working in this repository.
@@ -17,14 +38,18 @@ not drift.
 
 ## What Chelis Is
 
-Chelis is a functional language for AI research, built for a workflow where a coding
-agent is the primary author and a human is the supervisor, and where the programs are
-themselves AI systems: models, training loops, search spaces, learned functions. The
-bet is that a type system, representation, and compilation model designed around AI
-primitives from the start beat ones bolted onto Python or a systems language later. It
-is not a general-purpose language, a systems language, a web framework, or a Python
-replacement. `spec/00-context.md` and `spec/design/chelis_canonical_reference.md` own
-the full statement; their specifics may lag, their intent does not. When a tradeoff
+Chelis is a numerical computing language for code that agents write and people
+supervise. Tensors carry named dimensions and precision in their type; the compiler
+checks shapes, precision, effects, and ownership before anything runs, and `chelis
+prove` checks the properties an author states, naming the method behind each result.
+The bet is that numerical code an agent can reason about, and a person can review
+through its types and properties, beats code whose mistakes first surface at run time.
+Chelis is general purpose within numerical computing; the worked examples come from
+quantitative finance. Differentiation and machine-learning programs are research
+directions, not the definition of the language. It is not a systems language, a web
+framework, a deep-learning framework, or a general scripting replacement for Python.
+`spec/00-context.md` and `spec/design/chelis_canonical_reference.md` own the full
+statement; their specifics may lag, their intent does not. When a tradeoff
 appears, apply these in order:
 
 1. **Unambiguity over ergonomics.** The author is an agent. The friction a human feels
@@ -82,7 +107,7 @@ function of those inputs, and feedback that varies between identical runs is a d
 
 ## Subagents
 
-[`docs/investigations/agent_contract_rationale.md`](docs/investigations/agent_contract_rationale.md)
+[`docs/investigations/agent_contract_rationale.md`](https://github.com/Chelis-Lang/chelis/blob/v0.18.13/docs/investigations/agent_contract_rationale.md)
 holds the measurements behind these rules.
 
 - Every subagent prompt names the delivery mechanism and the complete expected report.
@@ -97,6 +122,10 @@ holds the measurements behind these rules.
   immediately with the exact missing items. Prefer a labelled partial report over
   silence or an overstated completion claim, and deduplicate repeated reports that
   race with a resume nudge.
+- Every follow-up message to a running subagent, and every message to a peer session,
+  ends by asking the recipient to acknowledge it and confirm what it will do. No
+  acknowledgement by the recipient's next reply means the message was not received:
+  resend it, consolidated.
 - More than five subagents live at once under one orchestrator needs the user's
   explicit approval and a stated reason. Five is the widest fan-out measured working
   here, not a certified safe width, and it is a separate budget from the CPU one above.
@@ -134,8 +163,10 @@ AST contract. `spec/02-surf-syntax.md` §0.1 is the authority.
 - Type system: no implicit precision promotion, named tensor dimensions match by name,
   no implicit broadcasting (explicit `expand` only), integer literals default to `i32`
   and float literals to `f32`.
-- `chelis build` emits C, a header, runtime artifacts, and compile flags; `--target hip`
-  emits host code with embedded kernel strings. Neither invokes the native compiler.
+- `chelis build` invokes the native compiler for C, HIP, or Metal and produces an
+  executable or static library, retaining sources and runtime artifacts. `--emit-c`
+  stops after source emission. CPU is the acceptance priority; GPU targets remain
+  prerelease. See `docs/book/src/backends.md`.
 
 <!-- END CHELIS MANAGED BLOCK: agents-inheritance -->
 
@@ -152,28 +183,7 @@ AST contract. `spec/02-surf-syntax.md` §0.1 is the authority.
 <!-- ## The Chelis-Lang Repositories -->
 <!-- shell-local:exclude:end -->
 
-- Economoist is a downstream **shell repo** for the
-  [Chelis](https://github.com/Chelis-Lang/chelis) language, scoped to
-  verified economic and dynamic-programming models. It is the
-  academic surface for checked economic models.
-- Every `properties/` economic claim must pass as an unqualified SMT result
-  over the reals. The concrete `f32` AD check belongs in `sampled/` and is
-  fuzz-validated. No result is generalized beyond its guards or dimension.
-- **Domain bifurcation.** Economic content lives here. Finance and
-  derivatives stay in [Shoals](https://github.com/Chelis-Lang/shoals).
-  Economoist must never depend on Shoals; the two shells share scaffolding,
-  not modules.
-- **Upstream of truth** is `Chelis-Lang/chelis`. The Chelis monorepo's
-  `AGENTS.md` is inherited through the managed block, with the exact-heading
-  exclusions above for compiler-only and monorepo-only procedures. The
-  downstream shell contract applies in full. The machine-local
-  environment sections of the monorepo `AGENTS.md` (workstation runbooks,
-  first-exec notes, workstation-specific measurements) bind only where the
-  named environment actually exists. Make changes to the inherited contract
-  and shared skill source in the Chelis compiler repo, then run the pinned
-  `chelis reef conform sync` here.
-
-### Economoist Red Team Rounds
+## Economoist Red Team Rounds
 
 Use [`redteam-exec`](agent-skills/redteam-exec/SKILL.md) for every PR before
 merge, including documentation changes. Start with a fresh local reviewer on
@@ -183,7 +193,7 @@ caps, finding scope, and brief content. For each handoff, record the worktree
 HEAD and full status, worktree list, and process ownership as specified by the
 shell-local skill block. A dirty or busy worktree is unavailable for reuse.
 
-### Economoist Worktrees
+## Economoist Worktrees
 
 - Treat the primary checkout as read-only developer state. Create a dedicated
   worktree for each task and create its Python 3.11 environment with
@@ -194,7 +204,7 @@ shell-local skill block. A dirty or busy worktree is unavailable for reuse.
   process ownership and preserve anything uncertain. Then use
   `git worktree remove <path>` for that worktree; branch removal is separate.
 
-### Honesty boundaries
+## Honesty Boundaries
 
 Every module's docs state, per property, where the green stops. The proven
 fact is never silently generalized past what the SMT call established. Three
@@ -215,19 +225,19 @@ boundaries are mandatory:
 
 ## Toolchain Policy
 
-- `reef.toml` is the **single source of truth** for the `chelis` and
-  `chelis-std` pins and the package `version`. Do not duplicate any of those
-  numbers anywhere else; tooling and CI read them from `reef.toml` directly.
-  The Economoist package `version` track is its own and is not aligned to the
-  compiler pin.
+- `reef.toml` is authoritative for the compiler pin, `chelis-std`
+  dependency, and package version. Workflow pin pairs repeat the compiler
+  version; `reef.lock` records all three, and the C Note manifest repeats
+  the compiler and package versions. Consistency checks guard each copy.
+  The Economoist package version is independent of the compiler pin.
 - A single released `chelis` binary drives `fmt`, `lint`, `reef build`,
   `eval`, and `prove`. Install the `reef.toml` pin through
   `scripts/install_chelis_toolchain.py`; the local and CI proof gates run that
   release binary.
 - Never vendor or build the chelis compiler into this shell. Consume the released
   tarball for everything, `prove` included.
-- Compiler bumps land in **every** Chelis shell in the same change set; do
-  not bump Economoist unilaterally.
+- Coordinate compiler bumps across Chelis shells as a release wave. Each
+  shell lands its own pin-bump PR; do not leave Economoist's pin behind.
 - CI authenticates to the private `Chelis-Lang/chelis` releases via the repo
   secret `CHELIS_RELEASE_TOKEN` (a PAT with `contents: read`).
 
@@ -260,7 +270,7 @@ one change set:
 
 ## Upstream Bugs
 
-See `docs/UPSTREAM_BUGS.md` for the active-blocking, tracking, parked, and
+See `docs/UPSTREAM_BUGS.md` for the actively blocking, tracking, and
 archived inventory and its per-section re-probe cadence.
 
 **Narrowing-citation rule.** Any narrowing in code or spec (a `fail(...)`
@@ -303,9 +313,9 @@ shells.
 Project-local skills live in `agent-skills/`. `.claude/skills` and
 `.codex/skills` are symlinks to that directory so both tool surfaces load the
 same skill library. `.claude/commands/` and `.codex/commands/` mirror each
-other. The eight shared skills (`redteam-exec`, `spec-sync`, `phase-gate`,
+other. The nine shared skills (`redteam-exec`, `spec-sync`, `phase-gate`,
 `backend-numerics`, `example-corpus`, `cli-surface`, `packaging-install`,
-`issue-resolution`) are materialized from the pinned toolchain by
+`issue-resolution`, `chelis-std`) are materialized from the pinned toolchain by
 `chelis reef conform sync`; `agent-skills/UPSTREAM.toml` records the set.
 The `red-team` alias stays wired to `redteam-exec`. Change a shared skill
 upstream first, then sync it here. Never fork a shared skill in place.

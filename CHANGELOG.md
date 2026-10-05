@@ -5,6 +5,8 @@ All notable changes to the Economoist shell are recorded here. The package
 
 ## [Unreleased]
 
+## [0.2.15] - 2026-10-05
+
 ### Added
 
 - `gordon_pv_checked` and `gordon_pv_strict_checked` (src/growth.ch) — the
@@ -89,6 +91,13 @@ All notable changes to the Economoist shell are recorded here. The package
 - Present the checked economic models, upstream issue inventory, and demo controls
   without migration drafts; require compiler-owned dependency attribution on the
   pinned toolchain and keep the file-level diagnostic under negative tests.
+
+- Rebuild Economoist with the published Chelis 0.18.13 compiler and its
+  bundled `chelis-std` archive. Repin the workflows and refresh the C Note
+  invariant manifest for the new package release.
+- The official release binary passed the ten-stage local gate. All nine
+  real-arithmetic SMT expectations and the sampled AD expectation retain their
+  tiers. The Beacon-only Gordon probe remains unsupported for scalar inputs.
 
 ### Security
 
