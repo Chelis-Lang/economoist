@@ -65,7 +65,7 @@ def gordon_pv_negated(d: f32, r: f32, g: f32) -> f32 = (0.0 - (d / (r - g)))
 -- it; tests/growth.ch pins both NaN cases, and negating the guard fails those
 -- two tests and nothing else.
 --
--- These guards test ONE INEQUALITY, not a domain. Three things follow, each
+-- These guards test ONE INEQUALITY, not a domain. Four things follow, each
 -- measured. They are not the hypothesis of the positivity properties, which
 -- also require d > 0, so Some(v) does not imply v > 0:
 -- gordon_pv_checked(-1, 0.08, 0.03) is Some(-20.000002). They do not bound the
@@ -85,9 +85,10 @@ def gordon_pv_negated(d: f32, r: f32, g: f32) -> f32 = (0.0 - (d / (r - g)))
 -- gordon_positive is proven over under its own d > 0.
 -- gordon_pv_strict_checked enforces
 -- r > g + 0.01, the margin-of-safety domain of use that gordon_pv_strict
--- documents and gordon_strict_positive is proven over, so it rejects a spread
--- that is positive but inside the one-point margin. Both return the same
--- closed form as their raw counterpart inside the domain. There is no checked
+-- documents and the rate half of what gordon_strict_positive is proven over,
+-- which carries its own d > 0 exactly as gordon_positive does, so it rejects a
+-- spread that is positive but inside the one-point margin. Both return the same
+-- closed form as their raw counterpart when their inequality holds. There is no checked
 -- counterpart to gordon_pv_negated: that export is a deliberately defective
 -- reference model for the gallery, and a domain guard on it would assert a
 -- correctness it is built not to have.
