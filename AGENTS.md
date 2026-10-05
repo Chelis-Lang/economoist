@@ -225,19 +225,19 @@ boundaries are mandatory:
 
 ## Toolchain Policy
 
-- `reef.toml` is the **single source of truth** for the `chelis` and
-  `chelis-std` pins and the package `version`. Do not duplicate any of those
-  numbers anywhere else; tooling and CI read them from `reef.toml` directly.
-  The Economoist package `version` track is its own and is not aligned to the
-  compiler pin.
+- `reef.toml` is authoritative for the compiler pin, `chelis-std`
+  dependency, and package version. Workflow pin pairs repeat the compiler
+  version; `reef.lock` records all three, and the C Note manifest repeats
+  the compiler and package versions. Consistency checks guard each copy.
+  The Economoist package version is independent of the compiler pin.
 - A single released `chelis` binary drives `fmt`, `lint`, `reef build`,
   `eval`, and `prove`. Install the `reef.toml` pin through
   `scripts/install_chelis_toolchain.py`; the local and CI proof gates run that
   release binary.
 - Never vendor or build the chelis compiler into this shell. Consume the released
   tarball for everything, `prove` included.
-- Compiler bumps land in **every** Chelis shell in the same change set; do
-  not bump Economoist unilaterally.
+- Coordinate compiler bumps across Chelis shells as a release wave. Each
+  shell lands its own pin-bump PR; do not leave Economoist's pin behind.
 - CI authenticates to the private `Chelis-Lang/chelis` releases via the repo
   secret `CHELIS_RELEASE_TOKEN` (a PAT with `contents: read`).
 
@@ -270,7 +270,7 @@ one change set:
 
 ## Upstream Bugs
 
-See `docs/UPSTREAM_BUGS.md` for the active-blocking, tracking, parked, and
+See `docs/UPSTREAM_BUGS.md` for the actively blocking, tracking, and
 archived inventory and its per-section re-probe cadence.
 
 **Narrowing-citation rule.** Any narrowing in code or spec (a `fail(...)`
