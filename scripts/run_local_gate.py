@@ -57,10 +57,9 @@ def _resolve_bin() -> str:
             return str(Path(v).expanduser())
     m = re.search(r'compiler\s*=\s*"=([^"]+)"', (REPO_ROOT / "reef.toml").read_text())
     if m:
-        base = Path.home() / ".local/share/chelis" / m.group(1)
-        for cand in (base / "bin" / "chelis", base / "chelis"):
-            if cand.is_file():
-                return str(cand)
+        cand = Path.home() / ".chelis" / "toolchains" / m.group(1) / "bin" / "chelis"
+        if cand.is_file():
+            return str(cand)
     if which("chelis"):
         return "chelis"
     sys.exit("error: no chelis binary found; set CHELIS_BIN")

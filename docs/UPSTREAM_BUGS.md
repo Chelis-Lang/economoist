@@ -24,8 +24,8 @@ commands below run from the Economoist checkout against the
   uniqueness of a fixed point, convergence of `v_(k+1) = T(v_k)`, or a
   general-state-count theorem. Chelis#978 provides structural induction for
   a particular directly recursive scalar shape, but no proof in this package
-  connects its Bellman bounds to an iteration limit. Current response: keep
-  these claims outside the proven catalog; there is no `.ch` reproducer of a
+  connects its Bellman bounds to an iteration limit. These claims stay outside
+  the proven catalog; there is no `.ch` reproducer of a
   false compiler verdict. Markov stationarity, ergodicity, and arbitrary
   state-count results are also outside the catalog. Chelis#978's scalar
   induction case does not establish those economic claims. Re-probe when
@@ -34,14 +34,14 @@ commands below run from the Economoist checkout against the
   claiming it.
 
 - **Larger state-space bounds — chelis#2830.** This package proves fixed two-
-  and three-state instances with SMT. At the 0.18.13 pin,
+  and three-state instances with SMT. With the pinned compiler,
   `chelis prove properties/growth.ch --tier beacon-only --json` reports
   eight `unsupported` results for the scalar Gordon inputs because this path
   requires distinct named rank-zero `tensor[f64]` parameters; it does not establish
   large economic-state bounds. Beacon's shape-semantic tensor handling is
   tracked in beacon#52; the Chelis reporting and dispatch need is chelis#2830.
-  Current response: retain the fixed-dimension claims
-  and make no larger-state bound claim. Re-probe when beacon#52 decides its
+  The catalog contains the fixed-dimension claims
+  and no larger-state bound claim. Re-probe when beacon#52 decides its
   tensor path and chelis#2830 can report an applicable bound.
 
 ## Archived

@@ -34,7 +34,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 def resolve_bin() -> str:
     """CHELIS_SMT_BIN/CHELIS_BIN override, else the reef.toml-pinned release
-    install (~/.local/share/chelis/<pin>/bin/chelis, or the top-level layout),
+    install (~/.chelis/toolchains/<pin>/bin/chelis),
     else `chelis` on PATH. The release binary supplies every command."""
     from shutil import which
     for env in ("CHELIS_BIN", "CHELIS_SMT_BIN"):
@@ -43,10 +43,9 @@ def resolve_bin() -> str:
             return str(Path(v).expanduser())
     m = re.search(r'compiler\s*=\s*"=([^"]+)"', (REPO_ROOT / "reef.toml").read_text())
     if m:
-        base = Path.home() / ".local/share/chelis" / m.group(1)
-        for cand in (base / "bin" / "chelis", base / "chelis"):
-            if cand.is_file():
-                return str(cand)
+        cand = Path.home() / ".chelis" / "toolchains" / m.group(1) / "bin" / "chelis"
+        if cand.is_file():
+            return str(cand)
     if which("chelis"):
         return "chelis"
     sys.exit("error: no chelis binary found; set CHELIS_SMT_BIN or CHELIS_BIN")

@@ -3,8 +3,8 @@
   "schema_version": "1.0",
   "pkg": "economoist",
   "pkg_version": "0.2.15",
-  "chelis_pin": "0.18.13",
-  "purpose": "Economoist's model and invariant surface for C Note. Every proven result is an unqualified SMT proof over the reals that calls the shipped operator; the fuzz_validated result checks sampled f32 AD and carries a tier_upgrade_trigger. At release, this file is copied byte-for-byte into economoist-<pkg_version>.invariants.json, the versioned asset C Note vendors. See C Note's characterization_contract_v1.md (schema chelis-shell.invariant-surface/1.0).",
+  "chelis_pin": "0.19.0",
+  "purpose": "Economoist's model and invariant surface for C Note. Every proven result is an unqualified SMT proof over the reals that calls the shipped operator; the fuzz_validated result checks sampled f32 AD and carries a tier_upgrade_trigger. The release publishes this file byte-for-byte as economoist-<pkg_version>.invariants.json, the versioned asset C Note vendors. See C Note's characterization_contract_v1.md (schema chelis-shell.invariant-surface/1.0).",
   "models": [
     {
       "id": "gordon",
@@ -501,7 +501,8 @@
         "0.18.9": "proven",
         "0.18.10": "proven",
         "0.18.12": "proven",
-        "0.18.13": "proven"
+        "0.18.13": "proven",
+        "0.19.0": "proven"
       },
       "dischargeability_probe": "p01_gordon_div_positive",
       "violation_text": "growth above the return puts the positive-dividend closed-form value below zero, outside the stated r > g guard",
@@ -561,7 +562,8 @@
         "0.18.9": "proven",
         "0.18.10": "proven",
         "0.18.12": "proven",
-        "0.18.13": "proven"
+        "0.18.13": "proven",
+        "0.19.0": "proven"
       },
       "dischargeability_probe": "p01_gordon_div_positive",
       "violation_text": "growth above the return puts the conservative closed-form value below zero, outside its stated r > g + 0.01 domain",
@@ -629,7 +631,8 @@
         "0.18.9": "proven",
         "0.18.10": "proven",
         "0.18.12": "proven",
-        "0.18.13": "proven"
+        "0.18.13": "proven",
+        "0.19.0": "proven"
       },
       "dischargeability_probe": "p02_gordon_two_point_r",
       "violation_text": "raising the required return does not strictly lower the present value",
@@ -696,7 +699,8 @@
         "0.18.9": "proven",
         "0.18.10": "proven",
         "0.18.12": "proven",
-        "0.18.13": "proven"
+        "0.18.13": "proven",
+        "0.19.0": "proven"
       },
       "dischargeability_probe": "p13_economoist_published_properties",
       "violation_text": "a non-stochastic transition row lets total probability mass drift off one",
@@ -770,7 +774,8 @@
         "0.18.9": "proven",
         "0.18.10": "proven",
         "0.18.12": "proven",
-        "0.18.13": "proven"
+        "0.18.13": "proven",
+        "0.19.0": "proven"
       },
       "dischargeability_probe": "p13_economoist_published_properties",
       "violation_text": "a non-stochastic transition row lets total probability mass drift off one (n=3)",
@@ -886,7 +891,8 @@
         "0.18.9": "proven",
         "0.18.10": "proven",
         "0.18.12": "proven",
-        "0.18.13": "proven"
+        "0.18.13": "proven",
+        "0.19.0": "proven"
       },
       "dischargeability_probe": "p04_ite_two_call",
       "violation_text": "one Bellman step can fail the monotonicity claim when the domination guard v <= w is dropped",
@@ -988,7 +994,8 @@
         "0.18.9": "proven",
         "0.18.10": "proven",
         "0.18.12": "proven",
-        "0.18.13": "proven"
+        "0.18.13": "proven",
+        "0.19.0": "proven"
       },
       "dischargeability_probe": "p04_ite_two_call",
       "violation_text": "dropping row-stochasticity lets the discounted expectation amplify the value gap past the g-contraction bound",
@@ -1104,7 +1111,8 @@
         "0.18.9": "proven",
         "0.18.10": "proven",
         "0.18.12": "proven",
-        "0.18.13": "proven"
+        "0.18.13": "proven",
+        "0.19.0": "proven"
       },
       "dischargeability_probe": "p15_nested_fmax3",
       "violation_text": "dropping row-stochasticity can break the n=3 per-state contraction bound",
@@ -1164,7 +1172,8 @@
         "0.18.9": "proven",
         "0.18.10": "proven",
         "0.18.12": "proven",
-        "0.18.13": "proven"
+        "0.18.13": "proven",
+        "0.19.0": "proven"
       },
       "dischargeability_probe": "p01_gordon_div_positive",
       "violation_text": "the mispriced perpetuity gordon_pv_negated prices a positive-dividend claim below zero INSIDE its validity region r > g -- an in-region defect",
@@ -1253,9 +1262,10 @@
         "0.18.9": "fuzz_validated",
         "0.18.10": "fuzz_validated",
         "0.18.12": "fuzz_validated",
-        "0.18.13": "fuzz_validated"
+        "0.18.13": "fuzz_validated",
+        "0.19.0": "fuzz_validated"
       },
-      "tier_upgrade_trigger": "Dated semantic deferral: retain the concrete f32 AD lane at fuzz_validated until a bit-precise floating-point proof tier exists (review 2027-01-30; docs/models/growth.md E4)",
+      "tier_upgrade_trigger": "The sampled/growth_sensitivity.ch f32 AD result is fuzz_validated until a bit-precise floating-point proof of the derivative is available.",
       "dischargeability_probe": "p05_grad_fuzz",
       "violation_text": "the AD sensitivity dP/dr comes out non-negative in the convergence region, contradicting the proven decreasing-in-r fact",
       "fuzz_domain_note": "guards intersect the prover fuzz box [-10,10]^n with ~3% acceptance (cnote.dischargeability p05/p11)",
