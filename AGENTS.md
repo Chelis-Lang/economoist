@@ -26,7 +26,7 @@ to this file so Claude-style and Codex-style entry points do not drift.
   and shared skill source in the Chelis compiler repo, then run the pinned
   `chelis reef conform sync` here.
 
-<!-- BEGIN CHELIS MANAGED BLOCK: agents-inheritance chelis@0.18.13 (sha256:20908ee18f40f7f3) -->
+<!-- BEGIN CHELIS MANAGED BLOCK: agents-inheritance chelis@0.19.0 (sha256:03e98b84cf93851d) -->
 # Chelis Agent Contract
 
 Keep this file concise and relevant to every agent working in this repository.
@@ -107,7 +107,7 @@ function of those inputs, and feedback that varies between identical runs is a d
 
 ## Subagents
 
-[`docs/investigations/agent_contract_rationale.md`](https://github.com/Chelis-Lang/chelis/blob/v0.18.13/docs/investigations/agent_contract_rationale.md)
+[`docs/investigations/agent_contract_rationale.md`](https://github.com/Chelis-Lang/chelis/blob/v0.19.0/docs/investigations/agent_contract_rationale.md)
 holds the measurements behind these rules.
 
 - Every subagent prompt names the delivery mechanism and the complete expected report.
@@ -231,15 +231,13 @@ boundaries are mandatory:
   the compiler and package versions. Consistency checks guard each copy.
   The Economoist package version is independent of the compiler pin.
 - A single released `chelis` binary drives `fmt`, `lint`, `reef build`,
-  `eval`, and `prove`. Install the `reef.toml` pin through
-  `scripts/install_chelis_toolchain.py`; the local and CI proof gates run that
-  release binary.
+  `eval`, and `prove`. `chelis reef setup` installs the `reef.toml` pin and
+  locked dependencies; the local and CI proof gates run that release binary.
 - Never vendor or build the chelis compiler into this shell. Consume the released
   tarball for everything, `prove` included.
 - Coordinate compiler bumps across Chelis shells as a release wave. Each
   shell lands its own pin-bump PR; do not leave Economoist's pin behind.
-- CI authenticates to the private `Chelis-Lang/chelis` releases via the repo
-  secret `CHELIS_RELEASE_TOKEN` (a PAT with `contents: read`).
+- CI downloads the public Chelis release with its GitHub token.
 
 ## Pin Bump Checklist
 
@@ -248,8 +246,8 @@ one change set:
 
 1. Update **every** pin location: `reef.toml` plus each workflow's
    `CHELIS_TAG`/`CHELIS_VERSION` env pair. Verify with the offline pin check
-   (`scripts/audit_workarounds.py --pins-only`). Install the toolchain via
-   the checked-in installer (`scripts/install_chelis_toolchain.py`).
+   (`scripts/audit_workarounds.py --pins-only`). Install the toolchain and
+   locked dependencies with `chelis reef setup`.
 2. Run the blocked-probe suite. **FIX-detected** means the upstream bug is
    gone: execute the sidecar's de-narrowing instructions, promote the probe
    to a real test, and archive the matching `UPSTREAM_BUGS` entry. **DRIFTED**

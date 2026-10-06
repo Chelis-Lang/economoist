@@ -12,8 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CHELIS_TAG: v0.18.13
-  CHELIS_VERSION: 0.18.13
+  CHELIS_TAG: v0.19.0
+  CHELIS_VERSION: 0.19.0
 
 jobs:
   hard-rule-guard:
@@ -21,8 +21,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Test release-toolchain installer layout
-        run: python3 scripts/test_install_chelis_toolchain.py
       - name: Test forge compiler-pin derivation
         run: python3 scripts/test_run_forge_tests.py
       - name: Exact compiler value decoder regressions
@@ -89,7 +87,7 @@ jobs:
         with:
           chelis-tag: ${{ env.CHELIS_TAG }}
           chelis-version: ${{ env.CHELIS_VERSION }}
-          gh-token: ${{ secrets.CHELIS_RELEASE_TOKEN }}
+          gh-token: ${{ github.token }}
 
       - name: Format check
         run: |
@@ -104,7 +102,7 @@ jobs:
 
       - name: Reef package build
         env:
-          GITHUB_TOKEN: ${{ secrets.CHELIS_RELEASE_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: chelis reef build .
 
       - name: Shell contract conformance
