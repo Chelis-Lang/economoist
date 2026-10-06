@@ -22,6 +22,7 @@ export PATH="$HOME/.chelis/bin:$PATH"
 gh repo clone Chelis-Lang/economoist
 cd economoist
 uv venv --python 3.11
+chelisup install "$(.venv/bin/python -c 'import tomllib; print(tomllib.load(open("reef.toml", "rb"))["package"]["compiler"].removeprefix("="))')"
 chelis reef setup
 chelis --version
 chelis reef build
@@ -29,8 +30,9 @@ chelis test tests/
 .venv/bin/python scripts/prove_gate.py
 ```
 
-`reef setup` installs the compiler pinned in `reef.toml` and its locked
-dependencies. From this checkout, `chelis --version` reports that version.
+`chelisup install` reads the compiler pin from `reef.toml` and installs its
+version-selecting shim. `reef setup` then installs the locked dependencies.
+From this checkout, `chelis --version` reports the pinned version.
 Add `~/.chelis/bin` to your shell's startup file to keep `chelis` available in
 later sessions. The proof gate checks the SMT properties and sampled result
 separately, and exits successfully when the expected proofs, counterexamples,
