@@ -5,6 +5,16 @@ All notable changes to the Economoist shell are recorded here. The package
 
 ## [Unreleased]
 
+## [0.2.16] - 2026-10-06
+
+### Changed
+
+- Build Economoist with Chelis 0.19.1 and its bundled `chelis-std` archive.
+  Repin the compiler, workflows and bundled standard-library lock, and refresh
+  the C Note invariant manifest for this package release. Chelis 0.19.1 is a
+  fix release with no language or standard-library change. No model body,
+  precondition, numeric golden or expected tier changes.
+
 ## [0.2.15] - 2026-10-06
 
 ### Added
