@@ -1,6 +1,6 @@
 # Upstream issues affecting Economoist
 
-The [model guide](SUMMARY.md) states what this package checks. A suspected
+The [model guide](book/src/models.md) states what this package checks. A suspected
 compiler or Beacon gap needs a live issue citation and a minimal reproducer.
 An expressible open blocker also gets an isolated `.ch` and `.expect` in
 [`tests_blocked/`](../tests_blocked/README.md), with the diagnostic measured

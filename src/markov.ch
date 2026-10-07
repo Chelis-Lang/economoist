@@ -14,7 +14,7 @@ export (eps, make_dist, advance, next_mass, make_dist3, advance3, mass3_next)
 -- invariant over the reals. Separate properties check exact one-step mass
 -- and nonnegativity under exact-sum guards. There is no checked stationarity,
 -- convergence, ergodicity, or arbitrary-state-count claim. See
--- docs/models/markov.md.
+-- docs/book/src/models/markov.md.
 def eps() -> f32 = 0.0001
 -- One mass-sum tolerance test, shared by every constructor and transition in
 -- this module so the distribution invariant and the transition guards cannot

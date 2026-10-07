@@ -4,7 +4,7 @@ import Economoist.Growth (gordon_pv, gordon_pv_strict)
 -- positivity and two-point comparisons over the reals under their written
 -- guards. They do not establish convergence of a dividend series or any
 -- claim about f32 rounding. Gordon has no state dimension. See
--- docs/models/growth.md.
+-- docs/book/src/models/growth.md.
 -- Under d > 0 and r > g, the closed-form value d / (r - g) is positive.
 @property gordon_positive forall(d: f32, r: f32, g: f32) where d > 0.0, r > g:
   (gordon_pv(d, r, g) > 0.0)

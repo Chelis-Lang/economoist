@@ -206,9 +206,13 @@ shell-local skill block. A dirty or busy worktree is unavailable for reuse.
 
 ## Honesty Boundaries
 
-Every module's docs state, per property, where the green stops. The proven
-fact is never silently generalized past what the SMT call established. Three
-boundaries are mandatory:
+The book states where each result stops: its Boundaries page covers all
+three boundaries below, and each model page states its own scope, applying
+them to that model. Comments in `src/` and `properties/` state the same limits next
+to the code. The proven fact is never silently generalized past
+what the SMT call established. Issue citations for held-out claims stay in
+source comments and maintainer docs, never in the book. Three boundaries are
+mandatory:
 
 - **Single-step vs limit/convergence.** A green on a one-step contraction or
   monotonicity is not a green on the fixed point, the limit, or the
@@ -222,6 +226,29 @@ boundaries are mandatory:
   discharged by cvc5 over the reals. It is not a statement about `f32`
   evaluation. Floating-point behavior of any executable demo is a separate,
   unproven concern.
+
+## Book
+
+`docs/book/` is the user-facing book for this shell. chelis.ch mirrors it
+page for page (https://chelis.ch/docs/economoist/), and the chelis.ch text is
+canonical: book pages are rendered from the site by the website's
+`scripts/sync_books.py`, so edit prose on the site and re-render, or make the
+same edit in both places in the same change.
+
+The reader is an engineer, or an AI coding agent, writing Chelis code against
+this shell. They know the domain but not this repo's internals or history, and
+they want to call the API correctly the first time. Every page teaches: what the
+API does, a runnable example with its real output, the contract (inputs, domain,
+shapes, precision, errors) and the pitfalls.
+
+Never in the book: issue or PR numbers, repo-internal paths (`spec/`, `src/`
+internals, `scripts/`, `tests/`, maintainer docs), maintainer or CI commands,
+contributor history, process talk (gates, red teams, agent instructions),
+status words (planned, not yet, stub, phase, milestone), "see the source" in
+place of documentation, em-dashes, and the word "load-bearing".
+`scripts/check_book.py` enforces the mechanical part in CI.
+
+A change that alters the public API updates the book in the same PR.
 
 ## Toolchain Policy
 
@@ -238,6 +265,8 @@ boundaries are mandatory:
 - Coordinate compiler bumps across Chelis shells as a release wave. Each
   shell lands its own pin-bump PR; do not leave Economoist's pin behind.
 - CI downloads the public Chelis release with its GitHub token.
+- [`docs/DEVELOPING.md`](docs/DEVELOPING.md) has the source-checkout
+  workflow, the meaning of raw `chelis prove` output, and the book checks.
 
 ## Pin Bump Checklist
 
@@ -334,6 +363,7 @@ git config core.hooksPath ./hooks
 ```
 
 The per-PR checks in `.github/workflows/ci.yml` run pin, authorship,
-manifest, formatting, lint, build, and negative/blocked suites. The full
+manifest, formatting, lint, build, negative/blocked suites, and the book job
+(mdBook build, `scripts/check_book.py`, and `scripts/check_book_examples.py`). The full
 `scripts/run_local_gate.py` also runs the SMT proof gate, corrupt-model checks,
 and numeric oracle before each push; nightly repeats the expensive proof work.

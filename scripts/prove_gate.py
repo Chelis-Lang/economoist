@@ -683,8 +683,8 @@ def name_lint(failures: list[str]) -> None:
 
 
 def doc_lint(failures: list[str]) -> None:
-    models = REPO_ROOT / "docs" / "models"
-    for md in sorted(models.glob("*.md")) if models.exists() else []:
+    book = REPO_ROOT / "docs" / "book" / "src"
+    for md in sorted(book.rglob("*.md")) if book.exists() else []:
         text = md.read_text()
         if UNIVERSAL_CLAIM.search(text) and not HELD_OUT.search(text):
             failures.append(f"{md.relative_to(REPO_ROOT)}: makes a universal-dimension claim without a held-out caveat in the same file")

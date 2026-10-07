@@ -1,0 +1,5 @@
+[book]
+title = "Economoist: verified economic models for Chelis"
+authors = ["Chelis contributors"]
+language = "en"
+src = "src"

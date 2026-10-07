@@ -5,6 +5,15 @@ All notable changes to the Economoist shell are recorded here. The package
 
 ## [Unreleased]
 
+### Changed
+
+- Add the user-facing book in `docs/book`, rendered page for page from the
+  chelis.ch Economoist docs, and remove the old `docs/SUMMARY.md` and
+  `docs/models/` guide it replaces. The README now points at the book; the
+  source-checkout workflow moves to `docs/DEVELOPING.md`. CI builds the book,
+  lints it, and runs every book example against the source. No model,
+  property or API change.
+
 ## [0.2.16] - 2026-10-06
 
 ### Changed

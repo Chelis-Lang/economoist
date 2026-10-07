@@ -23,7 +23,7 @@ import Economoist.Bellman (bellman_state0, bellman_state1, bellman_state0_n3, be
 -- ||Tv - Tw||_inf <= g * ||v - w||_inf requires, for EVERY output state s,
 -- |(Tv)_s - (Tw)_s| <= g * sup_j|v_j - w_j|. That per-component fact is proven
 -- here at each output state, upper and lower side; the full sup-norm contraction
--- is the max of these per-component facts (see docs/models/bellman.md), not a
+-- is the max of these per-component facts (see docs/book/src/models/bellman.md), not a
 -- separate prover record. Each component is a premise of the Banach fixed-point argument,
 -- not its conclusion.
 -- Output state 0, upper side. (Tv)_0 - (Tw)_0 is at most g times the sup-norm

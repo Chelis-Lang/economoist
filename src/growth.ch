@@ -8,7 +8,7 @@ export (gordon_pv, gordon_pv_strict, gordon_pv_negated, gordon_pv_checked, gordo
 -- dividend series converges. For the usual nonnegative-growth, positive-return
 -- series, 0 <= g < r supplies a convergent economic rate domain; the general
 -- real-rate series also needs r != -1 and |(1+g)/(1+r)| < 1. See
--- docs/models/growth.md.
+-- docs/book/src/models/growth.md.
 --
 -- gordon_pv_strict uses the same formula with a stated r > g + 0.01 domain.
 -- gordon_pv_negated is an intentionally defective model whose false
@@ -22,7 +22,7 @@ def gordon_pv(d: f32, r: f32, g: f32) -> f32 = (d / (r - g))
 -- a proper subset of the closed form's positive-denominator region r > g.
 -- The strict model's checked positivity region nests inside the standard
 -- model's checked positivity region. Both exports use the same formula;
--- the tighter spread is a domain-of-use choice. See docs/models/growth.md.
+-- the tighter spread is a domain-of-use choice. See docs/book/src/models/growth.md.
 def gordon_pv_strict(d: f32, r: f32, g: f32) -> f32 = (d / (r - g))
 -- A DEFECTIVE reference model: a mispriced perpetuity that returns the negative
 -- of the correct Gordon present value. It is a first-class model in the manifest

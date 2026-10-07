@@ -12,7 +12,7 @@ export (bellman_state0, bellman_state1, bellman_state0_n3, bellman_state1_n3, be
 -- checked at every shipped output state. They concern one application, at a
 -- fixed dimension, over the reals. Iteration limits, a fixed point, arbitrary
 -- state counts, and f32 rounding are outside those proofs; see
--- docs/models/bellman.md.
+-- docs/book/src/models/bellman.md.
 def fmax(a: f32, b: f32) -> f32 = if (a >= b) then a else b
 def fmax3(a: f32, b: f32, c: f32) -> f32 = if (a >= b) then if (a >= c) then a else c else if (b >= c) then b else c
 def fabs(x: f32) -> f32 = if (x >= 0.0) then x else (0.0 - x)

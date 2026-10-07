@@ -45,7 +45,7 @@ green PR CI alone does not establish that claim.
 ## Economoist Required Checks
 
 - Identify the claimed property and its expected result in
-  `docs/SUMMARY.md` and `docs/cnote-import-surface.json`; check the gate's
+  the book (`docs/book/src/`) and `docs/cnote-import-surface.json`; check the gate's
   result against that exact scope.
 - Execute any documented manual acceptance command and verify that ignored
   tests have an explicit reason and runner.
