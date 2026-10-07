@@ -5,6 +5,11 @@ All notable changes to the Economoist shell are recorded here. The package
 
 ## [Unreleased]
 
+- Docs: the book's getting-started page and the README install without a GitHub
+  token (`chelis reef install --from-github`); the book lint also flags unclosed
+  code fences; the AGENTS.md Book section says the book documents the latest
+  release.
+
 ### Changed
 
 - Add the user-facing book in `docs/book`, rendered page for page from the

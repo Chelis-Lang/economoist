@@ -14,10 +14,20 @@ covers.
 
 ## Use
 
-Add the released `economoist` package as a dependency in your project's
-`reef.toml` and run `chelis reef build`. Reef downloads the package;
-its one dependency, `chelis-std`, ships with the compiler. Set your project's compiler pin to the version this
-release requires (the `compiler` field of this repository's `reef.toml`). See
+Install the release into your local Reef registry (no GitHub token needed),
+add it as a dependency in your project's `reef.toml`, and build:
+
+```sh
+chelis reef install --from-github Chelis-Lang/economoist@v0.2.16
+chelis reef build
+```
+
+Its one dependency, `chelis-std`, ships with the compiler. With `GITHUB_TOKEN`
+set or `gh` signed in, `chelis reef build` fetches a missing package itself. Set
+your project's compiler pin to the version this release requires (the
+`compiler` field of this repository's `reef.toml`). The
+[getting started page](https://chelis.ch/docs/economoist/getting-started/) has
+the full sequence. See
 [Reef and packages](https://chelis.ch/docs/chelis/reef/) and the
 [Chelis installation guide](https://chelis.ch/docs/chelis/install/).
 
