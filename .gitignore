@@ -16,3 +16,6 @@ __pycache__/
 .reef-write.lock
 .*.reef-tmp-*
 .*.reef-backup-*
+
+# mdBook output
+docs/book/book/

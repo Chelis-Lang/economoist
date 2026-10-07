@@ -849,7 +849,7 @@ parked gaps.
 
 ## Read more
 
-- [Model guide](SUMMARY.md) — the checked claims and their one-step,
+- [Model guide](book/src/models.md) — the checked claims and their one-step,
   fixed-dimension, and real-arithmetic limits.
 - [`scripts/prove_gate.py`](../scripts/prove_gate.py) — exact proof verdict and
   model-dependency checks.

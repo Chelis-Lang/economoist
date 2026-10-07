@@ -4,7 +4,7 @@ import Economoist.Markov (next_mass, mass3_next)
 -- reals against the exported next_mass (n = 2) and mass3_next (n = 3) operators.
 -- These are single-application facts: they do not assert convergence to a
 -- stationary distribution, and they are the n = 2 and n = 3 instances (both
--- shipped), not the general-n theorem. See docs/models/markov.md.
+-- shipped), not the general-n theorem. See docs/book/src/models/markov.md.
 -- Total mass preserved, exactly. For a row-stochastic transition applied to a
 -- distribution summing to one, the output masses sum to one. This is an exact
 -- real-arithmetic identity (no epsilon), distinct from the f32 runtime band the
