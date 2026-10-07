@@ -28,10 +28,20 @@ resolver = "2"
 economoist = { version = "0.2.16" }
 ```
 
-`chelis reef build` downloads the Economoist release and records its version
-and archive hashes in `reef.lock`. Economoist's own dependency, `chelis-std` 0.4.0,
-ships with the compiler. The download uses the GitHub API; if it reports that
-no token is available, run `gh auth login` or set `GITHUB_TOKEN`. The
+Install the release into your local Reef registry. This downloads the public
+release assets and needs no GitHub token:
+
+```sh
+chelis reef install --from-github Chelis-Lang/economoist@v0.2.16
+```
+
+The command prints `Installed economoist 0.2.16`. `chelis reef build` then
+resolves the dependency from the registry and records its version and archive
+hashes in `reef.lock`. Economoist's own dependency, `chelis-std` 0.4.0, ships
+with the compiler. If `GITHUB_TOKEN` is set or the GitHub CLI is signed in
+(`gh auth login`), `chelis reef build` fetches a missing package itself and
+the install step can be skipped; without either, it stops with
+`remote discovery is unavailable` until the package is installed. The
 [Reef guide](https://chelis.ch/docs/chelis/reef/) covers lockfiles and `reef setup`.
 
 ## A first program
