@@ -7,6 +7,9 @@ All notable changes to the Economoist shell are recorded here. The package
 
 ### Changed
 
+- Docs: the book's table of contents follows the chelis.ch sidebar (Getting
+  started first; the model guide inside the Models group), and the book lint
+  flags `//` comments in Chelis code.
 - Docs: the book's getting-started page and the README install without a GitHub
   token (`chelis reef install --from-github`); the book lint also flags unclosed
   code fences; the AGENTS.md Book section says the book documents the latest
