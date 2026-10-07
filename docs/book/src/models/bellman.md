@@ -109,6 +109,10 @@ sums to more than one, the solver finds values where the bound fails; with
 `g >= 1` the bound can hold but its factor is no longer below one. The
 [counterexamples page](../business-wrong.md) shows both.
 
+For the three-state properties, run `chelis prove --tier smt-only --smt-timeout 20000`.
+With the default tier and timeout, the solver can report them as unsupported
+instead of proved.
+
 ## Scope
 
 The contraction is proved for one application of `T`, at two or three states

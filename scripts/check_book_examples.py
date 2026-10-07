@@ -105,6 +105,8 @@ def main() -> int:
                 sys.exit(f"check_book_examples: `chelis {' '.join(step)}` failed")
 
         cases = examples()
+        if not cases:
+            sys.exit(f"check_book_examples: no chelis examples found under {BOOK.relative_to(REPO)}")
         for n, (where, source, expected) in enumerate(cases):
             proj = tmp / f"ex{n}"
             r = run([chelis, "reef", "init", "demo", "--module-prefix", "Demo", "--output", str(proj)], tmp, env)

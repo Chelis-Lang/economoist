@@ -2,9 +2,9 @@
 
 The Gordon model values a stock whose dividend grows at a constant rate:
 
-\[
-P = \frac{D}{r-g}
-\]
+```text
+P = D / (r - g)
+```
 
 `D` is the next-period dividend, `r` the required return per period, and `g`
 the dividend growth rate per period. Rates are decimal fractions per period:
@@ -22,8 +22,8 @@ discounted dividend series when `0 <= g < r`; the usual economic domain is
 | `gordon_pv_strict` | `(d: f32, r: f32, g: f32) -> f32` | Same formula as `gordon_pv`; its proved positivity assumes `r > g + 0.01` |
 | `gordon_pv_negated` | `(d: f32, r: f32, g: f32) -> f32` | `-(d / (r - g))`, a deliberately wrong model used to demonstrate a counterexample; not for valuation |
 
-Arithmetic is `f32`, about seven significant digits: `1 / 0.05` comes back as
-`20.000002`. The `0.01` in the strict variant is one percentage point of
+Arithmetic is `f32`, about seven significant digits: `gordon_pv(1, 0.08, 0.03)`
+comes back as `20.000002`, because `0.08 - 0.03` is not exactly `0.05` in `f32`. The `0.01` in the strict variant is one percentage point of
 spread between `r` and `g` in the decimal units above.
 
 ## Example

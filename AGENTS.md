@@ -207,8 +207,8 @@ shell-local skill block. A dirty or busy worktree is unavailable for reuse.
 ## Honesty Boundaries
 
 The book states where each result stops: its Boundaries page covers all
-three boundaries below, and each model page's Scope section applies them to
-that model. Comments in `src/` and `properties/` state the same limits next
+three boundaries below, and each model page states its own scope, applying
+them to that model. Comments in `src/` and `properties/` state the same limits next
 to the code. The proven fact is never silently generalized past
 what the SMT call established. Issue citations for held-out claims stay in
 source comments and maintainer docs, never in the book. Three boundaries are
@@ -265,6 +265,8 @@ A change that alters the public API updates the book in the same PR.
 - Coordinate compiler bumps across Chelis shells as a release wave. Each
   shell lands its own pin-bump PR; do not leave Economoist's pin behind.
 - CI downloads the public Chelis release with its GitHub token.
+- [`docs/DEVELOPING.md`](docs/DEVELOPING.md) has the source-checkout
+  workflow, the meaning of raw `chelis prove` output, and the book checks.
 
 ## Pin Bump Checklist
 
@@ -361,6 +363,7 @@ git config core.hooksPath ./hooks
 ```
 
 The per-PR checks in `.github/workflows/ci.yml` run pin, authorship,
-manifest, formatting, lint, build, and negative/blocked suites. The full
+manifest, formatting, lint, build, negative/blocked suites, and the book job
+(mdBook build, `scripts/check_book.py`, and `scripts/check_book_examples.py`). The full
 `scripts/run_local_gate.py` also runs the SMT proof gate, corrupt-model checks,
 and numeric oracle before each push; nightly repeats the expensive proof work.

@@ -9,7 +9,9 @@ it is not a defect in the model.
 ## Run a pair yourself
 
 A property in your own project can import the Economoist functions and be
-checked with `chelis prove`.
+checked with `chelis prove`. For the three-state Bellman pairs, pass
+`--tier smt-only --smt-timeout 20000`; the default tier can report them as
+unsupported.
 [Getting started](getting-started.md) runs the Gordon pair
 this way:
 

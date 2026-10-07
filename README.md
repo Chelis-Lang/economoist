@@ -15,8 +15,8 @@ covers.
 ## Use
 
 Add the released `economoist` package as a dependency in your project's
-`reef.toml` and run `chelis reef build`. Reef downloads the package and its
-released dependencies. Set your project's compiler pin to the version this
+`reef.toml` and run `chelis reef build`. Reef downloads the package;
+its one dependency, `chelis-std`, ships with the compiler. Set your project's compiler pin to the version this
 release requires (the `compiler` field of this repository's `reef.toml`). See
 [Reef and packages](https://chelis.ch/docs/chelis/reef/) and the
 [Chelis installation guide](https://chelis.ch/docs/chelis/install/).
