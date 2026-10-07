@@ -36,7 +36,7 @@ inverted = gordon_pv(1.0f32, 0.03f32, 0.08f32)
 equal_rates = gordon_pv(1.0f32, 0.05f32, 0.05f32)
 checked_ok = gordon_pv_checked(1.0f32, 0.08f32, 0.03f32)
 checked_inverted = gordon_pv_checked(1.0f32, 0.03f32, 0.08f32)
-checked_nan_rate = gordon_pv_checked(1.0f32, 0.0f32 / 0.0f32, 0.03f32)
+checked_nan_rate = gordon_pv_checked(1.0f32, (0.0f32 / 0.0f32), 0.03f32)
 checked_negative_d = gordon_pv_checked(-1.0f32, 0.08f32, 0.03f32)
 checked_tiny_spread = gordon_pv_checked(1.0f32, 1.4e-45f32, 0.0f32)
 strict_ok = gordon_pv_strict_checked(1.0f32, 0.08f32, 0.03f32)
@@ -62,11 +62,15 @@ strict_at_margin = None
 
 ## Failure behavior
 
-`gordon_pv` never fails. With `r < g` it returns a negative number and with
-`r = g` it returns `inf`; neither traps, because `f32` division does not.
-Use it only where the rate domain is already established, or where you need
-a plain scalar, for example to differentiate it with `grad`, which rejects an
-`Option` result.
+`gordon_pv` never fails; it returns whatever `f32` division gives, and `f32`
+division does not trap. With `r < g` the sign of the result is the opposite
+of the sign of `d`: `gordon_pv(1, 0.03, 0.08)` is `-20.000002` and
+`gordon_pv(-1, 0.03, 0.08)` is `20.000002`. With `r = g` the result is `inf`
+for `d > 0`, `-inf` for `d < 0`, and `NaN` for `d = 0`. Use `gordon_pv` only
+where the rate domain is already established, or where you need a plain `f32`
+result, for example to differentiate it with
+[`grad`](https://chelis.ch/docs/chelis/transforms/), which accepts only a scalar
+floating-point result, not an `Option`.
 
 The checked functions test one inequality on the rates and nothing else:
 
@@ -85,8 +89,9 @@ The checked functions test one inequality on the rates and nothing else:
   with `g + 0.01` computed in `f32`. A spread of exactly one point, as in
   `strict_at_margin`, is refused.
 
-To accept only economically meaningful valuations, test `d > 0`,
-`0 <= g`, `r < 1` and a finite result yourself before or after the call.
+To accept only economically meaningful valuations, call a checked function
+(which enforces `r > g`) and also test `d > 0`, `0 <= g`, `r < 1` and that the
+result is finite. If you call `gordon_pv` directly, test `r > g` as well.
 
 ## Proved and sampled results
 

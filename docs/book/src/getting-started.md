@@ -15,6 +15,7 @@ exact version Economoist 0.2.16 requires; Reef rejects a project whose pin
 differs. Add Economoist under `[dependencies]`:
 
 ```toml
+schema = "3"
 [package]
 name = "demo"
 version = "0.1.0"
@@ -63,8 +64,9 @@ checked = None
 
 A dividend of 2 discounted at 10% with 5% growth is worth `2 / 0.05 = 40`.
 The second call has the required return below the growth rate, so the checked
-function refuses it. Every Economoist function takes and returns `f32`;
-write literals with the `f32` suffix, as above, so they match.
+function refuses it, returning `None` instead of `Some(value)`. Every numeric
+argument and result in Economoist is `f32`; write literals with the `f32`
+suffix, as above, so they match.
 
 The library has three modules:
 

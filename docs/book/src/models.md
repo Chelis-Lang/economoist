@@ -8,7 +8,8 @@
 | [Bellman operator](models/bellman.md) | `bellman_state0`, `bellman_state1` (two states); `bellman_state0_n3`, `bellman_state1_n3`, `bellman_state2_n3` (three states); `fmax`, `fmax3`, `fabs` | Monotonicity and boundedness at output state 0; a two-sided contraction bound at every output state |
 | [Gordon present value](models/growth.md) | `gordon_pv`, `gordon_pv_checked`, `gordon_pv_strict`, `gordon_pv_strict_checked`, `gordon_pv_negated` | Positivity, increase in `D`, decrease in `r`; a sampled sign check on `dP/dr` |
 
-All arguments and results are `f32`. Distributions are returned as
+Every numeric argument and result is `f32`. `advance` and `advance3` also take
+the current distribution as a `Dist2` or `Dist3`. Distributions are returned as
 `Option[Dist2]` or `Option[Dist3]`, and the checked Gordon functions return
 `Option[f32]`; every other function returns a plain `f32` and accepts any
 input.

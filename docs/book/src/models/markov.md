@@ -18,7 +18,8 @@ masses weighted by column `j` of `T`.
 | `advance3` | `(d: Dist3, t00, t01, t02, t10, t11, t12, t20, t21, t22) -> Option[Dist3]` | As `advance`, for three states |
 | `mass3_next` | `(p0, p1, p2, ta, tb, tc) -> f32` | `p0 * ta + p1 * tb + p2 * tc`, one output mass, unguarded |
 
-Every argument is `f32`. The transition entries are passed row by row:
+Apart from the `Dist2` or `Dist3` that `advance` and `advance3` take first,
+every argument is `f32`. The transition entries are passed row by row:
 `t00, t01` is the row out of state 0 and `t10, t11` the row out of state 1, so
 each row should sum to one. `next_mass` and `mass3_next` take one column, the
 entries into a single target state: the next mass of state 0 is

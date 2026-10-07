@@ -20,8 +20,13 @@ state to build the whole of `Tv`.
 | `bellman_state0`, `bellman_state1` | `(v0, v1, ra, a0, a1, rb, b0, b1, g)` | `(Tv)_0` or `(Tv)_1` at two states |
 | `bellman_state0_n3`, `bellman_state1_n3`, `bellman_state2_n3` | `(v0, v1, v2, ra, a0, a1, a2, rb, b0, b1, b2, g)` | `(Tv)_0`, `(Tv)_1` or `(Tv)_2` at three states |
 | `fmax` | `(a, b)` | `a` if `a >= b`, else `b` |
-| `fmax3` | `(a, b, c)` | The largest of the three, by the same rule |
+| `fmax3` | `(a, b, c)` | `fmax`'s rule applied pairwise: `a` if `a >= b` and `a >= c`, else `b` if `b >= c`, else `c` |
 | `fabs` | `(x)` | `x` if `x >= 0`, else `-x` |
+
+Every comparison with `NaN` is false, so these helpers do not propagate `NaN`
+consistently: `fmax(NaN, 1)` is `1` but `fmax(1, NaN)` is `NaN`;
+`fmax3(NaN, 1, 2)` and `fmax3(3, NaN, 2)` are both `2`, and
+`fmax3(3, 1, NaN)` is `NaN`. Check inputs for `NaN` before calling.
 
 All arguments and results are `f32`. The argument names in the table are
 placeholders for the layout, which is the same for every state function:

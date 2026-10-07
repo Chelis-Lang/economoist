@@ -53,7 +53,7 @@ The counterexample is the one cvc5 returned with Chelis 0.19.1.
 Two notes on reading the table. The Markov mass failure needs only a row that
 does not sum to one; the three-state counterexample happens to use negative masses
 as well, which is allowed because the claim, like the proved property, does not assume nonnegativity.
-The modulus row is not a failure of the bound itself: the per-state bound
+The "Bellman contraction factor below one" row is not a failure of the bound itself: the per-state bound
 holds for any `g >= 0`, and what breaks is the claim that its factor is below
 one.
 
