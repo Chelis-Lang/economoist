@@ -38,10 +38,8 @@ chelis reef install --from-github Chelis-Lang/economoist@v0.2.17
 The command prints `Installed economoist 0.2.17`. `chelis reef build` then
 resolves the dependency from the registry and records its version and archive
 hashes in `reef.lock`. Economoist's own dependency, `chelis-std` 0.4.0, ships
-with the compiler. If `GITHUB_TOKEN` is set or the GitHub CLI is signed in
-(`gh auth login`), `chelis reef build` fetches a missing package itself and
-the install step can be skipped; without either, it stops with
-`remote discovery is unavailable` until the package is installed. The
+with the compiler. `chelis reef build` also fetches missing public packages
+automatically, so the explicit install step can be skipped. The
 [Reef guide](https://chelis.ch/docs/chelis/reef/) covers lockfiles and `reef setup`.
 
 ## A first program

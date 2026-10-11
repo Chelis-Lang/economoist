@@ -22,8 +22,8 @@ chelis reef install --from-github Chelis-Lang/economoist@v0.2.17
 chelis reef build
 ```
 
-Its one dependency, `chelis-std`, ships with the compiler. With `GITHUB_TOKEN`
-set or `gh` signed in, `chelis reef build` fetches a missing package itself. Set
+Its one dependency, `chelis-std`, ships with the compiler. `chelis reef build`
+fetches a missing public package automatically. Set
 your project's compiler pin to the version this release requires (the
 `compiler` field of this repository's `reef.toml`). The
 [getting started page](https://chelis.ch/docs/economoist/getting-started/) has
