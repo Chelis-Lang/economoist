@@ -18,7 +18,7 @@ Install the release into your local Reef registry (no GitHub token needed),
 add it as a dependency in your project's `reef.toml`, and build:
 
 ```sh
-chelis reef install --from-github Chelis-Lang/economoist@v0.2.16
+chelis reef install --from-github Chelis-Lang/economoist@v0.2.17
 chelis reef build
 ```
 
