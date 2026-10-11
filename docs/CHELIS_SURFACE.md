@@ -825,7 +825,12 @@ round-trip witness. `chelis deep`/`surf` are the CLI views; `spec/02`
 
 # Chelis capability surface for Economoist
 
-> **Pinned compiler:** 0.19.0 · **Bundled chelis-std:** 0.4.0
+> **Pinned compiler:** 0.19.2 · **Bundled chelis-std:** 0.4.0
+
+The generated compiler surface above has one stale compiled-host CSV paragraph:
+Chelis PR [#3186](https://github.com/Chelis-Lang/chelis/pull/3186) added the
+runtime before 0.19.2, so the builtin CSV family runs in compiled-host code.
+The generated text is tracked by [chelis#3581](https://github.com/Chelis-Lang/chelis/issues/3581).
 
 `@pin` means the released toolchain supports the capability used here.
 `@upstream` is reserved for a capability expected at the next pin; none is
@@ -860,7 +865,7 @@ parked gaps.
 | Reverse-mode `grad` | `@pin` | `sampled/growth_sensitivity.ch` differentiates the imported `gordon_pv` export with respect to `r`. The concrete `f32` AD result is fuzz-validated, separate from the real-arithmetic two-point SMT comparison. |
 | Scalar gradient in SMT | `@pin` | Supported scalar gradients can lower to SMT. Economoist keeps its sampled result because that record characterizes concrete AD behavior. |
 | Compiler-owned dependency graph | `@pin` | `scripts/prove_gate.py` requires the exact declaration edge from each direct property to its exported function; it never treats a goal string as ownership evidence. |
-| Larger-state bound propagation | no claim | Beacon's current scalar input-box surface does not certify the larger economic state-space models; see chelis#2830 and beacon#52 in [`UPSTREAM_BUGS.md`](UPSTREAM_BUGS.md). |
+| Larger-state bound propagation | no claim | Beacon's shape-indexed state is an implementation decision; runtime support remains in beacon#94. The larger economic state-space models are not certified; see chelis#2830 and beacon#94 in [`UPSTREAM_BUGS.md`](UPSTREAM_BUGS.md). |
 
 ## Read more
 

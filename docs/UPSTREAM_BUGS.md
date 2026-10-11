@@ -18,6 +18,14 @@ commands below run from the Economoist checkout against the
 
 ## Tracking
 
+- **Generated compiled-host CSV capability text — chelis#3581.** The
+  `chelis reef conform sync` output at the pinned 0.19.2 still says the builtin
+  CSV family is rejected in compiled builds and cites closed chelis#1297.
+  PR #3186 is an ancestor of `v0.19.2` and supplies the compiled-host runtime;
+  this is a stale generated-docs defect, not a remaining CSV behavior blocker.
+  Re-run `chelis reef conform sync` after the upstream documentation fix and
+  verify the generated paragraph describes the pinned runtime correctly.
+
 - **Fixed-point and convergence proofs — chelis#2829.** The two- and
   three-state Bellman properties check a single update, including both sides
   of each output-state contraction bound. They do not check existence or
@@ -36,13 +44,15 @@ commands below run from the Economoist checkout against the
 - **Larger state-space bounds — chelis#2830.** This package proves fixed two-
   and three-state instances with SMT. With the pinned compiler,
   `chelis prove properties/growth.ch --tier beacon-only --json` reports
-  eight `unsupported` results for the scalar Gordon inputs because this path
-  requires distinct named rank-zero `tensor[f64]` parameters; it does not establish
-  large economic-state bounds. Beacon's shape-semantic tensor handling is
-  tracked in beacon#52; the Chelis reporting and dispatch need is chelis#2830.
+  eight `unsupported` results for the scalar Gordon inputs because Beacon
+  requires closed scalar inequalities for input bounds. This scalar probe does
+  not exercise shape-semantic state operations and does not establish large
+  economic-state bounds. Beacon's shape-indexed tensor-state decision landed
+  in beacon#93, closing decision tracker beacon#52; runtime support remains in
+  beacon#94. The Chelis reporting and dispatch need remains chelis#2830.
   The catalog contains the fixed-dimension claims
-  and no larger-state bound claim. Re-probe when beacon#52 decides its
-  tensor path and chelis#2830 can report an applicable bound.
+  and no larger-state bound claim. Re-probe when Chelis dispatch and the
+  released Chelis/Beacon pair can exercise an applicable larger-state bound.
 
 ## Archived
 
