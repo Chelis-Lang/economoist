@@ -5,7 +5,15 @@ All notable changes to the Economoist shell are recorded here. The package
 
 ## [Unreleased]
 
+## [0.2.17] - 2026-10-11
+
 ### Changed
+
+- Publish Economoist with Chelis 0.19.2 and its bundled `chelis-std` archive.
+  Refresh the C Note invariant manifest for this package version; model
+  implementations and public signatures are unchanged.
+- Describe Reef's public dependency fetch in the README and getting-started
+  page; the explicit package install remains available.
 
 - Docs: the book's table of contents follows the chelis.ch sidebar (Getting
   started first; the model guide inside the Models group), and the book lint

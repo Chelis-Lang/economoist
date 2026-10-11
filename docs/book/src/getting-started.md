@@ -1,6 +1,6 @@
 # Getting started
 
-Economoist 0.2.16 is built for Chelis 0.19.1. Install Chelis with the
+Economoist 0.2.17 is built for Chelis 0.19.2. Install Chelis with the
 [installation guide](https://chelis.ch/docs/chelis/install/), then create a project:
 
 ```sh
@@ -10,8 +10,8 @@ cd demo
 
 ## Declare the dependency
 
-Edit the generated `reef.toml`. The `compiler` pin must be `"=0.19.1"`, the
-exact version Economoist 0.2.16 requires; Reef rejects a project whose pin
+Edit the generated `reef.toml`. The `compiler` pin must be `"=0.19.2"`, the
+exact version Economoist 0.2.17 requires; Reef rejects a project whose pin
 differs. Add Economoist under `[dependencies]`:
 
 ```toml
@@ -19,29 +19,27 @@ schema = "3"
 [package]
 name = "demo"
 version = "0.1.0"
-compiler = "=0.19.1"
+compiler = "=0.19.2"
 module_prefix = "Demo"
 additional_sources = []
 resolver = "2"
 
 [dependencies]
-economoist = { version = "0.2.16" }
+economoist = { version = "0.2.17" }
 ```
 
 Install the release into your local Reef registry. This downloads the public
 release assets and needs no GitHub token:
 
 ```sh
-chelis reef install --from-github Chelis-Lang/economoist@v0.2.16
+chelis reef install --from-github Chelis-Lang/economoist@v0.2.17
 ```
 
-The command prints `Installed economoist 0.2.16`. `chelis reef build` then
+The command prints `Installed economoist 0.2.17`. `chelis reef build` then
 resolves the dependency from the registry and records its version and archive
 hashes in `reef.lock`. Economoist's own dependency, `chelis-std` 0.4.0, ships
-with the compiler. If `GITHUB_TOKEN` is set or the GitHub CLI is signed in
-(`gh auth login`), `chelis reef build` fetches a missing package itself and
-the install step can be skipped; without either, it stops with
-`remote discovery is unavailable` until the package is installed. The
+with the compiler. `chelis reef build` also fetches missing public packages
+automatically, so the explicit install step can be skipped. The
 [Reef guide](https://chelis.ch/docs/chelis/reef/) covers lockfiles and `reef setup`.
 
 ## A first program
