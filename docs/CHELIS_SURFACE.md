@@ -865,7 +865,7 @@ parked gaps.
 | Reverse-mode `grad` | `@pin` | `sampled/growth_sensitivity.ch` differentiates the imported `gordon_pv` export with respect to `r`. The concrete `f32` AD result is fuzz-validated, separate from the real-arithmetic two-point SMT comparison. |
 | Scalar gradient in SMT | `@pin` | Supported scalar gradients can lower to SMT. Economoist keeps its sampled result because that record characterizes concrete AD behavior. |
 | Compiler-owned dependency graph | `@pin` | `scripts/prove_gate.py` requires the exact declaration edge from each direct property to its exported function; it never treats a goal string as ownership evidence. |
-| Larger-state bound propagation | no claim | Beacon's shape-indexed state is an implementation decision; runtime support remains in beacon#94. The larger economic state-space models are not certified; see chelis#2830 and beacon#94 in [`UPSTREAM_BUGS.md`](UPSTREAM_BUGS.md). |
+| Larger-state bound propagation | no claim | Beacon's shape-indexed state decision and bounded fixed-extent tensor path are recorded in beacon#93, #97, and #98. The larger economic state-space models are not certified; see chelis#2830 in [`UPSTREAM_BUGS.md`](UPSTREAM_BUGS.md). |
 
 ## Read more
 

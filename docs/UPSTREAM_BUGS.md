@@ -48,8 +48,9 @@ commands below run from the Economoist checkout against the
   requires closed scalar inequalities for input bounds. This scalar probe does
   not exercise shape-semantic state operations and does not establish large
   economic-state bounds. Beacon's shape-indexed tensor-state decision landed
-  in beacon#93, closing decision tracker beacon#52; runtime support remains in
-  beacon#94. The Chelis reporting and dispatch need remains chelis#2830.
+  in beacon#93, and the bounded fixed-extent tensor path is implemented in
+  beacon#97 and beacon#98. Beacon#52 and beacon#94 are closed; the Chelis
+  reporting and dispatch need remains chelis#2830.
   The catalog contains the fixed-dimension claims
   and no larger-state bound claim. Re-probe when Chelis dispatch and the
   released Chelis/Beacon pair can exercise an applicable larger-state bound.
