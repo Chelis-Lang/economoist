@@ -19,7 +19,7 @@ import Economoist.Growth (gordon_pv, gordon_pv_strict)
 @property gordon_decreasing_in_r forall(d: f32, r1: f32, r2: f32, g: f32) where d > 0.0, r1 > g, r2 > r1:
   (gordon_pv(d, r2, g) < gordon_pv(d, r1, g))
 -- Holding the dividend and required return fixed, faster growth raises the
--- closed-form present value within the convergence region.
+-- closed-form present value within the positive-spread region.
 @property gordon_increasing_in_g forall(d: f32, r: f32, g1: f32, g2: f32) where d > 0.0, g2 > g1, r > g2:
   (gordon_pv(d, r, g2) > gordon_pv(d, r, g1))
 -- Non-vacuity witnesses. Each asserts false under the same forall and guards as
