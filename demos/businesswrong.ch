@@ -89,6 +89,12 @@ import Economoist.Bellman (bellman_state0, bellman_state0_n3, fmax, fmax3, fabs)
   (gordon_pv(d, r2, g) < gordon_pv(d, r1, g))
 @property gordon_decreasing_in_r_control forall(d: f32, r1: f32, r2: f32, g: f32) where d > 0.0, r1 > g, r2 > r1:
   (gordon_pv(d, r2, g) < gordon_pv(d, r1, g))
+-- Dropping the growth ordering allows a smaller g2, which reverses the
+-- comparative-statics claim while both calls remain in the valid region.
+@property gordon_increasing_in_g_wrong forall(d: f32, r: f32, g1: f32, g2: f32) where d > 0.0, r > g1, r > g2:
+  (gordon_pv(d, r, g2) > gordon_pv(d, r, g1))
+@property gordon_increasing_in_g_control forall(d: f32, r: f32, g1: f32, g2: f32) where d > 0.0, g2 > g1, r > g2:
+  (gordon_pv(d, r, g2) > gordon_pv(d, r, g1))
 -- Demo 8: the n=3 mass-preservation identity fails when a transition
 -- row is not stochastic. The wrong model drops the third row's sum == 1.0 guard;
 -- cvc5 returns a non-stochastic third row for which the three output masses do not

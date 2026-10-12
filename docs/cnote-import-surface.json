@@ -651,6 +651,63 @@
       "break_class": "out_of_region_expected"
     },
     {
+      "id": "econ.inv.gordon_increasing_in_g.v1",
+      "anchor_model": "gordon",
+      "kind_applies_to": [
+        "econ.perpetuity_pv"
+      ],
+      "property": {
+        "file": "properties/growth.ch",
+        "name": "gordon_increasing_in_g",
+        "module": "Economoist.Properties.Growth"
+      },
+      "binding": {
+        "mechanism": "direct-call",
+        "references_output_fn": "direct",
+        "goal_pattern": "({{output_fn}}(d, r, g2) > {{output_fn}}(d, r, g1))",
+        "contracts": []
+      },
+      "preconditions": [
+        {
+          "lhs": "d",
+          "op": "gt",
+          "rhs": {
+            "const": 0.0
+          }
+        },
+        {
+          "lhs": "g2",
+          "op": "gt",
+          "rhs": {
+            "input": "g1"
+          }
+        },
+        {
+          "lhs": "r",
+          "op": "gt",
+          "rhs": {
+            "input": "g2"
+          }
+        }
+      ],
+      "controls": {
+        "satisfying": {
+          "name": "gordon_increasing_in_g",
+          "expected": "passed"
+        },
+        "violating": {
+          "name": "gordon_increasing_in_g_wrong",
+          "expected": "failed",
+          "witness_required": true
+        }
+      },
+      "expected_tier_per_pin": {
+        "0.19.2": "proven"
+      },
+      "violation_text": "dropping the growth-order guard allows a lower growth rate and a lower present value",
+      "break_class": "out_of_region_expected"
+    },
+    {
       "id": "econ.inv.markov_mass_preserved.v1",
       "anchor_model": "markov_n2",
       "kind_applies_to": [

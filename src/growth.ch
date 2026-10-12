@@ -3,10 +3,11 @@ export (gordon_pv, gordon_pv_strict, gordon_pv_negated, gordon_pv_checked, gordo
 -- Gordon closed-form value P = D / (r - g), with next-period dividend D,
 -- required return r, and growth rate g. Under D > 0 and r > g the value is
 -- positive. The checked two-point comparisons show it increases with D
--- and decreases with r under their written guards. These are real-arithmetic
--- facts about the exported expression, not f32 guarantees or proofs that a
--- dividend series converges. For the usual nonnegative-growth, positive-return
--- series, 0 <= g < r supplies a convergent economic rate domain; the general
+-- and decreases with r and increases with g under their written guards.
+-- These are real-arithmetic facts about the exported expression, not f32
+-- guarantees or proofs that a dividend series converges. For the usual
+-- nonnegative-growth, positive-return series, 0 <= g < r supplies a
+-- convergent economic rate domain; the general
 -- real-rate series also needs r != -1 and |(1+g)/(1+r)| < 1. See
 -- docs/book/src/models/growth.md.
 --

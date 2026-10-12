@@ -20,6 +20,12 @@ All notable changes to the Economoist shell are recorded here. The package
 - Use Chelis 0.19.4 and its bundled `chelis-std` runtime across local and CI
   workflows; refresh the generated capability guide and C Note expected tiers.
 
+### Added
+
+- Prove over real arithmetic that Gordon present value rises with the growth
+  rate under a positive-dividend and positive-spread guard. The C Note manifest
+  includes a missing-order counterexample control.
+
 ## [0.2.17] - 2026-10-11
 
 ### Changed
