@@ -3,7 +3,7 @@
 All notable changes to the Economoist shell are recorded here. The package
 `version` tracks its own line (not the chelis compiler pin).
 
-## [Unreleased]
+## [0.2.18] - 2026-10-13
 
 ### Added
 

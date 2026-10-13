@@ -42,7 +42,7 @@ chelis test tests/
 .venv/bin/python scripts/prove_gate.py
 ```
 
-For the bounded Gordon valuation box, install the published Beacon v0.1.18
+For the bounded Gordon valuation box, install the published Beacon v0.1.20
 binary for your platform, set `CHELIS_BEACON_BIN` to its executable path, and
 run `.venv/bin/python scripts/beacon_gate.py`.
 
