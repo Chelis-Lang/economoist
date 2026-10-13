@@ -12,6 +12,11 @@ in [`book/`](book/); this file is not part of it.
   SMT result into a floating-point guarantee.
 - `sampled/` checks the Gordon automatic-differentiation result by sampling. A
   passing sampled check is not a proof for every input.
+- `beacon_properties/` holds the separate bounded Gordon valuation box.
+  `scripts/beacon_gate.py` checks its import-linked Beacon certificates and
+  confirmed false controls over real arithmetic. It requires the published
+  Beacon executable through `CHELIS_BEACON_BIN`; it does not certify `f32`
+  rounding.
 - `demos/` contains selected false claims and passing controls. The false
   claims are expected to produce counterexamples.
 - `tests/` exercises concrete values.
@@ -36,6 +41,10 @@ chelis reef build
 chelis test tests/
 .venv/bin/python scripts/prove_gate.py
 ```
+
+For the bounded Gordon valuation box, install the published Beacon v0.1.18
+binary for your platform, set `CHELIS_BEACON_BIN` to its executable path, and
+run `.venv/bin/python scripts/beacon_gate.py`.
 
 `chelisup install` reads the compiler pin from `reef.toml` and installs its
 version-selecting shim. `reef setup` then installs the locked dependencies.
