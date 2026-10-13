@@ -1,7 +1,7 @@
 schema = "3"
 [package]
 name = "economoist"
-version = "0.2.18"
+version = "0.2.19"
 compiler = "=0.19.4"
 module_prefix = "Economoist"
 additional_sources = ["properties", "demos", "sampled", "beacon_properties"]

@@ -2,7 +2,7 @@ schema = "1"
 
 [package]
 name = "economoist"
-version = "0.2.18"
+version = "0.2.19"
 
 [[dependencies]]
 name = "chelis-std"
