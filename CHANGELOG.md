@@ -11,6 +11,10 @@ All notable changes to the Economoist shell are recorded here. The package
   on `d` in `[0.5, 1]`, `r` in `[0.08, 0.10]`, and `g` in `[0.02, 0.04]`,
   certify the real-arithmetic value in `[6, 26]` with paired false controls.
 
+- Prove the Bellman constant-shift identity against all five exported two- and
+  three-state operators over real arithmetic. A missing row-normalization
+  control refutes, and the proof gate checks the imported source bodies.
+
 ## [0.2.17] - 2026-10-11
 
 ### Changed
