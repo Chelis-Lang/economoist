@@ -20,13 +20,16 @@ class BeaconGateTests(unittest.TestCase):
         for name, (status, side) in GATE.EXPECTED.items():
             evidence = {
                 "bound_side": side, "float_execution_covered": False,
+                "input_box": GATE.EXPECTED_BOX,
+                "source_bound": GATE.expected_source_bound(name),
                 "source_binding": {"declarations": [{
                     "name": "Economoist.Growth.gordon_pv", "sha256": "source",
                 }]},
-                "beacon_evidence": {"verdict": "certified"},
+                "beacon_evidence": {"verdict": "certified" if status == "passed" else "refuted"},
             }
             records.append({
                 "kind": "property", "name": name, "status": status,
+                "goal": GATE.expected_goal(name),
                 "proof_tier": "beacon", "samples": 0, "arith_model": "real",
                 "qualifiers": ["real_arithmetic"], "engine_evidence": evidence,
                 "counterexample": {"confirmed": True} if status == "failed" else None,
@@ -46,6 +49,20 @@ class BeaconGateTests(unittest.TestCase):
         wrong[-1]["errors"] = 1
         self.assertTrue(GATE.check_records(wrong))
         self.assertTrue(GATE.check_records(records + [{"kind": "error"}]))
+        wrong = copy.deepcopy(records)
+        wrong[0]["engine_evidence"]["input_box"]["r"]["hi"] = GATE.f32(0.099)
+        self.assertTrue(GATE.check_records(wrong))
+        wrong = copy.deepcopy(records)
+        wrong[0]["engine_evidence"]["source_bound"] = GATE.expected_source_bound(
+            "gordon_pv_box_upper"
+        )
+        self.assertTrue(GATE.check_records(wrong))
+        wrong = copy.deepcopy(records)
+        wrong[0]["goal"] = wrong[0]["goal"].replace("gordon_pv(d, r, g)", "gordon_pv(d, r, g) + 1.0f32")
+        self.assertTrue(GATE.check_records(wrong))
+        wrong = copy.deepcopy(records)
+        wrong[2]["engine_evidence"]["beacon_evidence"]["verdict"] = "unknown"
+        self.assertTrue(GATE.check_records(wrong))
 
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import struct
 import subprocess
 import sys
 
@@ -19,6 +20,37 @@ EXPECTED = {
     "gordon_pv_box_lower_wrong": ("failed", "lower"),
     "gordon_pv_box_upper_wrong": ("failed", "upper"),
 }
+BOUNDS = {
+    "gordon_pv_box_lower": (">=", 6.0),
+    "gordon_pv_box_upper": ("<=", 26.0),
+    "gordon_pv_box_lower_wrong": (">=", 7.0),
+    "gordon_pv_box_upper_wrong": ("<=", 24.0),
+}
+GOAL_PREFIX = (
+    "forall(d: f32, r: f32, g: f32) where "
+    "d >= 0.5f32, d <= 1.0f32, r >= 0.08f32, r <= 0.1f32, "
+    "g >= 0.02f32, g <= 0.04f32: (Economoist.Growth.gordon_pv(d, r, g) "
+)
+
+
+def f32(value: float) -> float:
+    return struct.unpack(">f", struct.pack(">f", value))[0]
+
+
+EXPECTED_BOX = {
+    "d": {"lo": f32(0.5), "hi": f32(1.0)},
+    "r": {"lo": f32(0.08), "hi": f32(0.10)},
+    "g": {"lo": f32(0.02), "hi": f32(0.04)},
+}
+
+
+def expected_goal(name: str) -> str:
+    comparison, bound = BOUNDS[name]
+    return f"{GOAL_PREFIX}{comparison} {bound}f32)"
+
+
+def expected_source_bound(name: str) -> dict[str, str]:
+    return {"dtype": "f64", "bits": struct.pack(">d", BOUNDS[name][1]).hex()}
 
 
 def check_records(records: list[dict]) -> list[str]:
@@ -44,6 +76,9 @@ def check_records(records: list[dict]) -> list[str]:
                 or (status == "passed" and "real_arithmetic" not in record.get("qualifiers", []))):
             errors.append(f"{name}: expected {status} with zero-sample real Beacon evidence")
         if (evidence.get("bound_side") != side
+                or evidence.get("input_box") != EXPECTED_BOX
+                or evidence.get("source_bound") != expected_source_bound(name)
+                or record.get("goal") != expected_goal(name)
                 or evidence.get("float_execution_covered") is not False
                 or len(declarations) != 1
                 or declarations[0].get("name") != "Economoist.Growth.gordon_pv"
@@ -52,8 +87,9 @@ def check_records(records: list[dict]) -> list[str]:
         if status == "passed":
             if (evidence.get("beacon_evidence") or {}).get("verdict") != "certified":
                 errors.append(f"{name}: Beacon did not certify the box")
-        elif (record.get("counterexample") or {}).get("confirmed") is not True:
-            errors.append(f"{name}: no confirmed false-control witness")
+        elif ((record.get("counterexample") or {}).get("confirmed") is not True
+              or (evidence.get("beacon_evidence") or {}).get("verdict") != "refuted"):
+            errors.append(f"{name}: no confirmed Beacon false-control witness")
     return errors
 
 
