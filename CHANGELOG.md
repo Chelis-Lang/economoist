@@ -15,6 +15,11 @@ All notable changes to the Economoist shell are recorded here. The package
   three-state operators over real arithmetic. A missing row-normalization
   control refutes, and the proof gate checks the imported source bodies.
 
+### Changed
+
+- Use Chelis 0.19.3 and its bundled `chelis-std` runtime across local and CI
+  workflows; refresh the generated capability guide and C Note expected tiers.
+
 ## [0.2.17] - 2026-10-11
 
 ### Changed
