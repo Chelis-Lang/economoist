@@ -4,7 +4,7 @@ name = "economoist"
 version = "0.2.17"
 compiler = "=0.19.2"
 module_prefix = "Economoist"
-additional_sources = ["properties", "demos", "sampled"]
+additional_sources = ["properties", "demos", "sampled", "beacon_properties"]
 resolver = "2"
 
 [dependencies]

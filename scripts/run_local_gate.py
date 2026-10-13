@@ -4,7 +4,7 @@
 Invokes, in order:
 
   1. ``chelis fmt --check`` over every ``.ch`` file in ``src/``,
-     ``properties/``, ``demos/``, ``sampled/``, ``tests/``.
+     ``properties/``, ``beacon_properties/``, ``demos/``, ``sampled/``, ``tests/``.
   2. ``chelis lint --check`` over the same set of ``.ch`` files.
   3. ``chelis reef build`` for package-level compiler validation.
   4. ``chelis test tests/`` for the native unit suite.
@@ -24,9 +24,10 @@ Each stage must pass for this checkout. The blocked-probe stage skips an empty
 `reef.toml`-pinned release install, or `chelis` on PATH, and its version must
 match the pin.
 
-Per-PR CI runs formatting, lint, package build, negative/blocked suites, and
-the offline contract gate. The local gate also runs SMT and corrupt-model
-checks and the numeric oracle; nightly repeats those execution checks.
+Per-PR CI runs formatting, lint, package build, negative/blocked suites, the
+offline contract gate, and the separate Beacon Gordon box. The local gate
+runs SMT and corrupt-model checks and the numeric oracle; run
+``scripts/beacon_gate.py`` separately when the Beacon executable is installed.
 
 Usage:
 
@@ -79,7 +80,7 @@ CHELIS = _resolve_bin()
 _assert_version(CHELIS)
 
 # Directories swept by fmt/lint, in stage order.
-SOURCE_DIRS = ["src", "properties", "demos", "sampled", "tests"]
+SOURCE_DIRS = ["src", "properties", "beacon_properties", "demos", "sampled", "tests"]
 
 
 def run(cmd: list[str], *, quiet: bool) -> int:

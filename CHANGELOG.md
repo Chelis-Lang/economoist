@@ -5,6 +5,12 @@ All notable changes to the Economoist shell are recorded here. The package
 
 ## [Unreleased]
 
+### Added
+
+- Add a separate Beacon lane for the imported Gordon present-value formula:
+  on `d` in `[0.5, 1]`, `r` in `[0.08, 0.10]`, and `g` in `[0.02, 0.04]`,
+  certify the real-arithmetic value in `[6, 26]` with paired false controls.
+
 ## [0.2.17] - 2026-10-11
 
 ### Changed
