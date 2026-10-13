@@ -1,6 +1,6 @@
 # Getting started
 
-Economoist 0.2.17 is built for Chelis 0.19.2. Install Chelis with the
+Economoist 0.2.18 is built for Chelis 0.19.4. Install Chelis with the
 [installation guide](https://chelis.ch/docs/chelis/install/), then create a project:
 
 ```sh
@@ -10,8 +10,8 @@ cd demo
 
 ## Declare the dependency
 
-Edit the generated `reef.toml`. The `compiler` pin must be `"=0.19.2"`, the
-exact version Economoist 0.2.17 requires; Reef rejects a project whose pin
+Edit the generated `reef.toml`. The `compiler` pin must be `"=0.19.4"`, the
+exact version Economoist 0.2.18 requires; Reef rejects a project whose pin
 differs. Add Economoist under `[dependencies]`:
 
 ```toml
@@ -19,23 +19,23 @@ schema = "3"
 [package]
 name = "demo"
 version = "0.1.0"
-compiler = "=0.19.2"
+compiler = "=0.19.4"
 module_prefix = "Demo"
 additional_sources = []
 resolver = "2"
 
 [dependencies]
-economoist = { version = "0.2.17" }
+economoist = { version = "0.2.18" }
 ```
 
 Install the release into your local Reef registry. This downloads the public
 release assets and needs no GitHub token:
 
 ```sh
-chelis reef install --from-github Chelis-Lang/economoist@v0.2.17
+chelis reef install --from-github Chelis-Lang/economoist@v0.2.18
 ```
 
-The command prints `Installed economoist 0.2.17`. `chelis reef build` then
+The command prints `Installed economoist 0.2.18`. `chelis reef build` then
 resolves the dependency from the registry and records its version and archive
 hashes in `reef.lock`. Economoist's own dependency, `chelis-std` 0.4.0, ships
 with the compiler. `chelis reef build` also fetches missing public packages

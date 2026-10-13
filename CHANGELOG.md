@@ -17,7 +17,7 @@ All notable changes to the Economoist shell are recorded here. The package
 
 ### Changed
 
-- Use Chelis 0.19.3 and its bundled `chelis-std` runtime across local and CI
+- Use Chelis 0.19.4 and its bundled `chelis-std` runtime across local and CI
   workflows; refresh the generated capability guide and C Note expected tiers.
 
 ## [0.2.17] - 2026-10-11
