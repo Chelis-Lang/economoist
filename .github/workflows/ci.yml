@@ -177,10 +177,10 @@ jobs:
           chelis-tag: ${{ env.CHELIS_TAG }}
           chelis-version: ${{ env.CHELIS_VERSION }}
           gh-token: ${{ github.token }}
-      - name: Install locked package dependencies
+      - name: Build package and resolve locked dependencies
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: chelis reef setup
+        run: chelis reef build .
       - name: Install published Beacon v0.1.18
         env:
           GH_TOKEN: ${{ github.token }}
