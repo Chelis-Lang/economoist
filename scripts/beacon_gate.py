@@ -26,8 +26,11 @@ def check_records(records: list[dict]) -> list[str]:
     properties = [record for record in records if record.get("kind") == "property"]
     summaries = [record for record in records if record.get("kind") == "summary"]
     names = [record.get("name") for record in properties]
-    if len(summaries) != 1 or len(names) != len(set(names)) or set(names) != set(EXPECTED):
+    if len(summaries) != 1 or len(records) != 5 or len(names) != len(set(names)) or set(names) != set(EXPECTED):
         errors.append("expected one summary and exactly four distinct Gordon properties")
+    elif any(summaries[0].get(key) != expected for key, expected in
+             (("passed", 2), ("failed", 2), ("unsupported", 0), ("errors", 0), ("total", 4))):
+        errors.append("summary counts do not match the four Gordon outcomes")
     for record in properties:
         name = record.get("name")
         if name not in EXPECTED:

@@ -31,7 +31,10 @@ class BeaconGateTests(unittest.TestCase):
                 "qualifiers": ["real_arithmetic"], "engine_evidence": evidence,
                 "counterexample": {"confirmed": True} if status == "failed" else None,
             })
-        records.append({"kind": "summary"})
+        records.append({
+            "kind": "summary", "passed": 2, "failed": 2, "unsupported": 0,
+            "errors": 0, "total": 4,
+        })
         self.assertEqual(GATE.check_records(records), [])
         wrong = copy.deepcopy(records)
         wrong[0]["engine_evidence"]["source_binding"]["declarations"] = []
@@ -39,6 +42,10 @@ class BeaconGateTests(unittest.TestCase):
         wrong = copy.deepcopy(records)
         wrong[2]["counterexample"] = None
         self.assertTrue(GATE.check_records(wrong))
+        wrong = copy.deepcopy(records)
+        wrong[-1]["errors"] = 1
+        self.assertTrue(GATE.check_records(wrong))
+        self.assertTrue(GATE.check_records(records + [{"kind": "error"}]))
 
 
 if __name__ == "__main__":
