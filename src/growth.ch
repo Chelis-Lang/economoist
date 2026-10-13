@@ -7,8 +7,8 @@ export (gordon_pv, gordon_pv_strict, gordon_pv_negated, gordon_pv_checked, gordo
 -- These are real-arithmetic facts about the exported expression, not f32
 -- guarantees or proofs that a dividend series converges. For the usual
 -- nonnegative-growth, positive-return series, 0 <= g < r supplies a
--- convergent economic rate domain; the general
--- real-rate series also needs r != -1 and |(1+g)/(1+r)| < 1. See
+-- convergent economic rate domain; the general real-rate series also needs
+-- r != -1 and |(1+g)/(1+r)| < 1. See
 -- docs/book/src/models/growth.md.
 --
 -- gordon_pv_strict uses the same formula with a stated r > g + 0.01 domain.

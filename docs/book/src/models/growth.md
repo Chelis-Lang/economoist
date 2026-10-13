@@ -102,6 +102,7 @@ These properties are proved by the cvc5 SMT solver over real arithmetic:
 | `gordon_positive` | `d > 0`, `r > g` | `gordon_pv(d, r, g) > 0` |
 | `gordon_increasing_in_d` | `r > g`, `d2 > d1` | `gordon_pv(d2, r, g) > gordon_pv(d1, r, g)` |
 | `gordon_decreasing_in_r` | `d > 0`, `r1 > g`, `r2 > r1` | `gordon_pv(d, r2, g) < gordon_pv(d, r1, g)` |
+| `gordon_increasing_in_g` | `d > 0`, `g2 > g1`, `r > g2` | `gordon_pv(d, r, g2) > gordon_pv(d, r, g1)` |
 | `gordon_strict_positive` | `d > 0`, `r > g + 0.01` | `gordon_pv_strict(d, r, g) > 0` |
 
 The derivative result is sampled, not proved. `gordon_dP_dr_negative_grad`
