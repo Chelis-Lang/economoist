@@ -3,6 +3,12 @@
 All notable changes to the Economoist shell are recorded here. The package
 `version` tracks its own line (not the chelis compiler pin).
 
+## [0.2.21] - 2026-10-19
+
+### Changed
+
+- Build with Chelis 0.21.0 and refresh the generated capability guide and C Note invariant manifest.
+
 ## [0.2.20] - 2026-10-13
 
 ### Added

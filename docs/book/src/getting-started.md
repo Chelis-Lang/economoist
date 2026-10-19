@@ -1,6 +1,6 @@
 # Getting started
 
-Economoist 0.2.20 is built for Chelis 0.19.4. Install Chelis with the
+Install Chelis with the
 [installation guide](https://chelis.ch/docs/chelis/install/), then create a project:
 
 ```sh
@@ -10,34 +10,34 @@ cd demo
 
 ## Declare the dependency
 
-Edit the generated `reef.toml`. The `compiler` pin must be `"=0.19.4"`, the
-exact version Economoist 0.2.20 requires; Reef rejects a project whose pin
-differs. Add Economoist under `[dependencies]`:
+Edit the generated `reef.toml`. The `compiler` pin must match this package's
+`reef.toml`; Reef rejects a project whose pin differs. Add Economoist under
+`[dependencies]`:
 
 ```toml
 schema = "3"
 [package]
 name = "demo"
 version = "0.1.0"
-compiler = "=0.19.4"
+compiler = "=0.21.0"
 module_prefix = "Demo"
 additional_sources = []
 resolver = "2"
 
 [dependencies]
-economoist = { version = "0.2.20" }
+economoist = { version = "0.2.21" }
 ```
 
 Install the release into your local Reef registry. This downloads the public
 release assets and needs no GitHub token:
 
 ```sh
-chelis reef install --from-github Chelis-Lang/economoist@v0.2.20
+chelis reef install --from-github chelis-lang/economoist@v0.2.21
 ```
 
-The command prints `Installed economoist 0.2.20`. `chelis reef build` then
+The install command downloads the release assets. `chelis reef build` then
 resolves the dependency from the registry and records its version and archive
-hashes in `reef.lock`. Economoist's own dependency, `chelis-std` 0.4.0, ships
+hashes in `reef.lock`. Economoist's own dependency, `chelis-std`, ships
 with the compiler. To let `chelis reef build` discover a missing package
 instead, set `GITHUB_TOKEN` or authenticate with `gh auth login` first. The
 [Reef guide](https://chelis.ch/docs/chelis/reef/) covers lockfiles and `reef setup`.
@@ -100,17 +100,19 @@ import Economoist.Growth (gordon_pv)
   (gordon_pv(d, r, g) > 0.0)
 ```
 
-`chelis prove src/main.ch` prints:
+`chelis prove src/main.ch --tier smt-only` checks the real-arithmetic claim and prints:
 
 ```text
 property failure: gordon_positive_wrong
   --> src/main.ch
-property: gordon_positive_control -- 0/0 passed
+property: gordon_positive_control -- proven_modulo_real_arithmetic (proved over the reals; machine arithmetic unchecked)
 1 passed, 1 failed, 0 unsupported, 0 errors
 ```
 
-and exits with status 1 because one property failed. `0/0` means no samples
-were drawn: the cvc5 SMT solver proved the control over real arithmetic. With
+and exits with status 1 because one property failed. The cvc5 SMT solver
+proves the control over real arithmetic; rounded `f32` execution remains
+unchecked. The default tier also tests machine arithmetic, where a positive
+value can underflow to zero. With
 `--json`, the failed property's record carries the solver's counterexample,
 `{"d": "1.0", "g": "0.0", "r": "(- 1.0)"}`, which is `d = 1, r = -1, g = 0`
 and gives a present value of `-1`. The

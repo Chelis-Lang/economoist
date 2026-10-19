@@ -9,9 +9,10 @@ it is not a defect in the model.
 ## Run a pair yourself
 
 A property in your own project can import the Economoist functions and be
-checked with `chelis prove`. For the three-state Bellman pairs, pass
-`--tier smt-only --smt-timeout 20000`; the default tier can report them as
-unsupported.
+checked over real arithmetic with `chelis prove --tier smt-only`. This
+leaves rounded `f32` execution unchecked: a positive real value can underflow
+to zero in machine arithmetic. For the three-state Bellman pairs, also pass
+`--smt-timeout 20000`.
 [Getting started](getting-started.md) runs the Gordon pair
 this way:
 
@@ -27,7 +28,7 @@ import Economoist.Growth (gordon_pv)
 ```text
 property failure: gordon_positive_wrong
   --> src/main.ch
-property: gordon_positive_control -- 0/0 passed
+property: gordon_positive_control -- proven_modulo_real_arithmetic (proved over the reals; machine arithmetic unchecked)
 1 passed, 1 failed, 0 unsupported, 0 errors
 ```
 
