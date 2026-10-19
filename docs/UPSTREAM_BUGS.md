@@ -19,7 +19,7 @@ commands below run from the Economoist checkout against the
 ## Tracking
 
 - **Generated compiled-host CSV capability text — chelis#3581.** The
-  `chelis reef conform sync` output at the pinned 0.19.4 still says the builtin
+  `chelis reef conform sync` output at the pinned 0.21.0 still says the builtin
   CSV family is rejected in compiled builds and cites closed chelis#1297.
   PR #3186 is an ancestor of `v0.19.2` and supplies the compiled-host runtime;
   this is a stale generated-docs defect, not a remaining CSV behavior blocker.

@@ -831,7 +831,7 @@ round-trip witness. `chelis deep`/`surf` are the CLI views; `spec/02`
 
 # Chelis capability surface for Economoist
 
-> **Pinned compiler:** 0.19.4 · **Bundled chelis-std:** 0.4.0
+> **Pinned compiler:** 0.21.0 · **Bundled chelis-std:** 0.4.0
 
 The generated compiler surface above has one stale compiled-host CSV paragraph:
 Chelis PR [#3186](https://github.com/Chelis-Lang/chelis/pull/3186) added the
