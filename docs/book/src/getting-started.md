@@ -32,7 +32,7 @@ Install the release into your local Reef registry. This downloads the public
 release assets and needs no GitHub token:
 
 ```sh
-chelis reef install --from-github Chelis-Lang/economoist@v0.2.21
+chelis reef install --from-github chelis-lang/economoist@v0.2.21
 ```
 
 The command prints `Installed economoist 0.2.21`. `chelis reef build` then
