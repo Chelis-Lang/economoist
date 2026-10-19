@@ -4,7 +4,7 @@
 Each ```chelis block in docs/book/src is a complete `src/main.ch` for a
 consumer project that depends on Economoist. When the block is followed by a
 ```text block, that text is the command's real output: `chelis prove
-src/main.ch` for a block that states a `@property`, `chelis eval --file
+src/main.ch --tier smt-only` for a block that states a `@property`, `chelis eval --file
 src/main.ch` otherwise. The script builds and publishes this checkout into a
 throwaway Reef registry (HOME points at a temporary directory, so the user's
 ~/.chelis/reef is never touched), creates one consumer project per example,
@@ -132,7 +132,7 @@ def main() -> int:
             if expected is None:
                 continue
             is_prove = re.search(r"(?m)^@property\b", source) is not None
-            cmd = ["prove", "src/main.ch"] if is_prove else ["eval", "--file", "src/main.ch"]
+            cmd = ["prove", "src/main.ch", "--tier", "smt-only"] if is_prove else ["eval", "--file", "src/main.ch"]
             r = run([chelis, *cmd], proj, env)
             got = "\n".join(line.rstrip() for line in r.stdout.strip("\n").splitlines())
             want = "\n".join(line.rstrip() for line in expected.strip("\n").splitlines())
