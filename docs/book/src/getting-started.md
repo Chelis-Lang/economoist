@@ -1,6 +1,6 @@
 # Getting started
 
-Economoist 0.2.21 is built for Chelis 0.21.0. Install Chelis with the
+Install Chelis with the
 [installation guide](https://chelis.ch/docs/chelis/install/), then create a project:
 
 ```sh
@@ -10,9 +10,9 @@ cd demo
 
 ## Declare the dependency
 
-Edit the generated `reef.toml`. The `compiler` pin must be `"=0.21.0"`, the
-exact version Economoist 0.2.21 requires; Reef rejects a project whose pin
-differs. Add Economoist under `[dependencies]`:
+Edit the generated `reef.toml`. The `compiler` pin must match this package's
+`reef.toml`; Reef rejects a project whose pin differs. Add Economoist under
+`[dependencies]`:
 
 ```toml
 schema = "3"
@@ -35,9 +35,9 @@ release assets and needs no GitHub token:
 chelis reef install --from-github chelis-lang/economoist@v0.2.21
 ```
 
-The command prints `Installed economoist 0.2.21`. `chelis reef build` then
+The install command downloads the release assets. `chelis reef build` then
 resolves the dependency from the registry and records its version and archive
-hashes in `reef.lock`. Economoist's own dependency, `chelis-std` 0.4.0, ships
+hashes in `reef.lock`. Economoist's own dependency, `chelis-std`, ships
 with the compiler. To let `chelis reef build` discover a missing package
 instead, set `GITHUB_TOKEN` or authenticate with `gh auth login` first. The
 [Reef guide](https://chelis.ch/docs/chelis/reef/) covers lockfiles and `reef setup`.
