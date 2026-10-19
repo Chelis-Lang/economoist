@@ -44,7 +44,7 @@ commands below run from the Economoist checkout against the
 - **Larger state-space bounds — chelis#2830.** This package proves fixed two-
   and three-state instances with SMT. With the pinned compiler,
   `chelis prove properties/growth.ch --tier beacon-only --json` reports
-  eight `unsupported` results for the scalar Gordon inputs because Beacon
+  ten `unsupported` results for the scalar Gordon inputs because Beacon
   requires closed scalar inequalities for input bounds. This scalar probe does
   not exercise shape-semantic state operations and does not establish large
   economic-state bounds. Beacon's shape-indexed tensor-state decision landed
