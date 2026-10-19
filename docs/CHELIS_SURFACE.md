@@ -831,12 +831,9 @@ round-trip witness. `chelis deep`/`surf` are the CLI views; `spec/02`
 
 # Chelis capability surface for Economoist
 
-> **Pinned compiler:** 0.21.0 · **Bundled chelis-std:** 0.4.0
-
-The generated compiler surface above has one stale compiled-host CSV paragraph:
-Chelis PR [#3186](https://github.com/Chelis-Lang/chelis/pull/3186) added the
-runtime before 0.19.2, so the builtin CSV family runs in compiled-host code.
-The generated text is tracked by [chelis#3581](https://github.com/Chelis-Lang/chelis/issues/3581).
+The builtin CSV family runs in both evaluation and compiled-host code. The
+contradictory generated paragraph above is tracked by
+[chelis#3581](https://github.com/Chelis-Lang/chelis/issues/3581).
 
 `@pin` means the released toolchain supports the capability used here.
 `@upstream` is reserved for a capability expected at the next pin; none is
