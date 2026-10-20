@@ -83,7 +83,7 @@ def gordon_pv_negated(d: f32, r: f32, g: f32) -> f32 = (0.0 - (d / (r - g)))
 -- leaving a reader to assume otherwise.
 --
 -- gordon_pv_checked enforces r > g, the positive-denominator rate region that
--- gordon_positive is proven over under its own d > 0.
+-- gordon_positive is proved under its own d > 0 guard.
 -- gordon_pv_strict_checked enforces
 -- r > g + 0.01, the margin-of-safety domain of use that gordon_pv_strict
 -- documents and the rate half of what gordon_strict_positive is proven over,

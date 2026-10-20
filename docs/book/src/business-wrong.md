@@ -38,8 +38,9 @@ record. The solver works over the reals, so it prints fractions in SMT form:
 
 ## The pairs
 
-Each claim below drops one assumption from a proved property.
-The counterexample is the one cvc5 returned with Chelis 0.19.1.
+Each claim below drops one assumption from a proved property. The table gives
+example assignments that refute each claim; a solver can return a different
+counterexample to the same claim.
 
 | Claim | Assumption removed | Counterexample | What goes wrong |
 | --- | --- | --- | --- |
