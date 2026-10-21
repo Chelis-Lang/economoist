@@ -111,7 +111,7 @@ property: gordon_positive_control -- proven_modulo_real_arithmetic (proved over 
 
 and exits with status 1 because one property failed. The cvc5 SMT solver
 proves the control over real arithmetic; rounded `f32` execution remains
-unchecked. The default proof strategy also tests machine arithmetic, where a positive
+unchecked. The default proof tier also tests machine arithmetic, where a positive
 value can underflow to zero. With
 `--json`, the failed property's record carries the solver's counterexample,
 `{"d": "1.0", "g": "0.0", "r": "(- 1.0)"}`, which is `d = 1, r = -1, g = 0`
