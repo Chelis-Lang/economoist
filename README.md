@@ -14,12 +14,17 @@ covers.
 
 ## Use
 
-Install the release into your local Reef registry (no GitHub token needed),
-add it as a dependency in your project's `reef.toml`, and build:
+Install the release into your local Reef registry (no GitHub token needed):
 
 ```sh
 chelis reef install --from-github chelis-lang/economoist@v0.2.21
-chelis reef build
+```
+
+Add Economoist to your project's `reef.toml`, then run `chelis reef build`:
+
+```toml
+[dependencies]
+economoist = { version = "0.2.21" }
 ```
 
 Its one dependency, `chelis-std`, ships with the compiler. `chelis reef build`

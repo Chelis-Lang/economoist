@@ -110,7 +110,7 @@ sums to more than one, the solver finds values where the bound fails; with
 [counterexamples page](../business-wrong.md) shows both.
 
 For the three-state properties, run `chelis prove --tier smt-only --smt-timeout 20000`.
-With the default tier and timeout, the solver can report them as unsupported
+With the default proof tier and timeout, the solver can report them as unsupported
 instead of proved.
 
 ## Scope
