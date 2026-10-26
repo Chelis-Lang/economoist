@@ -33,8 +33,9 @@ property: gordon_positive_control -- proven_modulo_real_arithmetic (proved over 
 ```
 
 `chelis prove --json` adds the counterexample to the failed property's
-record. The solver works over the reals, so it prints fractions in SMT form:
-`(/ 3 2)` is 1.5 and `(- 1.0)` is -1.
+record. The solver finds a point over the reals; the record gives each value
+as a JSON number rounded to the binder's `f32` width, so `-1` prints as
+`-1.0` and `7/6` prints as `1.1666666269302368`.
 
 ## The pairs
 

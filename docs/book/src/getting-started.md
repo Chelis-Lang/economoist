@@ -113,8 +113,9 @@ and exits with status 1 because one property failed. The cvc5 SMT solver
 proves the control over real arithmetic; rounded `f32` execution remains
 unchecked. The default proof tier also tests machine arithmetic, where a positive
 value can underflow to zero. With
-`--json`, the failed property's record carries the solver's counterexample,
-`{"d": "1.0", "g": "0.0", "r": "(- 1.0)"}`, which is `d = 1, r = -1, g = 0`
-and gives a present value of `-1`. The
+`--json`, the failed property's record carries the counterexample
+`{"d":1.0,"g":0.0,"r":-1.0}`, which is `d = 1, r = -1, g = 0` and gives a
+present value of `-1`. Its `machine_arithmetic` field reports `confirmed`:
+the witness rounded to `f32` also refutes the claim. The
 [counterexamples page](business-wrong.md) lists the other
 false claims of this kind and the guard each one is missing.
