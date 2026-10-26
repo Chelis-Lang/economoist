@@ -3,6 +3,13 @@
 All notable changes to the Economoist shell are recorded here. The package
 `version` tracks its own line (not the chelis compiler pin).
 
+## [0.2.22] - 2026-10-26
+
+### Changed
+
+- Build with Chelis 0.22.1 and refresh the generated capability guide and C Note invariant manifest. Every manifest invariant keeps its 0.21.0 proof tier at 0.22.1.
+- Make the README dependency setup explicit and describe counterexamples as illustrative assignments rather than a solver-version snapshot. Use proof-method wording in the model guide and correct the Gordon source commentary.
+
 ## [0.2.21] - 2026-10-19
 
 ### Changed

@@ -1,1 +1,0 @@
-Make the README dependency setup explicit and describe counterexamples as illustrative assignments rather than a solver-version snapshot. Use proof-method wording in the model guide and correct the Gordon source commentary.
