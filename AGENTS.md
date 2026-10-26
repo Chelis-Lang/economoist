@@ -26,7 +26,7 @@ to this file so Claude-style and Codex-style entry points do not drift.
   and shared skill source in the Chelis compiler repo, then run the pinned
   `chelis reef conform sync` here.
 
-<!-- BEGIN CHELIS MANAGED BLOCK: agents-inheritance chelis@0.21.0 (sha256:0badebea5a41065f) -->
+<!-- BEGIN CHELIS MANAGED BLOCK: agents-inheritance chelis@0.22.1 (sha256:924e3299fac3b737) -->
 # Chelis Agent Contract
 
 Keep this file concise and relevant to every agent working in this repository.
@@ -107,7 +107,7 @@ function of those inputs, and feedback that varies between identical runs is a d
 
 ## Subagents
 
-[`docs/investigations/agent_contract_rationale.md`](https://github.com/Chelis-Lang/chelis/blob/v0.21.0/docs/investigations/agent_contract_rationale.md)
+[`docs/investigations/agent_contract_rationale.md`](https://github.com/Chelis-Lang/chelis/blob/v0.22.1/docs/investigations/agent_contract_rationale.md)
 holds the measurements behind these rules.
 
 - Every subagent prompt names the delivery mechanism and the complete expected report.

@@ -19,20 +19,20 @@ schema = "3"
 [package]
 name = "demo"
 version = "0.1.0"
-compiler = "=0.21.0"
+compiler = "=0.22.1"
 module_prefix = "Demo"
 additional_sources = []
 resolver = "2"
 
 [dependencies]
-economoist = { version = "0.2.21" }
+economoist = { version = "0.2.22" }
 ```
 
 Install the release into your local Reef registry. This downloads the public
 release assets and needs no GitHub token:
 
 ```sh
-chelis reef install --from-github chelis-lang/economoist@v0.2.21
+chelis reef install --from-github chelis-lang/economoist@v0.2.22
 ```
 
 The install command downloads the release assets. `chelis reef build` then

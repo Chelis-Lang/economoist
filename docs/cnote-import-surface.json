@@ -2,8 +2,8 @@
   "schema_id": "chelis-shell.invariant-surface",
   "schema_version": "1.0",
   "pkg": "economoist",
-  "pkg_version": "0.2.21",
-  "chelis_pin": "0.21.0",
+  "pkg_version": "0.2.22",
+  "chelis_pin": "0.22.1",
   "purpose": "Economoist's model and invariant surface for C Note. Every proven result is an unqualified SMT proof over the reals that calls the shipped operator; the fuzz_validated result checks sampled f32 AD and carries a tier_upgrade_trigger. The release publishes this file byte-for-byte as economoist-<pkg_version>.invariants.json, the versioned asset C Note vendors. See C Note's characterization_contract_v1.md (schema chelis-shell.invariant-surface/1.0).",
   "models": [
     {
@@ -507,7 +507,8 @@
         "0.19.2": "proven",
         "0.19.3": "proven",
         "0.19.4": "proven",
-        "0.21.0": "proven"
+        "0.21.0": "proven",
+        "0.22.1": "proven"
       },
       "dischargeability_probe": "p01_gordon_div_positive",
       "violation_text": "growth above the return puts the positive-dividend closed-form value below zero, outside the stated r > g guard",
@@ -573,7 +574,8 @@
         "0.19.2": "proven",
         "0.19.3": "proven",
         "0.19.4": "proven",
-        "0.21.0": "proven"
+        "0.21.0": "proven",
+        "0.22.1": "proven"
       },
       "dischargeability_probe": "p01_gordon_div_positive",
       "violation_text": "growth above the return puts the conservative closed-form value below zero, outside its stated r > g + 0.01 domain",
@@ -647,7 +649,8 @@
         "0.19.2": "proven",
         "0.19.3": "proven",
         "0.19.4": "proven",
-        "0.21.0": "proven"
+        "0.21.0": "proven",
+        "0.22.1": "proven"
       },
       "dischargeability_probe": "p02_gordon_two_point_r",
       "violation_text": "raising the required return does not strictly lower the present value",
@@ -707,7 +710,8 @@
       "expected_tier_per_pin": {
         "0.19.2": "proven",
         "0.19.4": "proven",
-        "0.21.0": "proven"
+        "0.21.0": "proven",
+        "0.22.1": "proven"
       },
       "violation_text": "dropping the growth-order guard allows a lower growth rate and a lower present value",
       "break_class": "out_of_region_expected"
@@ -779,7 +783,8 @@
         "0.19.2": "proven",
         "0.19.3": "proven",
         "0.19.4": "proven",
-        "0.21.0": "proven"
+        "0.21.0": "proven",
+        "0.22.1": "proven"
       },
       "dischargeability_probe": "p13_economoist_published_properties",
       "violation_text": "a non-stochastic transition row lets total probability mass drift off one",
@@ -859,7 +864,8 @@
         "0.19.2": "proven",
         "0.19.3": "proven",
         "0.19.4": "proven",
-        "0.21.0": "proven"
+        "0.21.0": "proven",
+        "0.22.1": "proven"
       },
       "dischargeability_probe": "p13_economoist_published_properties",
       "violation_text": "a non-stochastic transition row lets total probability mass drift off one (n=3)",
@@ -981,7 +987,8 @@
         "0.19.2": "proven",
         "0.19.3": "proven",
         "0.19.4": "proven",
-        "0.21.0": "proven"
+        "0.21.0": "proven",
+        "0.22.1": "proven"
       },
       "dischargeability_probe": "p04_ite_two_call",
       "violation_text": "one Bellman step can fail the monotonicity claim when the domination guard v <= w is dropped",
@@ -1089,7 +1096,8 @@
         "0.19.2": "proven",
         "0.19.3": "proven",
         "0.19.4": "proven",
-        "0.21.0": "proven"
+        "0.21.0": "proven",
+        "0.22.1": "proven"
       },
       "dischargeability_probe": "p04_ite_two_call",
       "violation_text": "dropping row-stochasticity lets the discounted expectation amplify the value gap past the g-contraction bound",
@@ -1211,7 +1219,8 @@
         "0.19.2": "proven",
         "0.19.3": "proven",
         "0.19.4": "proven",
-        "0.21.0": "proven"
+        "0.21.0": "proven",
+        "0.22.1": "proven"
       },
       "dischargeability_probe": "p15_nested_fmax3",
       "violation_text": "dropping row-stochasticity can break the n=3 per-state contraction bound",
@@ -1277,7 +1286,8 @@
         "0.19.2": "proven",
         "0.19.3": "proven",
         "0.19.4": "proven",
-        "0.21.0": "proven"
+        "0.21.0": "proven",
+        "0.22.1": "proven"
       },
       "dischargeability_probe": "p01_gordon_div_positive",
       "violation_text": "the mispriced perpetuity gordon_pv_negated prices a positive-dividend claim below zero INSIDE its validity region r > g -- an in-region defect",
@@ -1372,7 +1382,8 @@
         "0.19.2": "fuzz_validated",
         "0.19.3": "fuzz_validated",
         "0.19.4": "fuzz_validated",
-        "0.21.0": "fuzz_validated"
+        "0.21.0": "fuzz_validated",
+        "0.22.1": "fuzz_validated"
       },
       "tier_upgrade_trigger": "The sampled/growth_sensitivity.ch f32 AD result is fuzz_validated until a bit-precise floating-point proof of the derivative is available.",
       "dischargeability_probe": "p05_grad_fuzz",

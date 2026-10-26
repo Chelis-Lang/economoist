@@ -19,12 +19,16 @@ commands below run from the Economoist checkout against the
 ## Tracking
 
 - **Generated compiled-host CSV capability text — chelis#3581.** The
-  `chelis reef conform sync` output at the pinned 0.21.0 still says the builtin
-  CSV family is rejected in compiled builds and cites closed chelis#1297.
-  PR #3186 is an ancestor of `v0.19.2` and supplies the compiled-host runtime;
-  this is a stale generated-docs defect, not a remaining CSV behavior blocker.
-  Re-run `chelis reef conform sync` after the upstream documentation fix and
-  verify the generated paragraph describes the pinned runtime correctly.
+  `chelis reef conform sync` output at the pinned 0.22.1 corrects §3.9: the
+  builtin CSV family runs through the shared host runtime in evaluation and
+  compiled-host code, and closed chelis#1297 is no longer cited. Two §11
+  sentences still contradict it: the `Std.Io.Csv` row calls the builtins the
+  "eval-only CSV builtin family", and the paragraph after the module table
+  says the builtin family "has a separate build rejection (§3.9)". PR #3186 is
+  an ancestor of `v0.19.2` and supplies the compiled-host runtime; this is a
+  stale generated-docs defect, not a remaining CSV behavior blocker. Re-run
+  `chelis reef conform sync` after the upstream documentation fix and verify
+  that no generated sentence describes the builtins as eval-only.
 
 - **Fixed-point and convergence proofs — chelis#2829.** The two- and
   three-state Bellman properties check a single update, including both sides
